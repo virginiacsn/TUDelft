@@ -12,7 +12,7 @@ filename = '20180706_FS_test.txt';
 filepath = ['D:\Student_experiments\Virginia\FTSensor\Data\',filename];
 
 % Task parameters
-targetForce = 8; % [N]
+targetForce = 5; % [N]
 targetAngles = [0:pi/4:2*pi]; % [rad]
 rCirTarget = 0.5; % [N]
 rCirCursor = 0.25; % [N]
@@ -101,7 +101,7 @@ if ~isempty(device)
     delete(h)
     close(hf)
 else
-    error('No DAQ device detected.')
+    disp('No DAQ device detected.')
 end
 
 %% Event handles
