@@ -1,4 +1,4 @@
-% DAQ from F/T Sensor
+%% DAQ from F/T Sensor
 % Virginia Casasnovas
 % 07/07/2018
 

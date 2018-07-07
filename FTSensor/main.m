@@ -1,5 +1,4 @@
-% Main for DAQ from F/T sensor
-
+%% Main for DAQ from F/T sensor
 % Parameters
 fileparams = struct();
 fileparams.savefile = 1;
