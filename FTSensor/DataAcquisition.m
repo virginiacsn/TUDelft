@@ -13,7 +13,9 @@ filepath = ['D:\Student_experiments\Virginia\FTSensor\Data\',filename];
 
 % Task parameters
 targetForce = 8; % [N]
-targetAngles = [0:pi/4:2*pi]; % [rad]
+numTargets = 8; 
+targetAngles = [0:2*pi/numTargets:2*pi]; % [rad]
+targetAngles(targetAngles == 2*pi) = [];
 rCirTarget = 0.5; % [N]
 rCirCursor = 0.25; % [N]
 
