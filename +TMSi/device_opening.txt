@@ -1,0 +1,15 @@
+At beginning
+After new dev
+dev mutex locked.
+Socket options set
+Trying to find socket address for IP address 10.30.203.127 port 7654.
+Succesful found socket address to IP address 10.30.203.127 port 7654: a1ecb7f.
+Trying to connect to IP address 10.30.203.127 port 7654: 6b007408.
+Connect: Connect without timeout
+Connect: Succesfully connected without timeout
+Succsfully connected to IP address 10.30.203.127 port 7654.
+dev mutex unlocked.
+Connect: Connect with timeout
+Connect: Succesfully connected with timeout
+Connect: Connect with timeout
+Connect: Succesfully connected with timeout
