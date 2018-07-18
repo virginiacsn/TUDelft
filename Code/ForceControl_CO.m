@@ -2,7 +2,7 @@
 % Virginia Casasnovas
 % 11/07/2018
 
-function DAQ_ForceCO_EMG(varargin)
+function ForceControl_CO(varargin)
 %% Parameter assignment
 % Default parameters
 % File parameters
@@ -11,7 +11,7 @@ saveEMG =    0;
 date =      '20180711';
 task =      'CO';
 code =      '001';
-filenameforce =  [date,'_',task,'_',code,'.mat'];
+filenameforce =  [date,'_',task,'_Force_',code,'.mat'];
 filenameEMG = [date,'_',task,'_EMG_',code,'.mat'];
 filepath =  [pwd '\Data\' date '\'];
 
@@ -21,9 +21,10 @@ numTargets =    8;
 rCirTarget =    targetForce/10; % [N]
 rCirCursor =    targetForce/20; % [N]
 
-scanRate =      1000; % [scans/sec]
-availSamples =  100; % [samples]
-fc =            5; % [Hz]
+scanRate =      2000; % [scans/sec]
+availSamples =  40; % [samples]
+bufferWin =     200; % [samples]
+fclF =          5; % [Hz]
 
 movemtime =     5; % sec
 holdtime =      1; % sec
@@ -33,9 +34,9 @@ relaxtime =     1; % sec
 % EMG parameters
 plotEMG =           0;
 EMGEnabled =        0;
-channel_subset =    [1 18];
-channel_name =      {'BB','Saw'};
-sample_rate =       1024;
+channelSubset =     [1 18];
+channelName =       {'BB','Saw'};
+sampleRateEMG =     1024;
 
 % Overwrite parameters from input structs
 if ~isempty(varargin)
@@ -44,37 +45,45 @@ if ~isempty(varargin)
     end
 end
 
-if length(channel_subset)~=length(channel_name)
+if length(channelSubset)~=length(channelName)
     error('Names for all channels not available.')
 end
 
 %% Initialization
 disp('Running DataAcquisition for CO force task with EMG.')
+
 device = daq.getDevices;
 
 if ~isempty(device)
-    if saveforce
-        if exist([filepath,filenameforce],'file')
+    disp('DAQ device found.')
+    
+    if saveEMG || saveforce
+        if exist([filepath,filenameEMG],'file')
             savefile = input('\nThis file already exsists. Continue saving? (y/n) ','s');
             if strcmp(savefile,'y')
-                fprintf('Saving force data in %s.\n',filenameforce)
                 if saveEMG
-                    fprintf('Saving EMG data in %s.\n\n',filenameEMG)
+                    fprintf('Saving EMG data in %s.\n',filenameEMG)
+                end
+                if saveforce
+                    fprintf('Saving force data in %s.\n\n',filenameforce)
                 else
                     fprintf('\n')
                 end
             else
+                saveEMG = 0;
                 saveforce = 0;
                 fprintf('Not saving data.\n\n')
             end
         else
-            fprintf('Saving force data in %s.\n',filenameforce)
             if saveEMG
-                fprintf('Saving EMG data in %s.\n\n',filenameEMG)
+                fprintf('Saving EMG data in %s.\n',filenameEMG)
+            end
+            if saveforce
+                fprintf('Saving force data in %s.\n\n',filenameforce)
             else
                 fprintf('\n')
             end
-        end    
+        end
     else
         fprintf('Not saving data.\n\n')
     end
@@ -88,24 +97,13 @@ if ~isempty(device)
     % Initialize EMG
     disp('Initializing EMG.')
     library = TMSi.Library('usb');
-    [EMGEnabled,sampler,emg_data,channels] = EMGinit(library,channel_subset,channel_name,sample_rate);
+    [EMGEnabled,sampler,emg_data,channels] = EMGinit(library,channelSubset,channelName,sampleRateEMG);
     
     if EMGEnabled
         disp('EMG initialized.')
         if plotEMG
             disp('Plotting EMGs to check.')
-            emg_plot = TMSi.RealTimePlot('EMG RealTimePlot', sampler.sample_rate, channels);
-            emg_plot.setWindowSize(10);
-            emg_plot.show();
-            
-            sampler.start();
-            samples = sampler.sample();
-            emg_data.append(samples(channel_subset,:));
-            while emg_plot.is_visible
-                emg_plot.append(samples(channel_subset,:));
-                emg_plot.draw();
-            end
-            sampler.stop();
+            EMGplot(emg_data,sampler,channels,channelSubset);
         end
     else
         disp('EMG could not be initialized.')
@@ -125,8 +123,21 @@ if ~isempty(device)
     calforceDataz = FzCalibration(s.startForeground,forceOffset);
     disp('Fz calibration obtained.')
     
-    % Start data acquisition
+    %% Data acquisition
     input('\nPress enter to start acquisition.')
+    
+    % Initialize variables
+    global tmove trelax tfail tsuccess tholdstart
+    global targetCir
+    global htrg hsta htrl
+    
+    trialNum = 0;
+    cursorHoldOut = 0;
+    countState = 0;
+    countBuffer = 0;
+    forceDataBuffer = zeros(200,3);
+    state = 'start';
+    tempState = 'start';
     
     % Set target forces
     targetAngles = [0:2*pi/numTargets:2*pi]; % [rad]
@@ -140,24 +151,12 @@ if ~isempty(device)
     title('2D Force');
     xlabel('F_x [N]'); ylabel('F_y [N]');
     
-    % Set file if saving option is enabled
+    % Save file header
     if saveforce
-        samplenum = 1;
-        forceDataOut(samplenum,:) = {'Trialnum', 'State', 'TimeStamp', 'Fx', 'Fy', 'Trigger'};
+        sampleNum = 1;
+        forceDataOut(sampleNum,:) = {'Trialnum', 'State', 'TimeStamp', 'Fx', 'Fy', 'Fz','Trigger'};
     end
-    
-    %% Data acquisition
-    % Initialize variables
-    global tstart trelax tfail tsuccess tholdstart
-    global targetCir
-    global htrg hsta htrl
-    
-    trialnum = 0;
-    cursorholdout = 0;
-    countstate = 0;
-    state = 'start';
-    prevstate = 'start';
-    
+
     % Start EMG data sampling
     if EMGEnabled
         sampler.start()
@@ -212,18 +211,13 @@ end
             0.48287     -18.59045   0.38579     -18.05502   0.75146     -19.86235];
         offsetMat = repmat(offset,size(event(:,1:6),1),1);
         offsetData = event(:,1:6)-offsetMat;
+        
         procData = zeros(size(event(:,1:6)));
         for i = 1:size(offsetData,1)
             procData(i,:) = (calibMat*offsetData(i,:)')';
         end
         
-        forceData = procData(:,1:3);
-        
-%         % LPF?
-%         wn = (2/s.Rate)*fc;
-%         [b,a] = butter(2,wn,'low');
-%         forceData = filter(b,a,forceData);
-        
+        forceData = procData(:,1:3);      
         forceDataz = mean(forceData(:,3));
     end
 
@@ -236,6 +230,7 @@ end
             0.48287     -18.59045   0.38579     -18.05502   0.75146     -19.86235];
         offsetMat = repmat(offset,size(event.Data(:,1:6),1),1);
         offsetData = event.Data(:,1:6)-offsetMat;
+        
         procData = zeros(size(event.Data(:,1:6)));
         for i = 1:size(offsetData,1)
             procData(i,:) = (calibMat*offsetData(i,:)')';
@@ -245,74 +240,85 @@ end
         triggerData = event.Data(:,7);
         forceData = procData(:,1:3);
         
-        % LPF?
-        wn = (2/s.Rate)*fc;
-        [b,a] = butter(2,wn,'low');
-        forceDataFilt = filter(b,a,forceData);
+        bufferTemp = forceDataBuffer;
+        bufferTemp(1:availSamples,:) = forceData;
+        bufferTemp(availSamples+1:end) = forceDataBuffer(1:bufferWin-availSamples,:);
+        forceDataBuffer = bufferTemp;
+        countBuffer = countBuffer+1;
         
-        fmx = mean(forceData(:,1));
-        fmy = mean(forceData(:,2));
+        % LPF
+        wn = (2/s.Rate)*fclF;
+        [b,a] = butter(2,wn,'low');
+        forceDataFilt = filter(b,a,forceDataBuffer);
+        
         forceDatax = mean(forceDataFilt(:,1));
         forceDatay = mean(forceDataFilt(:,2));
         forceDataz = mean(forceDataFilt(:,3));
-        fprintf('[%f,%f]   [%f,%f]\n',fmx,fmy,forceDatax,forceDatay)
+        
+%         fmx = mean(forceData(:,1));
+%         fmy = mean(forceData(:,2));
+%         fprintf('[%f,%f]   [%f,%f]\n',fmx,fmy,forceDatax,forceDatay)
+        
         calCirCursor = rCirCursor*(1 + abs(forceDataz/calforceDataz));
         cursorCir = circle(calCirCursor,forceDatax,forceDatay);
         set(hp,'xdata',cursorCir(:,1)','ydata',cursorCir(:,2)');
         
-        if strcmp(state,prevstate) && countstate == 0
-            countstate = countstate+1;
+        if countBuffer == 5
+            drawnow;
+            countBuffer = 0;
+        end
+
+        if strcmp(state,tempState) && countState == 0
+            countState = countState+1;
             xl = xlim;
             hsta = text(xl(2)+0.3*xl(2),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',16);
-        elseif ~strcmp(state,prevstate) && countstate > 0
-            countstate = 0;
+        elseif ~strcmp(state,tempState) && countState > 0
+            countState = 0;
             delete(hsta)
         end
         
-        drawnow;
-        
-        prevstate = state;
         
         % Trial
+        tempState = state;
+        
         switch state
             case 'start'
-                tstart = tic;
-                
                 xl = xlim; yl = ylim;
                 delete(htrl)
-                htrl = text(xl(2)+0.3*xl(2),yl(2),['Trial: ',num2str(trialnum)],'clipping','off','Fontsize',14);
+                htrl = text(xl(2)+0.3*xl(2),yl(2),['Trial: ',num2str(trialNum)],'clipping','off','Fontsize',14);
                 
                 iAngle = randi(numTargets);
                 targetCir = circle(rCirTarget,targetPosx(iAngle),targetPosy(iAngle));
                 htrg = plot(targetCir(:,1),targetCir(:,2),'r','Linewidth',3);
                 
                 state = 'movement';
+                tmove = tic;
             case 'movement'
-                if calCirCursor > rCirCursor*2
+                if calCirCursor > 2*rCirCursor
                     state = 'fail';
                     tfail = tic;
                 else
-                    if cursorInTarget(cursorCir,targetCir) && toc(tstart) <= movemtime
+                    if cursorInTarget(cursorCir,targetCir) && toc(tmove) <= movemtime
                         state = 'hold';
                         tholdstart = tic;
-                    elseif ~cursorInTarget(cursorCir,targetCir) && toc(tstart) > movemtime
+                    elseif ~cursorInTarget(cursorCir,targetCir) && toc(tmove) > movemtime
                         state = 'fail';
                         tfail = tic;
                     end
                 end
             case 'hold'
-                if calCirCursor > rCirCursor*2
+                if calCirCursor > 2*rCirCursor
                     state = 'fail';
                     tfail = tic;
                 else
                     if ~cursorInTarget(cursorCir,targetCir) && toc(tholdstart) <= holdtime
-                        cursorholdout = cursorholdout+1;
-                    elseif cursorholdout > 5 && toc(tholdstart) > holdtime
-                        cursorholdout = 0;
+                        cursorHoldOut = cursorHoldOut+1;
+                    elseif cursorHoldOut > 5 && toc(tholdstart) > holdtime
+                        cursorHoldOut = 0;
                         state = 'fail';
                         tfail = tic;
-                    elseif cursorholdout <= 5 && toc(tholdstart) > holdtime
-                        cursorholdout = 0;
+                    elseif cursorHoldOut <= 5 && toc(tholdstart) > holdtime
+                        cursorHoldOut = 0;
                         state = 'success';
                         tsuccess = tic;
                     end
@@ -330,22 +336,22 @@ end
                     delete(htrg)
                 end
             case 'relax'
-                if cursorInTarget(cursorCir,circle(1.5*calCirCursor,0,0)) && toc(trelax) > relaxtime && calCirCursor <= rCirCursor*2
+                if cursorInTarget(cursorCir,circle(1.5*calCirCursor,0,0)) && toc(trelax) > relaxtime && calCirCursor <= 2*rCirCursor
                     state = 'start';
-                    trialnum = trialnum+1;
+                    trialNum = trialNum+1;
                 end
         end
         
-        % Saving EMG data in emg_data matrix
+        % Appending EMG data
         if EMGEnabled
             samples = sampler.sample();
-            emg_data.append(samples(channel_subset,:));
+            emg_data.append(samples(channelSubset,:));
         end
         
-        % Saving trial data in cell
+        % Appending trial data 
         if saveforce 
-            samplenum = samplenum+1;
-            forceDataOut(samplenum,:) = {trialnum,state,timeStamp,forceData(:,1),forceData(:,2),triggerData};
+            sampleNum = sampleNum+1;
+            forceDataOut(sampleNum,:) = {trialNum,state,timeStamp,forceData(:,1),forceData(:,2),forceData(:,3),triggerData};
         end
     end
 end
