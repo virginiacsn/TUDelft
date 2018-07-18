@@ -16,30 +16,31 @@ filenameEMG = [date,'_',task,'_EMG_',code,'.mat'];
 filepath =  [pwd '\Data\' date '\'];
 
 % Task parameters
-numTrials =    3;
+numTrials =         3;
 
-targetForce =   1000; % [N]
-numTargets =    3;
-rCirTarget =    targetForce/10; % [N]
-rCirCursor =    targetForce/20; % [N]
+targetForce =       1000; % [N]
+numTargets =        3;
+rCirTarget =        targetForce/10; % [N]
+rCirCursor =        targetForce/20; % [N]
 
 fchEMG =            10; % [Hz]
 
-scanRate =      1000; % [scans/sec]
-availSamples =  100; % [samples]
+scanRate =          1000; % [scans/sec]
+availSamples =      100; % [samples]
+bufferWin =         200; % [samples]
+iterUpdatePlot =    10;
 
-movemtime =     5; % sec
-holdtime =      1; % sec
-timeout =       1; % sec
-relaxtime =     1; % sec
+movemtime =         5; % sec
+holdtime =          1; % sec
+timeout =           1; % sec
+relaxtime =         1; % sec
 
 % EMG parameters
 plotEMG =           0;
-EMGEnabled =        0;
 channelSubset =     [1 2];
 channelName =       {'BB','TL'};
 sampleRateEMG =     1024;
-smoothWin =         200;
+smoothWin =         500;
 
 % Overwrite parameters from input structs
 if ~isempty(varargin)
@@ -62,7 +63,7 @@ if EMGEnabled
     disp('EMG initialized.')
     
     if saveEMG || saveforce
-        if exist([filepath,filenameEMG],'file')
+        if exist([filepath,filenameEMG],'file')||exist([filepath,filenameforce],'file')
             savefile = input('\nThis file already exsists. Continue saving? (y/n) ','s');
             if strcmp(savefile,'y')
                 if saveEMG
@@ -76,6 +77,7 @@ if EMGEnabled
             else
                 saveEMG = 0;
                 saveforce = 0;
+                device = [];
                 fprintf('Not saving data.\n\n')
             end
         else
@@ -92,16 +94,36 @@ if EMGEnabled
         fprintf('Not saving data.\n\n')
     end
     
+    % Get EMG offset
+    input('Press enter when prepared for EMG offset calculation')
+    samplesOffset = [];
+    sampler.start()
+    for n = 1:20
+        samples = sampler.sample();
+        samplesOffset = [samplesOffset, samples(channelSubset,:)];
+    end
+    sampler.stop()
+    EMGOffset = mean(samplesOffset,2);
+    
+    MVCScale = zeros(length(channelSubset),1);
+    for j = 1:length(channelSubset)
+        str = ['Press enter when prepared for ',channelName{j},' EMG MVC calculation'];
+        input(str)
+        samplesMVC = [];
+        sampler.start()
+        for n = 1:20
+            samples = sampler.sample();
+            samplesMVC = [samplesMVC, samples(channelSubset(j),:)];
+        end
+        sampler.stop()
+        MVCScale(j) = mean(samplesMVC);
+    end
+    fprintf('\n')
+    
     % Plot EMG
     if plotEMG
         disp('Plotting EMGs to check.')
-        EMGplot(emg_data,sampler,channels,channelSubset);
-    end
-    
-    % Save EMG file header
-    if saveEMG
-        samplenum = 1;
-        EMGDataOut(samplenum,:) = {'Trialnum', 'State', 'EMG'};
+        EMGplot(emg_data,sampler,channels,channelSubset); %emg_data appended will be saved? trigger
     end
     
     % Initialize force DAQ
@@ -166,16 +188,25 @@ if EMGEnabled
         global htrg hsta
         
         trialNum = 0;
+        EMGDataBuffer = zeros(length(channelSubset),smoothWin);
+        countBuffer = 0;
         cursorHoldOut = 0;
         state = 'start';
         tempState = 'start';
+        emg_save = [];
+        
+        % Save EMG file header
+        if saveEMG
+            samplenum = 1;
+            EMGDataOut(samplenum,:) = {'Trialnum', 'State', 'EMG'};
+        end
         
         % Add event listener and start acquisition
         outputData = [4*ones(1,availSamples),zeros(1,scanRate-availSamples)]';
         queueOutputData(s,outputData);
         hlout = addlistener(s,'DataRequired',@(src,event) src.queueOutputData(outputData));
         
-        hlin = addlistener(s,'DataAvailable',@(src,event) processForceData(event,forceOffset,hp));
+        hlin = addlistener(s,'DataAvailable',@(src,event) processForceData(event,forceOffset,EMGOffset,MVCScale,hp));
         s.IsContinuous = true;
         s.Rate = scanRate; % scans/sec, samples/sec?
         s.NotifyWhenDataAvailableExceeds = availSamples; % Call listener when x samples are available
@@ -208,7 +239,7 @@ if EMGEnabled
         
                     wn = (2/sampleRateEMG)*fchEMG;
                     [b,a] = butter(2,wn,'high');
-                    filtemg = filter(b,a,emg_data.samples);
+                    filtemg = filter(b,a,emg_data.samples-EMGOffset);
                     emg_proc = mean(abs(filtemg),2); % Rectify and average
                     
                     [EMGDatax,EMGDatay] = EMG2xy(emg_proc);
@@ -291,14 +322,6 @@ if EMGEnabled
         end
     end
     
-    % Save data
-    if saveforce && ~isempty(device)
-        save([filepath,filenameforce],'forceDataOut')
-    end
-    if saveEMG
-        save([filepath,filenameEMG],'EMGDataOut')
-    end
-    
     % Delete handles and stop session
     close(hf)
     if ~isempty(device)
@@ -311,6 +334,16 @@ if EMGEnabled
     sampler.stop()
     sampler.disconnect()
     
+    % Save data
+    if saveforce && ~isempty(device)
+        save([filepath,filenameforce],'forceDataOut')
+    end
+    if saveEMG
+        EMGDataOut = emg_data.samples;
+        save([filepath,filenameEMG],'EMGDataOut')
+        %save('emg_proc','emg_save')
+    end
+    
 else
     error('EMG could not be initialized.')
 end
@@ -318,14 +351,14 @@ end
 library.destroy()
 
 %% Function handles
-    function processForceData(event,offset,hp)
+    function processForceData(event,forceOffset,EMGOffset,MVCScale,hp)
         calibMat = [-0.56571    -0.01516    1.69417     -31.81016   -0.35339    33.73195;...
             -0.67022    37.27575    1.14848     -18.75980   0.34816     -19.33789;...
             19.06483    0.45530     18.57588    0.72627     19.51260    0.65624;...
             0.71302     0.12701     -32.12926   -1.43043    32.51061    1.09333;...
             37.80563    1.05190     -19.89516   -0.79823    -18.79634   -0.79836;...
             0.48287     -18.59045   0.38579     -18.05502   0.75146     -19.86235];
-        offsetMat = repmat(offset,size(event.Data(:,1:6),1),1);
+        offsetMat = repmat(forceOffset,size(event.Data(:,1:6),1),1);
         offsetData = event.Data(:,1:6)-offsetMat;
         procData = zeros(size(event.Data(:,1:6)));
         for i = 1:size(offsetData,1)
@@ -337,14 +370,22 @@ library.destroy()
         forceData = procData(:,1:3);
         
         samples = sampler.sample();
-        emg_data.append(samples(channelSubset,:));
-        emg_data_len = size(emg_data.samples,2);
-
+        nSamples = size(samples,2);
+        appendSamples = (samples(channelSubset,:)-repmat(EMGOffset,1,nSamples))./repmat(MVCScale,1,nSamples);
+        
+        emg_data.append(appendSamples)
+        
+        bufferTemp = EMGDataBuffer;
+        bufferTemp(:,1:nSamples) = (samples(channelSubset,:)-repmat(EMGOffset,1,nSamples))./repmat(MVCScale,1,nSamples);
+        bufferTemp(:,nSamples+1:end) = EMGDataBuffer(:,1:smoothWin-nSamples);
+        EMGDataBuffer = bufferTemp;
+        countBuffer = countBuffer+1;
+       
         wn = (2/sampleRateEMG)*fchEMG;
         [b,a] = butter(2,wn,'high');
-        filtemg = filter(b,a,emg_data.samples);
-        emg_proc = mean(abs(filtemg),2); % Rectify and average
-        
+        filtEMG = filter(b,a,EMGDataBuffer,[],2);
+        emg_proc = mean(abs(filtEMG),2); % Rectify and average
+        %emg_save = [emg_save,emg_proc];
         [EMGDatax,EMGDatay] = EMG2xy(emg_proc);
         
         cursorCir = circle(rCirCursor,EMGDatax,EMGDatay);
@@ -359,7 +400,10 @@ library.destroy()
             delete(hsta)
         end
         
-        drawnow;
+        if countBuffer == iterUpdatePlot
+            drawnow;
+            countBuffer = 0;
+        end
         
         tempState = state;
         

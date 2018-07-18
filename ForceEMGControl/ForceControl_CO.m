@@ -16,24 +16,24 @@ filenameEMG = [date,'_',task,'_EMG_',code,'.mat'];
 filepath =  [pwd '\Data\' date '\'];
 
 % Task parameters
-targetForce =   5; % [N]
-numTargets =    8;
-rCirTarget =    targetForce/10; % [N]
-rCirCursor =    targetForce/20; % [N]
+targetForce =       5; % [N]
+numTargets =        8;
+rCirTarget =        targetForce/10; % [N]
+rCirCursor =        targetForce/20; % [N]
 
-scanRate =      2000; % [scans/sec]
-availSamples =  40; % [samples]
-bufferWin =     200; % [samples]
-fclF =          5; % [Hz]
+fclF =              5; % [Hz]
+scanRate =          2000; % [scans/sec]
+availSamples =      40; % [samples]
+bufferWin =         200; % [samples]
+iterUpdatePlot =    10;
 
-movemtime =     5; % sec
-holdtime =      1; % sec
-timeout =       1; % sec
-relaxtime =     1; % sec
+movemtime =         5; % sec
+holdtime =          1; % sec
+timeout =           1; % sec
+relaxtime =         1; % sec
 
 % EMG parameters
 plotEMG =           0;
-EMGEnabled =        0;
 channelSubset =     [1 18];
 channelName =       {'BB','Saw'};
 sampleRateEMG =     1024;
@@ -135,7 +135,7 @@ if ~isempty(device)
     cursorHoldOut = 0;
     countState = 0;
     countBuffer = 0;
-    forceDataBuffer = zeros(200,3);
+    forceDataBuffer = zeros(bufferWin,3);
     state = 'start';
     tempState = 'start';
     
@@ -147,7 +147,7 @@ if ~isempty(device)
     
     % Set figure
     hf = figure('Name','CO Force Control Task');
-    [hf,hp] = Figinit(hf,target);
+    [hf,hp] = Figinit(hf,targetForce);
     title('2D Force');
     xlabel('F_x [N]'); ylabel('F_y [N]');
     
@@ -242,7 +242,7 @@ end
         
         bufferTemp = forceDataBuffer;
         bufferTemp(1:availSamples,:) = forceData;
-        bufferTemp(availSamples+1:end) = forceDataBuffer(1:bufferWin-availSamples,:);
+        bufferTemp(availSamples+1:end,:) = forceDataBuffer(1:bufferWin-availSamples,:);
         forceDataBuffer = bufferTemp;
         countBuffer = countBuffer+1;
         
@@ -263,7 +263,7 @@ end
         cursorCir = circle(calCirCursor,forceDatax,forceDatay);
         set(hp,'xdata',cursorCir(:,1)','ydata',cursorCir(:,2)');
         
-        if countBuffer == 5
+        if countBuffer == iterUpdatePlot
             drawnow;
             countBuffer = 0;
         end

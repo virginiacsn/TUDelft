@@ -9,7 +9,7 @@ end
 if numel(library.devices) == 0
     disp('EMG device not found.')
     EMGEnabled = 0;
-    varargout = {EMGEnabled,[],[],[],[]};
+    varargout = {EMGEnabled,[],[],[]};
 else
     
     try
@@ -64,6 +64,8 @@ else
         
     catch matlabException
         warning(sprintf('Error while trying to create device/sampler.\n\tIdentifier: %s\n\tMessage: %s\n', matlabException.identifier, matlabException.message));
+        EMGEnabled = 0;
+        varargout = {EMGEnabled,[],[],[]};
     end
 end
 end
