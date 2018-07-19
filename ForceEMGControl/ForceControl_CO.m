@@ -147,7 +147,7 @@ if ~isempty(device)
     
     % Set figure
     hf = figure('Name','CO Force Control Task');
-    [hf,hp] = Figinit(hf,targetForce);
+    [hf,hp] = Figinit(hf,targetForce*[1 1]);
     title('2D Force');
     xlabel('F_x [N]'); ylabel('F_y [N]');
     
