@@ -42,6 +42,7 @@ channelName =       {'BB','TL'};
 sampleRateEMG =     1024;
 smoothWin =         500;
 pauseSamp =         0.04;
+iterUpdatePlotEMG = 1;
 
 % Overwrite parameters from input structs
 if ~isempty(varargin)
@@ -95,24 +96,28 @@ if EMGEnabled
     end
     
     % Get EMG offset
-    input('Press enter when prepared for EMG offset calculation')
+    input('Press enter when prepared for EMG offset calculation.')
     samplesOffset = [];
     sampler.start()
     for n = 1:10
         samples = sampler.sample();
         pause(0.2)
-        samplesOffset = [samplesOffset, samples(channelSubset,:)];
+        samplesOffset = [samplesOffset, samples(channelSubset(1:end-1),:)];
     end
     sampler.stop()
     wn = (2/sampleRateEMG)*fchEMG;
     [b,a] = butter(2,wn,'high');
-    samplesOffsetFilt = filter(b,a,samplesOffset,[],2);
-    EMGOffset = mean((samplesOffsetFilt),2);
-    fprintf('EMG offset: (%1.3f, %1.3f)\n\n',EMGOffset)
+    samplesOffsetFilt = filtfilt(b,a,samplesOffset')';
+    EMGOffset = mean(abs(samplesOffsetFilt),2);
+    fprintf('EMG offset:\n')
+    for k = 1:length(channelSubset)-1
+        fprintf('%s: %1.3f\n',channelName{k},EMGOffset(k))
+    end
+    fprintf('\n')
     
-    MVCScale = zeros(length(channelSubset),1);
-    for j = 1:length(channelSubset)
-        str = ['Press enter when prepared for ',channelName{j},' EMG MVC calculation'];
+    MVCScale = zeros(length(channelSubset)-1,1);
+    for j = 1:length(channelSubset)-1
+        str = ['Press enter when prepared for ',channelName{j},' EMG MVC calculation.'];
         input(str)
         samplesMVC = [];
         sampler.start()
@@ -122,12 +127,16 @@ if EMGEnabled
             samplesMVC = [samplesMVC, samples(channelSubset(j),:)];
         end
         sampler.stop()
-%         wn = (2/sampleRateEMG)*fchEMG;
-%         [b,a] = butter(2,wn,'high');
-%         samplesMVCFilt = filter(b,a,samplesMVC,[],2);
-        MVCScale(j) = mean(samplesMVC-EMGOffset(j));
+        wn = (2/sampleRateEMG)*fchEMG;
+        [b,a] = butter(2,wn,'high');
+        samplesMVCFilt = filtfilt(b,a,samplesMVC);
+        MVCScale(j) = mean(abs(samplesMVCFilt),2);
     end
-    fprintf('EMG MVC Scaling: (%1.3f, %1.3f)\n\n',MVCScale)
+    fprintf('EMG MVC Scaling:\n')
+    for k = 1:length(channelSubset)-1
+        fprintf('%s: %1.3f\n',channelName{k},MVCScale(k))
+    end
+    fprintf('\n')
     
     % Plot EMG
     if plotEMG
@@ -178,7 +187,7 @@ if EMGEnabled
 %     targetForce = MVCScale(1)/2;
 %     rCirTarget = targetForce/10;
 %     rCirCursor = targetForce/20;
-    targetAngles = [pi/4:pi/(2*(numTargets-1)):3*pi/4]; % [rad]
+    targetAngles = pi/4;%[pi/4:pi/(2*(numTargets-1)):3*pi/4]; % [rad]
     targetPosx = targetForce*cos(targetAngles)';
     targetPosy = targetForce*sin(targetAngles)';
     
@@ -201,7 +210,7 @@ if EMGEnabled
         global htrg hsta
         
         trialNum = 0;
-        EMGDataBuffer = zeros(length(channelSubset),smoothWin);
+        EMGDataBuffer = zeros(length(channelSubset)-1,smoothWin);
         countBuffer = 0;
         cursorHoldOut = 0;
         state = 'start';
@@ -228,7 +237,7 @@ if EMGEnabled
             EMGDataOut(samplenum,:) = {'Trialnum', 'State', 'EMG'};
         end
         
-        EMGDataBuffer = zeros(length(channelSubset),smoothWin);
+        EMGDataBuffer = zeros(length(channelSubset)-1,smoothWin);
         emg_save = [];
         
         for itrial = 1:numTrials
@@ -247,13 +256,14 @@ if EMGEnabled
                 pause(pauseSamp)
                 
                 nSamples = size(samples,2);
-                appendSamples = (samples(channelSubset,:))./repmat(MVCScale,1,nSamples);%-repmat(EMGOffset,1,nSamples))./repmat(MVCScale,1,nSamples);
+                appendSamples = (samples(channelSubset,:));%-repmat(EMGOffset,1,nSamples))./repmat(MVCScale,1,nSamples);
                 
                 emg_data.append(appendSamples)
+                EMGSamples = appendSamples(1:end-1,:);
                 
                 if nSamples < smoothWin
                     bufferTemp = EMGDataBuffer;
-                    bufferTemp(:,1:nSamples) = appendSamples;
+                    bufferTemp(:,1:nSamples) = EMGSamples;
                     bufferTemp(:,nSamples+1:end) = EMGDataBuffer(:,1:smoothWin-nSamples);
                     EMGDataBuffer = bufferTemp;
                     countBuffer = countBuffer+1;
@@ -261,15 +271,19 @@ if EMGEnabled
                 
                 wn = (2/sampleRateEMG)*fchEMG;
                 [b,a] = butter(2,wn,'high');
-                filtEMGBuffer = filter(b,a,EMGDataBuffer,[],2);
-                normEMGBuffer = (filtEMGBuffer);%-repmat(EMGOffset,1,smoothWin);
-                avgRectEMGBuffer = mean(abs(normEMGBuffer),2); % Rectify and average
+                filtEMGBuffer = filtfilt(b,a,EMGDataBuffer')';
+                avgRectEMGBuffer = (mean(abs(filtEMGBuffer),2)-EMGOffset)./MVCScale; % Rectify, smooth and scale
                 avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;
                 emg_save = [emg_save,avgRectEMGBuffer];
                 [EMGDatax,EMGDatay] = EMG2xy(avgRectEMGBuffer);
                 
                 cursorCir = circle(rCirCursor,EMGDatax,EMGDatay);
                 set(hp,'xdata',cursorCir(:,1)','ydata',cursorCir(:,2)');
+                
+                if countBuffer == iterUpdatePlotEMG
+                    drawnow;
+                    countBuffer = 0;
+                end
                 
                 if strcmp(state,tempState) && countState == 0
                     countState = countState+1;
@@ -280,10 +294,6 @@ if EMGEnabled
                     delete(hsta)
                 end
                 
-                if countBuffer == iterUpdatePlot
-                    drawnow;
-                    countBuffer = 0;
-                end
                 % Trial
                 tempState = state;
                 
@@ -332,7 +342,7 @@ if EMGEnabled
                             delete(htrg)
                         end
                     case 'relax'
-                        if cursorInTarget(cursorCir,circle(5*rCirCursor,0,0)) && toc(trelax) > relaxtime
+                        if cursorInTarget(cursorCir,circle(1.5*rCirCursor,0,0)) && toc(trelax) > relaxtime
                             state = 'start';
                             nextTrial = true;
                         end
@@ -359,13 +369,15 @@ if EMGEnabled
     sampler.disconnect()
     
     % Save data
-    if saveforce && ~isempty(device)
-        save([filepath,filenameforce],'forceDataOut')
+    if ~isempty(device)
+        if saveforce
+            save([filepath,filenameforce],'forceDataOut')
+        end
+        EMGDataOut = emg_data.samples;
+        %save('emg_proc','emg_save')
     end
     if saveEMG
-        EMGDataOut = emg_data.samples;
-        save([filepath,filenameEMG],'EMGDataOut')
-        save('emg_proc','emg_save')
+        save([filepath,filenameEMG],'EMGDataOut','EMGOffset','MVCScale')
     end
     
 else
@@ -395,13 +407,14 @@ library.destroy()
         
         samples = sampler.sample();
         nSamples = size(samples,2);
-        appendSamples = (samples(channelSubset,:)-repmat(EMGOffset,1,nSamples))./repmat(MVCScale,1,nSamples);
+        appendSamples = (samples(channelSubset,:));%-repmat(EMGOffset,1,nSamples))./repmat(MVCScale,1,nSamples);
         
         emg_data.append(appendSamples)
+        EMGSamples = appendSamples(1:end-1,:);
         
         if nSamples < smoothWin
             bufferTemp = EMGDataBuffer;
-            bufferTemp(:,1:nSamples) = (samples(channelSubset,:)-repmat(EMGOffset,1,nSamples))./repmat(MVCScale,1,nSamples);
+            bufferTemp(:,1:nSamples) = EMGSamples;
             bufferTemp(:,nSamples+1:end) = EMGDataBuffer(:,1:smoothWin-nSamples);
             EMGDataBuffer = bufferTemp;
             countBuffer = countBuffer+1;
@@ -409,14 +422,19 @@ library.destroy()
         
         wn = (2/sampleRateEMG)*fchEMG;
         [b,a] = butter(2,wn,'high');
-        filtEMG = filter(b,a,EMGDataBuffer,[],2);
-        emg_proc = mean(abs(filtEMG),2); % Rectify and average
-        emg_proc(isnan(emg_proc)) = 0;
-        emg_save = [emg_save,emg_proc];
-        [EMGDatax,EMGDatay] = EMG2xy(emg_proc);
+        filtEMGBuffer = filtfilt(b,a,EMGDataBuffer')';
+        avgRectEMGBuffer = (mean(abs(filtEMGBuffer),2)-EMGOffset)./MVCScale; % Rectify, smooth and scale
+        avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;
+        emg_save = [emg_save,avgRectEMGBuffer];
+        [EMGDatax,EMGDatay] = EMG2xy(avgRectEMGBuffer);
         
         cursorCir = circle(rCirCursor,EMGDatax,EMGDatay);
         set(hp,'xdata',cursorCir(:,1)','ydata',cursorCir(:,2)');
+        
+        if countBuffer == iterUpdatePlot
+            drawnow;
+            countBuffer = 0;
+        end
         
         if strcmp(state,tempState) && countState == 0
             countState = countState+1;
@@ -426,12 +444,7 @@ library.destroy()
             countState = 0;
             delete(hsta)
         end
-        
-        if countBuffer == iterUpdatePlot
-            drawnow;
-            countBuffer = 0;
-        end
-        
+
         tempState = state;
         
         % Trial

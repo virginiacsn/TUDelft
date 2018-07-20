@@ -1,16 +1,16 @@
 %% Data Analysis
-date =      '20180716';
-task =      'CO';
-code =      '006';
-EMG =       0;
-filenameforce =  [date,'_',task,'_',code,'.mat'];
+date =      '20180720';
+task =      'EMGCO';
+code =      '002';
+EMG =       1;
+filenameforce =  [date,'_',task,'_Force_',code,'.mat'];
 filenameEMG = [date,'_',task,'_EMG_',code,'.mat'];
-filepath =  [pwd '\Data\' date '\'];
+filepath =  ['D:\Student_experiments\Virginia\Data\' date '\'];
 
 load([filepath,filenameforce]);
 if EMG
     load([filepath,filenameEMG]);
-end
+end 
 
 forceEMGData = {forceDataOut,EMGDataOut};
 params.downsample = 2;
@@ -18,7 +18,7 @@ trial_data = trialCO(forceEMGData,params);
 %trial_data = removeFailTrials(trial_data);
 
 %% Plot
-itrial = 1;
+itrial = 2;
 wn = (2/2048)*5;
 [b,a] = butter(2,wn,'low');
 forceDataFilt = filter(b,a,trial_data(itrial).force);
