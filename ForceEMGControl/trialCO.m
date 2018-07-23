@@ -65,57 +65,68 @@ for itrial = 1:length(trials)
     
     trial_data(itrial).dt = mean(diff(data_ts{1}));
     
-    imove = find(ismember(data_outcome,'movement'),1);
-    
     istart = find(ismember(data_outcome,'start'),1);
+    imove = find(ismember(data_outcome,'movement'),1);
+    ihold = find(ismember(data_outcome,'hold'),1);
+    
     if ~isempty(istart) && ~isempty(imove)
         tsstart = data_ts{istart};        
-        tsmove  = data_ts{imove};
-        trial_data(itrial).tstart = tsstart(1)-tinit;
-        trial_data(itrial).tmove  = tsmove(1)-tinit;
+        trial_data(itrial).tstart = tsstart(1);
+        
+        trial_data(itrial).istart = istart;
+        trial_data(itrial).imove  = imove;
     elseif isempty(istart) && trials(itrial) == 0 
         trial_data(itrial).tstart = 0; % Hard coded
-        trial_data(itrial).tmove  = 0.1;
+        
+        trial_data(itrial).istart = 1;
+        trial_data(itrial).imove  = 2;
     else
         trial_data(itrial).tstart = [];
     end
     
     if isempty(imove)
-        trial_data(itrial).tmove = [];
+        trial_data(itrial).imove = [];
     end
     
-    ihold = find(ismember(data_outcome,'hold'),1);
     if ~isempty(ihold)
-        tshold  = data_ts{ihold};
-        trial_data(itrial).thold  = tshold(1)-tinit;
+        trial_data(itrial).ihold  = ihold;
     else
-        trial_data(itrial).thold = [];
+        trial_data(itrial).ihold = [];
     end
     
     if ~isempty(iend) && ~isempty(istart)
         tsend = data_ts{iend};
-        trial_data(itrial).tend = tsend(1)-tinit;
+        trial_data(itrial).iend = iend;
+        trial_data(itrial).tend = tsend(1);
         
+        %trial_data(itrial).ts = cell2mat(data_ts(istart:iend));
         trial_data(itrial).force = cell2mat(data_force(istart:iend,:));
         trial_data(itrial).trigger = cell2mat(data_trigger(istart:iend,:));
     elseif isempty(iend) && ~isempty(istart)
-        trial_data(itrial).tend = [];
+        trial_data(itrial).iend = length(data_ts);
+        trial_data(itrial).tend = data_ts(end);
         
+        %trial_data(itrial).ts = cell2mat(data_ts(istart:end));
         trial_data(itrial).force = cell2mat(data_force(istart:end,:));
         trial_data(itrial).trigger = cell2mat(data_trigger(istart:end,:));
     elseif ~isempty(iend) && isempty(istart)
         tsend = data_ts{iend};
-        trial_data(itrial).tend = tsend(1)-tinit;
+        trial_data(itrial).iend = iend;
+        trial_data(itrial).tend = tsend(1);
         
+        %trial_data(itrial).ts = cell2mat(data_ts(1:iend));
         trial_data(itrial).force = cell2mat(data_force(1:iend,:));
         trial_data(itrial).trigger = cell2mat(data_trigger(1:iend,:));
     end
     
     if ~isempty(downsample)
-        %data_ts = decimate(data_ts,downsample,'fir');
-        data_forcex = decimate(trial_data(itrial).force(:,1),downsample,'fir');
-        data_forcey = decimate(trial_data(itrial).force(:,2),downsample,'fir');
-        trial_data(itrial).force = [data_forcex,data_forcey];
+        %trial_data(itrial).ts = decimate(trial_data(itrial).ts,downsample,'fir');
+        
+        downsamp_fx = decimate(trial_data(itrial).force(:,1),downsample,'fir');
+        downsamp_fy = decimate(trial_data(itrial).force(:,2),downsample,'fir');
+        downsamp_fz = decimate(trial_data(itrial).force(:,3),downsample,'fir');
+        trial_data(itrial).force = [downsamp_fx downsamp_fy downsamp_fz];
+        
         trial_data(itrial).trigger = decimate(trial_data(itrial).trigger,downsample,'fir');
     end
     

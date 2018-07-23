@@ -1,11 +1,17 @@
 %% Data Analysis
 date =      '20180720';
 task =      'EMGCO';
-code =      '002';
+code =      '001';
 EMG =       1;
 filenameforce =  [date,'_',task,'_Force_',code,'.mat'];
 filenameEMG = [date,'_',task,'_EMG_',code,'.mat'];
-filepath =  ['D:\Student_experiments\Virginia\Data\' date '\'];
+
+switch computer
+    case 'WIN34'
+        filepath =  ['D:\Student_experiments\Virginia\Data\' date '\'];
+    case 'MACI64'
+        filepath =  ['/Users/virginia/Documents/MATLAB/TUDELFT/Data/'];
+end
 
 load([filepath,filenameforce]);
 if EMG
