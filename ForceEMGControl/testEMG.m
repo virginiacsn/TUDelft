@@ -1,5 +1,5 @@
 load([fileparams.filepath,fileparams.filenameEMG])
-load('emg_proc.mat')
+% load('emg_proc.mat')
 EMGdata = (EMGDataOut);
 fchEMG = 5;
 sampleRateEMG = 1024;

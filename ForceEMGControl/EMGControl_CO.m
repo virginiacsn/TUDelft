@@ -165,7 +165,7 @@ if EMGEnabled
             
             % Save force file header
             samplenum = 1;
-            forceDataOut(samplenum,:) = {'Trialnum', 'State', 'TimeStamp', 'Fx', 'Fy', 'Fz','Trigger'};
+            forceDataOut(samplenum,:) = {'Trialnum', 'TargetAng', 'State', 'TimeStamp', 'Fx', 'Fy', 'Fz','Trigger'};
         else
             device = [];
             disp('DAQ device not found.')
@@ -187,7 +187,7 @@ if EMGEnabled
 %     targetForce = MVCScale(1)/2;
 %     rCirTarget = targetForce/10;
 %     rCirCursor = targetForce/20;
-    targetAngles = pi/4;%[pi/4:pi/(2*(numTargets-1)):3*pi/4]; % [rad]
+    targetAngles = [pi/4:pi/(2*(numTargets-1)):3*pi/4]; % [rad]
     targetPosx = targetForce*cos(targetAngles)';
     targetPosy = targetForce*sin(targetAngles)';
     
@@ -206,7 +206,7 @@ if EMGEnabled
     if ~isempty(device)
         % Initialize variables
         global tmove trelax tfail tsuccess tholdstart
-        global targetCir
+        global targetCir iAngle
         global htrg hsta
         
         trialNum = 0;
@@ -234,7 +234,7 @@ if EMGEnabled
         % Save EMG file header
         if saveEMG
             samplenum = 1;
-            EMGDataOut(samplenum,:) = {'Trialnum', 'State', 'EMG'};
+            EMGDataOut(samplenum,:) = {'Trialnum', 'TargetAng', 'State', 'EMG'};
         end
         
         EMGDataBuffer = zeros(length(channelSubset)-1,smoothWin);
@@ -350,7 +350,7 @@ if EMGEnabled
                 % Appending trial data
                 if saveEMG
                     samplenum = samplenum+1;
-                    EMGDataOut(samplenum,:) = {itrial,state,appendSamples};
+                    EMGDataOut(samplenum,:) = {itrial,iAngle,state,appendSamples};
                 end
             end
         end
@@ -502,7 +502,7 @@ library.destroy()
         % Appending trial data
         if saveforce
             samplenum = samplenum+1;
-            forceDataOut(samplenum,:) = {trialNum,state,timeStamp,forceData(:,1),forceData(:,2),forceData(:,3),triggerData};
+            forceDataOut(samplenum,:) = {trialNum,iAngle,state,timeStamp,forceData(:,1),forceData(:,2),forceData(:,3),triggerData};
         end
     end
 end

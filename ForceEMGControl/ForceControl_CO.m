@@ -128,7 +128,7 @@ if ~isempty(device)
     
     % Initialize variables
     global tmove trelax tfail tsuccess tholdstart
-    global targetCir
+    global targetCir iAngle
     global htrg hsta htrl
     
     trialNum = 0;
@@ -154,7 +154,7 @@ if ~isempty(device)
     % Save file header
     if saveforce
         sampleNum = 1;
-        forceDataOut(sampleNum,:) = {'Trialnum', 'State', 'TimeStamp', 'Fx', 'Fy', 'Fz','Trigger'};
+        forceDataOut(sampleNum,:) = {'Trialnum', 'TargetAng', 'State', 'TimeStamp', 'Fx', 'Fy', 'Fz','Trigger'};
     end
 
     % Start EMG data sampling
@@ -351,7 +351,7 @@ end
         % Appending trial data 
         if saveforce 
             sampleNum = sampleNum+1;
-            forceDataOut(sampleNum,:) = {trialNum,state,timeStamp,forceData(:,1),forceData(:,2),forceData(:,3),triggerData};
+            forceDataOut(sampleNum,:) = {trialNum,iAngle,state,timeStamp,forceData(:,1),forceData(:,2),forceData(:,3),triggerData};
         end
     end
 end

@@ -6,6 +6,7 @@ if length(varargin{1})>1
     EMGData = EMGDataOut(1:2,:);
     EMGTrig = EMGDataOut(3,:);
     EMGTrig(EMGTrig ~= 6) = 0;
+    EMGTrig(find(EMGTrig)) = 1;
     EMGData = EMGData(:,find(EMGTrig,1):end);
     EMGTrig = EMGTrig(:,find(EMGTrig,1):end);
 else
@@ -13,6 +14,7 @@ else
 end
 if nargin > 1
     downsample = [];
+    target_angles = [0:2*pi/8:2*pi];
     struct2vars(who,varargin{2});
 end
 % forceData = forceDataOut;
@@ -23,6 +25,7 @@ header_data = header(2:end);
 forceData = forceData(2:end,:);
 
 idh_tn = ismember(header,'Trialnum');
+idh_ang = ismember(header,'TargetAng');
 idh_sta = ismember(header,'State');
 idh_ts = ismember(header,'TimeStamp');
 idh_fx = ismember(header,'Fx');
@@ -39,6 +42,7 @@ trial_numsd = zeros(length(trial_nums),1);
 trial_numsd([1;find(diff(trial_nums))]) = 1;
 trial_forces = cell2mat(forceData(:,idh_fx|idh_fy|idh_fz));
 trial_trig = cell2mat(forceData(:,idh_trig));
+sampLength = size(forceData{1,idh_ts},1);
 %trial_states = {'start','movement','hold','success','fail'};
 trial_outcomes = {'S','F','I'};
 %trial_data_fields = {'outcome','tstart','tmove','thold','tend','force'}; % add EMG
@@ -62,6 +66,8 @@ for itrial = 1:length(trials)
         trial_data(itrial).outcome = trial_outcomes{3};
         iend = [];
     end
+    
+    trial_data(itrial).angle = target_angles(data_trial{1,idh_ang(2:end)});
     
     trial_data(itrial).dt = mean(diff(data_ts{1}));
     
@@ -119,8 +125,19 @@ for itrial = 1:length(trials)
         trial_data(itrial).trigger = cell2mat(data_trigger(1:iend,:));
     end
     
+    trial_data(itrial).imove =  trial_data(itrial).imove*sampLength;
+    trial_data(itrial).ihold = trial_data(itrial).ihold*sampLength;
+    trial_data(itrial).iend =  trial_data(itrial).iend*sampLength;
+    
+    trial_data(itrial).trigger(find(trial_data(itrial).trigger<3)) = 0;
+    trial_data(itrial).trigger(find(trial_data(itrial).trigger>3)) = 1;
+    
+    
     if ~isempty(downsample)
         %trial_data(itrial).ts = decimate(trial_data(itrial).ts,downsample,'fir');
+        trial_data(itrial).imove =  trial_data(itrial).imove/downsample;
+        trial_data(itrial).ihold =  trial_data(itrial).ihold/downsample;
+        trial_data(itrial).iend =  trial_data(itrial).iend/downsample;
         
         downsamp_fx = decimate(trial_data(itrial).force(:,1),downsample,'fir');
         downsamp_fy = decimate(trial_data(itrial).force(:,2),downsample,'fir');
