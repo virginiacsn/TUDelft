@@ -22,7 +22,7 @@ end
 
 header = forceData(1,:);
 header_data = header(2:end);
-forceData = forceData(2:end,:);
+force_data = forceData(2:end,:);
 
 idh_tn = ismember(header,'Trialnum');
 idh_ang = ismember(header,'TargetAng');
@@ -33,16 +33,16 @@ idh_fy = ismember(header,'Fy');
 idh_fz = ismember(header,'Fz');
 idh_trig = ismember(header,'Trigger');
 
-tsinit = cell2mat(forceData(1,idh_ts));
+tsinit = cell2mat(force_data(1,idh_ts));
 tinit = tsinit(1);
 
 trial_data = struct();
-trial_nums = cell2mat(forceData(:,idh_tn));
+trial_nums = cell2mat(force_data(:,idh_tn));
 trial_numsd = zeros(length(trial_nums),1);
 trial_numsd([1;find(diff(trial_nums))]) = 1;
-trial_forces = cell2mat(forceData(:,idh_fx|idh_fy|idh_fz));
-trial_trig = cell2mat(forceData(:,idh_trig));
-sampLength = size(forceData{1,idh_ts},1);
+trial_forces = cell2mat(force_data(:,idh_fx|idh_fy|idh_fz));
+trial_trig = cell2mat(force_data(:,idh_trig));
+sampLength = size(force_data{1,idh_ts},1);
 %trial_states = {'start','movement','hold','success','fail'};
 trial_outcomes = {'S','F','I'};
 %trial_data_fields = {'outcome','tstart','tmove','thold','tend','force'}; % add EMG
@@ -50,7 +50,7 @@ trials = 0:max(trial_nums);
 cum_samp_trial = 0;
 
 for itrial = 1:length(trials)
-    data_trial = forceData(trial_nums==trials(itrial),2:end);
+    data_trial = force_data(trial_nums==trials(itrial),2:end);
     data_outcome = data_trial(:,idh_sta(2:end));
     data_ts = (data_trial(:,idh_ts(2:end)));
     data_force = (cat(2,data_trial(:,idh_fx(2:end)),data_trial(:,idh_fy(2:end)),data_trial(:,idh_fz(2:end))));

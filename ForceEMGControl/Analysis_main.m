@@ -68,10 +68,26 @@ xlabel('Fx [N]'); ylabel('Fy [N]')
 axis equal
 
 %% EMG
+L = size(trial_data(itrial).EMGrect,1);
+EMGfft = fft(trial_data(itrial).EMGrect)/L;
+fv = 1024*(0:(L/2))/L;
+coh = mscohere(trial_data(itrial).EMGrect(:,1),trial_data(itrial).EMGrect(:,2),hamming(128),[],1024);
+
 figure
-plot(time,trial_data(itrial).EMGrect(:,1));
+plot(time,trial_data(itrial).EMGrect(:,2));
 hold on
-plot(timeavg,trial_data(itrial).EMGavg(:,1));
+plot(timeavg,trial_data(itrial).EMGavg(:,2));
 legend('Rectified','Smoothed')
 xlabel('Time [s]'); ylabel('EMG [mV]')
 
+figure
+plot(fv(1:end-2),abs(EMGfft(2:round(L/2),:)))
+legend('BB','TL')
+
+%spectrogram(trial_data(itrial).EMGrect(:,2),256);
+alp = 0.05;
+Z = 1-alp^(1/(length(coh)-1));
+figure
+plot(coh)
+hold on
+line(xlim,[Z Z])
