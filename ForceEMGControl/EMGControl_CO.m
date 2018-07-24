@@ -43,6 +43,7 @@ sampleRateEMG =     1024;
 smoothWin =         500;
 pauseSamp =         0.04;
 iterUpdatePlotEMG = 1;
+EMGScale =          [];
 
 % Overwrite parameters from input structs
 if ~isempty(varargin)
@@ -115,28 +116,31 @@ if EMGEnabled
     end
     fprintf('\n')
     
-    MVCScale = zeros(length(channelSubset)-1,1);
-    for j = 1:length(channelSubset)-1
-        str = ['Press enter when prepared for ',channelName{j},' EMG MVC calculation.'];
-        input(str)
-        samplesMVC = [];
-        sampler.start()
-        for n = 1:10
-            samples = sampler.sample();
-            pause(0.2)
-            samplesMVC = [samplesMVC, samples(channelSubset(j),:)];
+    if isempty(EMGScale)
+        MVCScale = zeros(length(channelSubset)-1,1);
+        for j = 1:length(channelSubset)-1
+            str = ['Press enter when prepared for ',channelName{j},' EMG MVC calculation.'];
+            input(str)
+            samplesMVC = [];
+            sampler.start()
+            for n = 1:10
+                samples = sampler.sample();
+                pause(0.2)
+                samplesMVC = [samplesMVC, samples(channelSubset(j),:)];
+            end
+            sampler.stop()
+            wn = (2/sampleRateEMG)*fchEMG;
+            [b,a] = butter(2,wn,'high');
+            samplesMVCFilt = filtfilt(b,a,samplesMVC);
+            MVCScale(j) = mean(abs(samplesMVCFilt),2);
         end
-        sampler.stop()
-        wn = (2/sampleRateEMG)*fchEMG;
-        [b,a] = butter(2,wn,'high');
-        samplesMVCFilt = filtfilt(b,a,samplesMVC);
-        MVCScale(j) = mean(abs(samplesMVCFilt),2);
+        EMGScale = MVCScale;
+        fprintf('EMG MVC Scaling:\n')
+        for k = 1:length(channelSubset)-1
+            fprintf('%s: %1.3f\n',channelName{k},MVCScale(k))
+        end
+        fprintf('\n')
     end
-    fprintf('EMG MVC Scaling:\n')
-    for k = 1:length(channelSubset)-1
-        fprintf('%s: %1.3f\n',channelName{k},MVCScale(k))
-    end
-    fprintf('\n')
     
     % Plot EMG
     if plotEMG
@@ -165,7 +169,7 @@ if EMGEnabled
             
             % Save force file header
             samplenum = 1;
-            forceDataOut(samplenum,:) = {'Trialnum', 'TargetAng', 'State', 'TimeStamp', 'Fx', 'Fy', 'Fz','Trigger'};
+            forceDataOut_EMGCO(samplenum,:) = {'Trialnum', 'TargetAng', 'State', 'TimeStamp', 'Fx', 'Fy', 'Fz','Trigger'};
         else
             device = [];
             disp('DAQ device not found.')
@@ -222,7 +226,7 @@ if EMGEnabled
         queueOutputData(s,outputData);
         hlout = addlistener(s,'DataRequired',@(src,event) src.queueOutputData(outputData));
         
-        hlin = addlistener(s,'DataAvailable',@(src,event) processForceData(event,forceOffset,EMGOffset,MVCScale,hp));
+        hlin = addlistener(s,'DataAvailable',@(src,event) processForceData(event,forceOffset,EMGOffset,EMGScale,hp));
         s.IsContinuous = true;
         s.Rate = scanRate; % scans/sec, samples/sec?
         s.NotifyWhenDataAvailableExceeds = availSamples; % Call listener when x samples are available
@@ -234,7 +238,7 @@ if EMGEnabled
         % Save EMG file header
         if saveEMG
             samplenum = 1;
-            EMGDataOut(samplenum,:) = {'Trialnum', 'TargetAng', 'State', 'EMG'};
+            EMGDataOut_EMGCO(samplenum,:) = {'Trialnum', 'TargetAng', 'State', 'EMG'};
         end
         
         EMGDataBuffer = zeros(length(channelSubset)-1,smoothWin);
@@ -272,7 +276,7 @@ if EMGEnabled
                 wn = (2/sampleRateEMG)*fchEMG;
                 [b,a] = butter(2,wn,'high');
                 filtEMGBuffer = filtfilt(b,a,EMGDataBuffer')';
-                avgRectEMGBuffer = (mean(abs(filtEMGBuffer),2)-EMGOffset)./MVCScale; % Rectify, smooth and scale
+                avgRectEMGBuffer = (mean(abs(filtEMGBuffer),2)-EMGOffset)./EMGScale; % Rectify, smooth and scale
                 avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;
                 emg_save = [emg_save,avgRectEMGBuffer];
                 [EMGDatax,EMGDatay] = EMG2xy(avgRectEMGBuffer);
@@ -350,7 +354,7 @@ if EMGEnabled
                 % Appending trial data
                 if saveEMG
                     samplenum = samplenum+1;
-                    EMGDataOut(samplenum,:) = {itrial,iAngle,state,appendSamples};
+                    EMGDataOut_EMGCO(samplenum,:) = {itrial,iAngle,state,appendSamples};
                 end
             end
         end
@@ -371,13 +375,13 @@ if EMGEnabled
     % Save data
     if ~isempty(device)
         if saveforce
-            save([filepath,filenameforce],'forceDataOut')
+            save([filepath,filenameforce],'forceDataOut_EMGCO')
         end
-        EMGDataOut = emg_data.samples;
+        EMGDataOut_EMGCO = emg_data.samples;
         %save('emg_proc','emg_save')
     end
     if saveEMG
-        save([filepath,filenameEMG],'EMGDataOut','EMGOffset','MVCScale')
+        save([filepath,filenameEMG],'EMGDataOut_EMGCO','EMGOffset','MVCScale')
     end
     
 else
@@ -387,7 +391,7 @@ end
 library.destroy()
 
 %% Function handles
-    function processForceData(event,forceOffset,EMGOffset,MVCScale,hp)
+    function processForceData(event,forceOffset,EMGOffset,EMGScale,hp)
         calibMat = [-0.56571    -0.01516    1.69417     -31.81016   -0.35339    33.73195;...
             -0.67022    37.27575    1.14848     -18.75980   0.34816     -19.33789;...
             19.06483    0.45530     18.57588    0.72627     19.51260    0.65624;...
@@ -407,7 +411,7 @@ library.destroy()
         
         samples = sampler.sample();
         nSamples = size(samples,2);
-        appendSamples = (samples(channelSubset,:));%-repmat(EMGOffset,1,nSamples))./repmat(MVCScale,1,nSamples);
+        appendSamples = (samples(channelSubset,:));%-repmat(EMGOffset,1,nSamples))./repmat(EMGScale,1,nSamples);
         
         emg_data.append(appendSamples)
         EMGSamples = appendSamples(1:end-1,:);
@@ -423,7 +427,7 @@ library.destroy()
         wn = (2/sampleRateEMG)*fchEMG;
         [b,a] = butter(2,wn,'high');
         filtEMGBuffer = filtfilt(b,a,EMGDataBuffer')';
-        avgRectEMGBuffer = (mean(abs(filtEMGBuffer),2)-EMGOffset)./MVCScale; % Rectify, smooth and scale
+        avgRectEMGBuffer = (mean(abs(filtEMGBuffer),2)-EMGOffset)./EMGScale; % Rectify, smooth and scale
         avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;
         emg_save = [emg_save,avgRectEMGBuffer];
         [EMGDatax,EMGDatay] = EMG2xy(avgRectEMGBuffer);
@@ -502,7 +506,7 @@ library.destroy()
         % Appending trial data
         if saveforce
             samplenum = samplenum+1;
-            forceDataOut(samplenum,:) = {trialNum,iAngle,state,timeStamp,forceData(:,1),forceData(:,2),forceData(:,3),triggerData};
+            forceDataOut_EMGCO(samplenum,:) = {trialNum,iAngle,state,timeStamp,forceData(:,1),forceData(:,2),forceData(:,3),triggerData};
         end
     end
 end

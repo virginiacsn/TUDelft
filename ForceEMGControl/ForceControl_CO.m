@@ -33,6 +33,7 @@ timeout =           1; % sec
 relaxtime =         1; % sec
 
 % EMG parameters
+EMGEnabled = 0;
 plotEMG =           0;
 channelSubset =     [1 18];
 channelName =       {'BB','Saw'};
@@ -95,9 +96,11 @@ if ~isempty(device)
     addAnalogOutputChannel(s,device.ID,'ao0','Voltage');
     
     % Initialize EMG
-    disp('Initializing EMG.')
-    library = TMSi.Library('usb');
-    [EMGEnabled,sampler,emg_data,channels] = EMGinit(library,channelSubset,channelName,sampleRateEMG);
+    if saveEMG
+        disp('Initializing EMG.')
+        library = TMSi.Library('usb');
+        [EMGEnabled,sampler,emg_data,channels] = EMGinit(library,channelSubset,channelName,sampleRateEMG);
+    end
     
     if EMGEnabled
         disp('EMG initialized.')
@@ -154,7 +157,7 @@ if ~isempty(device)
     % Save file header
     if saveforce
         sampleNum = 1;
-        forceDataOut(sampleNum,:) = {'Trialnum', 'TargetAng', 'State', 'TimeStamp', 'Fx', 'Fy', 'Fz','Trigger'};
+        forceDataOut_ForceCO(sampleNum,:) = {'Trialnum', 'TargetAng', 'State', 'TimeStamp', 'Fx', 'Fy', 'Fz','Trigger'};
     end
 
     % Start EMG data sampling
@@ -177,11 +180,11 @@ if ~isempty(device)
     
     % Save data
     if saveforce
-        save([filepath,filenameforce],'forceDataOut')
+        save([filepath,filenameforce],'forceDataOut_ForceCO')
     end
     if saveEMG && EMGEnabled
-        EMGDataOut = emg_data.samples;
-        save([filepath,filenameEMG],'EMGDataOut')
+        EMGDataOut_ForceCO = emg_data.samples;
+        save([filepath,filenameEMG],'EMGDataOut_ForceCO')
     end
      
     % Close session and delete handles
@@ -191,11 +194,13 @@ if ~isempty(device)
     close(hf)
     
     % Close EMG
-    if EMGEnabled
-        sampler.stop()
-        sampler.disconnect()
+    if saveEMG
+        if EMGEnabled
+            sampler.stop()
+            sampler.disconnect()
+        end
+        library.destroy()
     end
-    library.destroy()
     
 else
     error('No DAQ device detected.')
@@ -313,11 +318,11 @@ end
                 else
                     if ~cursorInTarget(cursorCir,targetCir) && toc(tholdstart) <= holdtime
                         cursorHoldOut = cursorHoldOut+1;
-                    elseif cursorHoldOut > 5 && toc(tholdstart) > holdtime
+                    elseif cursorHoldOut > 3 && toc(tholdstart) > holdtime
                         cursorHoldOut = 0;
                         state = 'fail';
                         tfail = tic;
-                    elseif cursorHoldOut <= 5 && toc(tholdstart) > holdtime
+                    elseif cursorHoldOut <= 3 && toc(tholdstart) > holdtime
                         cursorHoldOut = 0;
                         state = 'success';
                         tsuccess = tic;
@@ -351,7 +356,7 @@ end
         % Appending trial data 
         if saveforce 
             sampleNum = sampleNum+1;
-            forceDataOut(sampleNum,:) = {trialNum,iAngle,state,timeStamp,forceData(:,1),forceData(:,2),forceData(:,3),triggerData};
+            forceDataOut_ForceCO(sampleNum,:) = {trialNum,iAngle,state,timeStamp,forceData(:,1),forceData(:,2),forceData(:,3),triggerData};
         end
     end
 end
