@@ -26,7 +26,7 @@ rCirCursor =        targetForce/20; % [N]
 fchEMG =            10; % [Hz]
 
 scanRate =          1000; % [scans/sec]
-availSamples =      100; % [samples]
+availSamplesEMG =   500; % [samples]
 bufferWin =         200; % [samples]
 iterUpdatePlot =    10;
 
@@ -161,6 +161,7 @@ if EMGEnabled
             addAnalogOutputChannel(s,device.ID,'ao0','Voltage');
             
             % Obtain offset by averaging 2 sec of still data
+            input('Press enter when prepared for sensor offset calculation.')
             fprintf('\nObtaining offset values...\n')
             queueOutputData(s,zeros(2*scanRate,1));
             forceOffsetData = s.startForeground();
@@ -222,14 +223,14 @@ if EMGEnabled
         emg_save = [];
         
         % Add event listener and start acquisition
-        outputData = [4*ones(1,availSamples),zeros(1,scanRate-availSamples)]';
+        outputData = [4*ones(1,availSamplesEMG),zeros(1,scanRate-availSamplesEMG)]';
         queueOutputData(s,outputData);
         hlout = addlistener(s,'DataRequired',@(src,event) src.queueOutputData(outputData));
         
         hlin = addlistener(s,'DataAvailable',@(src,event) processForceData(event,forceOffset,EMGOffset,EMGScale,hp));
         s.IsContinuous = true;
         s.Rate = scanRate; % scans/sec, samples/sec?
-        s.NotifyWhenDataAvailableExceeds = availSamples; % Call listener when x samples are available
+        s.NotifyWhenDataAvailableExceeds = availSamplesEMG; % Call listener when x samples are available
         s.startBackground();
         
         input('\Press enter to stop acquisition.')
@@ -378,10 +379,10 @@ if EMGEnabled
             save([filepath,filenameforce],'forceDataOut_EMGCO')
         end
         EMGDataOut_EMGCO = emg_data.samples;
-        %save('emg_proc','emg_save')
+        save('emg_proc','emg_save')
     end
     if saveEMG
-        save([filepath,filenameEMG],'EMGDataOut_EMGCO','EMGOffset','MVCScale')
+        save([filepath,filenameEMG],'EMGDataOut_EMGCO','EMGOffset','EMGScale')
     end
     
 else
@@ -427,7 +428,7 @@ library.destroy()
         wn = (2/sampleRateEMG)*fchEMG;
         [b,a] = butter(2,wn,'high');
         filtEMGBuffer = filtfilt(b,a,EMGDataBuffer')';
-        avgRectEMGBuffer = (mean(abs(filtEMGBuffer),2)-EMGOffset)./EMGScale; % Rectify, smooth and scale
+        avgRectEMGBuffer = (mean(abs(filtEMGBuffer),2)-EMGOffset)./(EMGScale); % Rectify, smooth and scale
         avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;
         emg_save = [emg_save,avgRectEMGBuffer];
         [EMGDatax,EMGDatay] = EMG2xy(avgRectEMGBuffer);

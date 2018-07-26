@@ -3,10 +3,13 @@ function[trial_data] = trialCO(varargin)
 forceData = varargin{1}{1};
 if length(varargin{1})>1
     EMGDataOut = varargin{1}{2};
-    EMGData = EMGDataOut(1:2,:);
-    EMGTrig = EMGDataOut(3,:);
+    
+    EMGData = EMGDataOut(1:end-1,:);
+    
+    EMGTrig = EMGDataOut(end,:);
     EMGTrig(EMGTrig ~= 6) = 0;
-    EMGTrig(find(EMGTrig)) = 1;
+    EMGTrig(EMGTrig > 0) = 1;
+    
     EMGData = EMGData(:,find(EMGTrig,1):end);
     EMGTrig = EMGTrig(:,find(EMGTrig,1):end);
 else
@@ -67,7 +70,7 @@ for itrial = 1:length(trials)
         iend = [];
     end
     
-    trial_data(itrial).angle = target_angles(data_trial{1,idh_ang(2:end)});
+    trial_data(itrial).angle = target_angles(data_trial{2,idh_ang(2:end)});
     
     trial_data(itrial).dt = mean(diff(data_ts{1}));
     

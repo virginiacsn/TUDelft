@@ -2,13 +2,15 @@
 close all;
 %clear all;
 
+addpath('Tools');
+
 % Parameters
 fileparams = struct(...
     'saveforce',    1,...
     'saveEMG',      1,...
-    'date',         '20180724',...
+    'date',         '20180726',...
     'task',         'ForceCO',...
-    'code',         '001');
+    'code',         '002');
 
 fileparams.filenameforce =       [fileparams.date,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
 fileparams.filenameEMG =    [fileparams.date,'_',fileparams.task,'_EMG_',fileparams.code,'.mat'];
@@ -23,7 +25,7 @@ EMGparams = struct(...
     'channelSubset',    [1 2 17],...
     'channelName',      {{'BB','TL','Trigger'}},...
     'sampleRateEMG',    1024,... [samples/sec]
-    'fclH',             5,... % [Hz]
+    'fchEMG',           10,... % [Hz]
     'smoothWin',        600,...
     'pauseSamp',        0.04,... % [s]
     'iterUpdatePlotEMG',1);
@@ -32,6 +34,7 @@ forceparams = struct(...
     'fclF',             2,... % [Hz]
     'scanRate',         2048,... % [scans/sec]
     'availSamples',     200,... % [samples]
+    'availSamplesEMG',  200,... % [samples]
     'bufferWin',        500,... % [samples]
     'iterUpdatePlot',   2);
 
@@ -39,7 +42,7 @@ taskparams = struct(...
     'numTargets',       8,...
     'numTrials',        3,...
     'movemtime',        5,... % sec
-    'targetForce',      5,... % [N]
+    'targetForce',      10,... % [N]
     'holdtime',         1,... % sec
     'timeout',          1,... % sec
     'relaxtime',        2 ); % sec
@@ -75,17 +78,25 @@ epoch = {'ihold','iend'};
 fields = {'EMGrect'};
 trial_data_avg = trialangleavg(trial_data, epoch, fields);
 
-EMGparams.EMGScale = max(reshape([trial_data_avg.EMGrect],2,length(trial_data_avg)),[],2)';
+EMGparams.EMGScale = max(reshape([trial_data_avg.EMGrect],2,length(trial_data_avg)),[],2);
 
 %% EMG-control task
 fileparams.task = 'EMGCO';
 
+fileparams.filenameforce =       [fileparams.date,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
+fileparams.filenameEMG =    [fileparams.date,'_',fileparams.task,'_EMG_',fileparams.code,'.mat'];
+
 if strcmp(fileparams.task,'EMGCO')
-    taskparams.numTargets = 3;
+    taskparams.numTargets =     3;
+    taskparams.targetForce =    0.2;
+    taskparams.rCirTarget =     taskparams.targetForce/10; % [N]
+    taskparams.rCirCursor =     taskparams.targetForce/20; % [N]
+    
     EMGControl_CO(fileparams,taskparams,forceparams,EMGparams);
 end
 
 %% Save params
+
 if ~exist([fileparams.filepath,'Parameters/'],'dir')
     mkdir([fileparams.filepath,'Parameters/'])
 end

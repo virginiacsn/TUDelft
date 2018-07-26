@@ -7,7 +7,7 @@ fileparams = struct(...
     'saveEMG',      1,...
     'date',         '20180724',...
     'task',         'ForceCO',...
-    'code',         '001');
+    'code',         '002');
 
 if fileparams.saveEMG
     fileparams.saveformat = '.mat';
@@ -21,7 +21,6 @@ if ~exist(['D:\Student_experiments\Virginia\Data\' fileparams.date],'dir')
     mkdir(['D:\Student_experiments\Virginia\Data\' fileparams.date])
 end
 fileparams.filepath =       ['D:\Student_experiments\Virginia\Data\' fileparams.date '\'];
-
 
 EMGparams = struct(...
     'EMG',              1,...
@@ -51,7 +50,6 @@ taskparams = struct(...
     'timeout',          1,... % sec
     'relaxtime',        2 ); % sec
 
-
 taskparams.rCirTarget =     taskparams.targetForce/10; % [N]
 taskparams.rCirCursor =     taskparams.targetForce/20; % [N]
 
@@ -68,4 +66,3 @@ elseif strcmp(fileparams.task,'EMGCO')
     taskparams.numTargets = 3;
     EMGControl_CO(fileparams,taskparams,forceparams,EMGparams);
 end
-
