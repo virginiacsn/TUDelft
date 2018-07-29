@@ -43,6 +43,7 @@ taskparams = struct(...
     'numTrials',        3,...
     'movemtime',        5,... % sec
     'targetForce',      10,... % [N]
+    'targetEMG',        0.2,...
     'holdtime',         1,... % sec
     'timeout',          1,... % sec
     'relaxtime',        2 ); % sec
@@ -76,7 +77,7 @@ trial_data = procForce(trial_data,PreAparams);
 
 epoch = {'ihold','iend'};
 fields = {'EMGrect'};
-trial_data_avg = trialangleavg(trial_data, epoch, fields);
+trial_data_avg = trialAngleAvg(trial_data, epoch, fields);
 
 EMGparams.EMGScale = max(reshape([trial_data_avg.EMGrect],2,length(trial_data_avg)),[],2);
 
@@ -88,9 +89,8 @@ fileparams.filenameEMG =    [fileparams.date,'_',fileparams.task,'_EMG_',filepar
 
 if strcmp(fileparams.task,'EMGCO')
     taskparams.numTargets =     3;
-    taskparams.targetForce =    0.2;
-    taskparams.rCirTarget =     taskparams.targetForce/10; % [N]
-    taskparams.rCirCursor =     taskparams.targetForce/20; % [N]
+    taskparams.rCirTarget =     taskparams.targetEMG/10; % [N]
+    taskparams.rCirCursor =     taskparams.targetEMG/20; % [N]
     
     EMGControl_CO(fileparams,taskparams,forceparams,EMGparams);
 end

@@ -10,12 +10,16 @@ wn = (2/sampleRateEMG)*fchEMG;
 [b,a] = butter(2,wn,'high');
 
 for i = 1:length(trial_data)
-    EMGfilt = filtfilt(b,a,trial_data(i).EMG);
+    EMGfilt = filtfilt(b,a,trial_data(i).EMG.raw);
     EMGrect = abs(EMGfilt);
-    EMGavg = movingavg(EMGrect,avgWindow);
+    EMGavg = movingAvg(EMGrect,avgWindow);
     
-    trial_data(i).EMGfilt = EMGfilt;
-    trial_data(i).EMGrect = EMGrect;
-    trial_data(i).EMGavg = EMGavg;
+    trial_data(i).EMG.filt = EMGfilt;
+    trial_data(i).EMG.rect = EMGrect;
+    trial_data(i).EMG.avg = EMGavg;
+    
+    trial_data(i).EMG.raw_fft = fft(trial_data(i).EMG.raw);
+    trial_data(i).EMG.filt_fft = fft(EMGfilt);
+    trial_data(i).EMG.rect_fft = fft(EMGrect);
 end
 end

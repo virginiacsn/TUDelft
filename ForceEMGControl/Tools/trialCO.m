@@ -1,31 +1,34 @@
 function[trial_data] = trialCO(varargin)
 
-forceData = varargin{1}{1};
-if length(varargin{1})>1
-    EMGDataOut = varargin{1}{2};
-    
-    EMGData = EMGDataOut(1:end-1,:);
-    
-    EMGTrig = EMGDataOut(end,:);
-    EMGTrig(EMGTrig ~= 6) = 0;
-    EMGTrig(EMGTrig > 0) = 1;
-    
-    EMGData = EMGData(:,find(EMGTrig,1):end);
-    EMGTrig = EMGTrig(:,find(EMGTrig,1):end);
-else
-    EMGData = [];
-end
 if nargin > 1
-    downsample = [];
+    downsample = 1;
+    fs = 1024;
     target_angles = [0:2*pi/8:2*pi];
     struct2vars(who,varargin{2});
 end
+
+forceDataOut = varargin{1}{1};
+if length(varargin{1})>1
+    EMGDataOut = varargin{1}{2};
+    
+    EMG_data = EMGDataOut(1:end-1,:);
+    
+    EMG_trigger = EMGDataOut(end,:);
+    EMG_trigger(EMG_trigger ~= 6) = 0;
+    EMG_trigger(EMG_trigger > 0) = 1;
+    
+    EMG_data = EMG_data(:,find(EMG_trigger,1):end);
+    EMG_trigger = EMG_trigger(:,find(EMG_trigger,1):end);
+else
+    EMG_data = [];
+end
+
 % forceData = forceDataOut;
 % EMGData = EMGDataOut;
 
-header = forceData(1,:);
-header_data = header(2:end);
-force_data = forceData(2:end,:);
+header = forceDataOut(1,:);
+%header_data = header(2:end);
+force_data = forceDataOut(2:end,:);
 
 idh_tn = ismember(header,'Trialnum');
 idh_ang = ismember(header,'TargetAng');
@@ -36,16 +39,16 @@ idh_fy = ismember(header,'Fy');
 idh_fz = ismember(header,'Fz');
 idh_trig = ismember(header,'Trigger');
 
-tsinit = cell2mat(force_data(1,idh_ts));
-tinit = tsinit(1);
+% tsinit = cell2mat(force_data(1,idh_ts));
+% tinit = tsinit(1);
 
 trial_data = struct();
 trial_nums = cell2mat(force_data(:,idh_tn));
-trial_numsd = zeros(length(trial_nums),1);
-trial_numsd([1;find(diff(trial_nums))]) = 1;
-trial_forces = cell2mat(force_data(:,idh_fx|idh_fy|idh_fz));
-trial_trig = cell2mat(force_data(:,idh_trig));
-sampLength = size(force_data{1,idh_ts},1);
+% trial_numsd = zeros(length(trial_nums),1);
+% trial_numsd([1;find(diff(trial_nums))]) = 1;
+% trial_forces = cell2mat(force_data(:,idh_fx|idh_fy|idh_fz));
+% trial_trig = cell2mat(force_data(:,idh_trig));
+num_samp = size(force_data{1,idh_ts},1);
 %trial_states = {'start','movement','hold','success','fail'};
 trial_outcomes = {'S','F','I'};
 %trial_data_fields = {'outcome','tstart','tmove','thold','tend','force'}; % add EMG
@@ -55,10 +58,10 @@ cum_samp_trial = 0;
 for itrial = 1:length(trials)
     data_trial = force_data(trial_nums==trials(itrial),2:end);
     data_outcome = data_trial(:,idh_sta(2:end));
-    data_ts = (data_trial(:,idh_ts(2:end)));
-    data_force = (cat(2,data_trial(:,idh_fx(2:end)),data_trial(:,idh_fy(2:end)),data_trial(:,idh_fz(2:end))));
-    data_trigger = (data_trial(:,idh_trig(2:end)));
-    
+    data_ts = data_trial(:,idh_ts(2:end));
+    data_force = cat(2,data_trial(:,idh_fx(2:end)),data_trial(:,idh_fy(2:end)),data_trial(:,idh_fz(2:end)));
+    data_trigger = data_trial(:,idh_trig(2:end));
+
     if any(strcmp(data_outcome,'success'))
         trial_data(itrial).outcome = trial_outcomes{1};
         iend = find(ismember(data_outcome,'success'),1);
@@ -72,7 +75,7 @@ for itrial = 1:length(trials)
     
     trial_data(itrial).angle = target_angles(data_trial{2,idh_ang(2:end)});
     
-    trial_data(itrial).dt = mean(diff(data_ts{1}));
+    trial_data(itrial).dt = 1/fs;
     
     istart = find(ismember(data_outcome,'start'),1);
     imove = find(ismember(data_outcome,'movement'),1);
@@ -109,31 +112,31 @@ for itrial = 1:length(trials)
         trial_data(itrial).tend = tsend(1);
         
         %trial_data(itrial).ts = cell2mat(data_ts(istart:iend));
-        trial_data(itrial).force = cell2mat(data_force(istart:iend,:));
-        trial_data(itrial).trigger = cell2mat(data_trigger(istart:iend,:));
+        trial_data(itrial).force.raw = cell2mat(data_force(istart:iend,:));
+        trial_data(itrial).trigger.force = cell2mat(data_trigger(istart:iend,:));
     elseif isempty(iend) && ~isempty(istart)
         trial_data(itrial).iend = length(data_ts);
         trial_data(itrial).tend = data_ts(end);
         
         %trial_data(itrial).ts = cell2mat(data_ts(istart:end));
-        trial_data(itrial).force = cell2mat(data_force(istart:end,:));
-        trial_data(itrial).trigger = cell2mat(data_trigger(istart:end,:));
+        trial_data(itrial).force.raw = cell2mat(data_force(istart:end,:));
+        trial_data(itrial).trigger.force = cell2mat(data_trigger(istart:end,:));
     elseif ~isempty(iend) && isempty(istart)
         tsend = data_ts{iend};
         trial_data(itrial).iend = iend;
         trial_data(itrial).tend = tsend(1);
         
         %trial_data(itrial).ts = cell2mat(data_ts(1:iend));
-        trial_data(itrial).force = cell2mat(data_force(1:iend,:));
-        trial_data(itrial).trigger = cell2mat(data_trigger(1:iend,:));
+        trial_data(itrial).force.raw = cell2mat(data_force(1:iend,:));
+        trial_data(itrial).trigger.force = cell2mat(data_trigger(1:iend,:));
     end
     
-    trial_data(itrial).imove =  trial_data(itrial).imove*sampLength;
-    trial_data(itrial).ihold = trial_data(itrial).ihold*sampLength;
-    trial_data(itrial).iend =  trial_data(itrial).iend*sampLength;
+    trial_data(itrial).imove =  trial_data(itrial).imove*num_samp;
+    trial_data(itrial).ihold = trial_data(itrial).ihold*num_samp;
+    trial_data(itrial).iend =  trial_data(itrial).iend*num_samp;
     
-    trial_data(itrial).trigger(find(trial_data(itrial).trigger<3)) = 0;
-    trial_data(itrial).trigger(find(trial_data(itrial).trigger>3)) = 1;
+    trial_data(itrial).trigger.force(find(trial_data(itrial).trigger.force < 3)) = 0;
+    trial_data(itrial).trigger.force(find(trial_data(itrial).trigger.force >= 3)) = 1;
     
     
     if ~isempty(downsample)
@@ -142,19 +145,25 @@ for itrial = 1:length(trials)
         trial_data(itrial).ihold =  trial_data(itrial).ihold/downsample;
         trial_data(itrial).iend =  trial_data(itrial).iend/downsample;
         
-        downsamp_fx = decimate(trial_data(itrial).force(:,1),downsample,'fir');
-        downsamp_fy = decimate(trial_data(itrial).force(:,2),downsample,'fir');
-        downsamp_fz = decimate(trial_data(itrial).force(:,3),downsample,'fir');
-        trial_data(itrial).force = [downsamp_fx downsamp_fy downsamp_fz];
+        downsamp_fx = decimate(trial_data(itrial).force.raw(:,1),downsample,'fir');
+        downsamp_fy = decimate(trial_data(itrial).force.raw(:,2),downsample,'fir');
+        downsamp_fz = decimate(trial_data(itrial).force.raw(:,3),downsample,'fir');
+        trial_data(itrial).force.raw = [downsamp_fx downsamp_fy downsamp_fz];
         
-        trial_data(itrial).trigger = decimate(trial_data(itrial).trigger,downsample,'fir');
+        trial_data(itrial).trigger.force = decimate(trial_data(itrial).trigger.force,downsample,'fir');
     end
     
-    samp_trial = length(trial_data(itrial).trigger);
+    samp_trial = length(trial_data(itrial).trigger.force);
     samp_trial_tot = round(length(cell2mat(data_ts))/2);
-    trial_data(itrial).EMG = EMGData(:,1+cum_samp_trial:cum_samp_trial+samp_trial)';
-    trial_data(itrial).EMGtrigger = EMGTrig(1+cum_samp_trial:cum_samp_trial+samp_trial)';
+    
+    trial_data(itrial).EMG.raw = EMG_data(:,1+cum_samp_trial:cum_samp_trial+samp_trial)';
+    trial_data(itrial).trigger.EMG = EMG_trigger(1+cum_samp_trial:cum_samp_trial+samp_trial)';
 
     cum_samp_trial = cum_samp_trial+samp_trial_tot;
+    
+    trial_data(itrial).ts = (0:length(trial_data(itrial).EMG.raw)-1)*trial_data(itrial).dt;
+    trial_data(itrial).fv = trial_data(itrial).ts/trial_data(itrial).ts(end);
 end
+nfields = length(fieldnames(trial_data));
+trial_data = orderfields(trial_data,[1:nfields-5 nfields-1 nfields nfields-4 nfields-2 nfields-3]);
 end

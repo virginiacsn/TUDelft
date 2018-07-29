@@ -18,10 +18,11 @@ filepath =  [pwd '\Data\' date '\'];
 % Task parameters
 numTrials =         3;
 
-targetForce =       1000; % [N]
+% targetForce =       1000; % [N]
+targetEMG =         0.5; 
 numTargets =        3;
-rCirTarget =        targetForce/10; % [N]
-rCirCursor =        targetForce/20; % [N]
+rCirTarget =        targetEMG/10; % [N]
+rCirCursor =        targetEMG/20; % [N]
 
 fchEMG =            10; % [Hz]
 
@@ -193,12 +194,12 @@ if EMGEnabled
 %     rCirTarget = targetForce/10;
 %     rCirCursor = targetForce/20;
     targetAngles = [pi/4:pi/(2*(numTargets-1)):3*pi/4]; % [rad]
-    targetPosx = targetForce*cos(targetAngles)';
-    targetPosy = targetForce*sin(targetAngles)';
+    targetPosx = targetEMG*cos(targetAngles)';
+    targetPosy = targetEMG*sin(targetAngles)';
     
     % Set figure
     hf = figure('Name','CO EMG Control Task');
-    [hf,hp] = Figinit(hf,targetForce*[1 1]);
+    [hf,hp] = Figinit(hf,targetEMG*[1 1]);
     title('EMG');
     xlabel(channelName{1}); ylabel(channelName{2});
     xl = xlim; yl = ylim;
