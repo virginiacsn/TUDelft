@@ -2,7 +2,7 @@
 addpath('Tools');
 
 date =      '20180726';
-task =      'ForceCO';
+task =      'EMGCO';
 code =      '002';
 EMG =       1;
 filenameforce =  [date,'_',task,'_Force_',code,'.mat'];
@@ -50,11 +50,12 @@ trial_data_avg = trialAngleAvg(trial_data, epoch, fields);
 trial_data_app = trialAngleApp(trial_data, epoch, fields);
 
 %% EMG 
-data_analysis = trial_data_avg;
+data_analysis = trial_data_app;
 
 %% Frequency analysis
-cohparams.window = hamming(256);
-cohparams.overlap = 100;
+cohparams.nseg = 10;
+cohparams.window = @(N) hanning(N);
+cohparams.overlap = length(cohparams.window)/2;
 trial_data_coh = cohStruct(data_analysis,EMGparams.channelName,{'rect'},cohparams);
 
 target_angles = sort(unique(extractfield(data_analysis,'angle')));
@@ -62,17 +63,22 @@ nangles = length(target_angles);
 nmusc = length(EMGparams.channelName)-1;
 nmusccomb = (length(EMGparams.channelName)-1)*(length(EMGparams.channelName)-2)/2; % n*(n-1)/2
 
-fc = 60;
+fc = 500;
 
 figure;
 set(gcf,'Name','FFT');
 for i = 1:nangles
-    subplot(2,nangles/2,i);
+    if rem(nangles,2) == 0
+        subplot(2,nangles/2,i);
+    else
+        subplot(1,nangles,i);
+    end
     for j = 1:nmusc
         plot(data_analysis(i).fv,abs(data_analysis(i).EMG.rect_fft(:,j))/length(data_analysis(i).EMG.rect_fft(:,j)));
         hold on;
     end
     xlim([data_analysis(i).fv(2) fc])% data_analysis(i).fv(round(end/2))])
+    ylim([0 max(max(abs(data_analysis(i).EMG.rect_fft(2:end,:))/size(data_analysis(i).EMG.rect_fft,1)))+1]);
     xlabel('Frequency [Hz]'); ylabel('FFT [-]');
     title(['Target: ',num2str(rad2deg(trial_data_coh(i).angle)),' deg']);
     legend(EMGparams.channelName{1:end-1});
@@ -82,7 +88,11 @@ for j = 1:nmusccomb
     figure;
     set(gcf,'Name','Coherence');
     for i = 1:nangles
-        subplot(2,nangles/2,i);
+        if rem(nangles,2) == 0
+            subplot(2,nangles/2,i);
+        else
+            subplot(1,nangles,i);
+        end
         plot(trial_data_coh(i).rect.fcoh(:,j),trial_data_coh(i).rect.coh(:,j));
         hold on;
         line(xlim,trial_data_coh(i).rect.CL(j)*[1 1]);
@@ -97,10 +107,15 @@ for j = 1:nmusc
     figure;
     set(gcf,'Name',['EMG ',EMGparams.channelName{j}]);
     for i = 1:nangles
-        subplot(2,nangles/2,i);
+        if rem(nangles,2) == 0
+            subplot(2,nangles/2,i);
+        else
+            subplot(1,nangles,i);
+        end
         plot(data_analysis(i).ts,data_analysis(i).EMG.rect(:,j));
         hold on;
         plot(data_analysis(i).ts,data_analysis(i).EMG.avg(:,j));
+        ylim([0 max(data_analysis(i).EMG.rect(:))+50]);
         xlabel('Time [s]'); ylabel('EMG [-]');
         title(['Target: ',num2str(rad2deg(data_analysis(i).angle)),' deg']);
     end
@@ -110,7 +125,11 @@ end
 figure;
 set(gcf,'Name','Force in time');
 for i = 1:nangles
-    subplot(2,nangles/2,i);
+    if rem(nangles,2) == 0
+        subplot(2,nangles/2,i);
+    else
+        subplot(1,nangles,i);
+    end
     for j = 1:2
         plot(trial_data_avg(i).ts,trial_data_avg(i).force.filt(:,j));
         hold on;
@@ -124,7 +143,11 @@ end
 figure;
 set(gcf,'Name','Force trajectory');
 for i = 1:nangles
-    subplot(2,nangles/2,i);
+    if rem(nangles,2) == 0
+        subplot(2,nangles/2,i);
+    else
+        subplot(1,nangles,i);
+    end
     plot(trial_data_avg(i).force.filt(:,1),trial_data_avg(i).force.filt(:,2));
     hold on;
     plot(trial_data_avg(i).force.filt(1,1),trial_data_avg(i).force.filt(1,2),'go');
