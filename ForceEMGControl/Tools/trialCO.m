@@ -8,7 +8,7 @@ if nargin > 1
 end
 
 forceDataOut = varargin{1}{1};
-if length(varargin{1})>1
+if length(varargin{1}) > 1
     EMGDataOut = varargin{1}{2};
     
     EMG_data = EMGDataOut(1:end-1,:);
@@ -162,7 +162,7 @@ for itrial = 1:length(trials)
     cum_samp_trial = cum_samp_trial+samp_trial_tot;
     
     trial_data(itrial).ts = (0:length(trial_data(itrial).EMG.raw)-1)*trial_data(itrial).dt;
-    trial_data(itrial).fv = trial_data(itrial).ts/trial_data(itrial).ts(end);
+    trial_data(itrial).fv = (0:length(trial_data(itrial).EMG.raw)-1)/trial_data(itrial).ts(end);
 end
 nfields = length(fieldnames(trial_data));
 trial_data = orderfields(trial_data,[1:nfields-5 nfields-1 nfields nfields-4 nfields-2 nfields-3]);

@@ -2,7 +2,7 @@
 addpath('Tools');
 
 date =      '20180726';
-task =      'EMGCO';
+task =      'ForceCO';
 code =      '002';
 EMG =       1;
 filenameforce =  [date,'_',task,'_Force_',code,'.mat'];
@@ -45,7 +45,7 @@ trial_data = procForce(trial_data,Aparams);
 
 %% Trial-average
 epoch = {'ihold','iend'};
-fields = {'EMG.rect','EMG.avg','force.filt'};
+fields = {'EMG.filt','EMG.rect','EMG.avg','force.filt'};
 trial_data_avg = trialAngleAvg(trial_data, epoch, fields);
 trial_data_app = trialAngleApp(trial_data, epoch, fields);
 
@@ -53,18 +53,20 @@ trial_data_app = trialAngleApp(trial_data, epoch, fields);
 data_analysis = trial_data_app;
 
 %% Frequency analysis
-cohparams.nseg = 10;
+cohparams.tseg = 1;
+cohparams.nseg = 20;
 cohparams.window = @(N) hanning(N);
-cohparams.overlap = length(cohparams.window)/2;
-trial_data_coh = cohStruct(data_analysis,EMGparams.channelName,{'rect'},cohparams);
+field = 'rect';
+trial_data_coh = cohStruct(data_analysis,EMGparams.channelName,{field},cohparams);
 
 target_angles = sort(unique(extractfield(data_analysis,'angle')));
 nangles = length(target_angles);
 nmusc = length(EMGparams.channelName)-1;
 nmusccomb = (length(EMGparams.channelName)-1)*(length(EMGparams.channelName)-2)/2; % n*(n-1)/2
 
-fc = 500;
+fc = 80;
 
+% FFT
 figure;
 set(gcf,'Name','FFT');
 for i = 1:nangles
@@ -74,16 +76,17 @@ for i = 1:nangles
         subplot(1,nangles,i);
     end
     for j = 1:nmusc
-        plot(data_analysis(i).fv,abs(data_analysis(i).EMG.rect_fft(:,j))/length(data_analysis(i).EMG.rect_fft(:,j)));
+        plot(data_analysis(i).fv,abs(data_analysis(i).EMG.([field,'_fft'])(:,j))/length(data_analysis(i).EMG.([field,'_fft'])(:,j)));
         hold on;
     end
     xlim([data_analysis(i).fv(2) fc])% data_analysis(i).fv(round(end/2))])
-    ylim([0 max(max(abs(data_analysis(i).EMG.rect_fft(2:end,:))/size(data_analysis(i).EMG.rect_fft,1)))+1]);
+    ylim([0 max(max(abs(data_analysis(i).EMG.([field,'_fft'])(2:end,:))/size(data_analysis(i).EMG.([field,'_fft']),1)))+1]);
     xlabel('Frequency [Hz]'); ylabel('FFT [-]');
     title(['Target: ',num2str(rad2deg(trial_data_coh(i).angle)),' deg']);
     legend(EMGparams.channelName{1:end-1});
 end
 
+% Coherence
 for j = 1:nmusccomb
     figure;
     set(gcf,'Name','Coherence');
@@ -93,16 +96,17 @@ for j = 1:nmusccomb
         else
             subplot(1,nangles,i);
         end
-        plot(trial_data_coh(i).rect.fcoh(:,j),trial_data_coh(i).rect.coh(:,j));
+        plot(trial_data_coh(i).(field).fcoh(:,j),trial_data_coh(i).(field).coh(:,j));
         hold on;
-        line(xlim,trial_data_coh(i).rect.CL(j)*[1 1]);
-        xlim([trial_data_coh(i).rect.fcoh(1,j) fc])
+        line(xlim,trial_data_coh(i).(field).CL(j)*[1 1]);
+        xlim([trial_data_coh(i).(field).fcoh(2,j) fc])
         xlabel('Frequency [Hz]'); ylabel('Coh [-]');
-        title(['Musc: ',trial_data_coh(i).rect.muscles{j}{1},',',trial_data_coh(i).rect.muscles{j}{2},'; Target: ',num2str(rad2deg(trial_data_coh(i).angle)),' deg']);
+        title(['Musc: ',trial_data_coh(i).(field).muscles{j}{1},',',trial_data_coh(i).(field).muscles{j}{2},'; Target: ',num2str(rad2deg(trial_data_coh(i).angle)),' deg']);
     end
 end
 
 %% Time analysis
+% Rectified and smoothed EMG
 for j = 1:nmusc
     figure;
     set(gcf,'Name',['EMG ',EMGparams.channelName{j}]);
@@ -118,6 +122,24 @@ for j = 1:nmusc
         ylim([0 max(data_analysis(i).EMG.rect(:))+50]);
         xlabel('Time [s]'); ylabel('EMG [-]');
         title(['Target: ',num2str(rad2deg(data_analysis(i).angle)),' deg']);
+    end
+end
+
+%% Correlation
+for j = 1:nmusccomb
+    figure;
+    set(gcf,'Name','Unbiased correlation');
+    for i = 1:nangles
+        if rem(nangles,2) == 0
+            subplot(2,nangles/2,i);
+        else
+            subplot(1,nangles,i);
+        end
+        plot(trial_data_coh(i).(field).lags(:,j)*trial_data_avg(i).ts(2),trial_data_coh(i).(field).corr(:,j));
+        hold on;
+        xlim([-0.1 0.1])
+        xlabel('Time lag [s]'); ylabel('Corr [-]');
+        title(['Musc: ',trial_data_coh(i).(field).muscles{j}{1},',',trial_data_coh(i).(field).muscles{j}{2},'; Target: ',num2str(rad2deg(trial_data_coh(i).angle)),' deg']);
     end
 end
 
@@ -211,26 +233,25 @@ title(['Trial: ',num2str(itrial),'; Target: ',num2str(rad2deg(trial_data(itrial)
 legend([h1,h2],'Start','End');
 
 %% Mapping
-N = size(trial_data(4).EMGrect,1);
-tv = (0:N-1)*dt;
-
-FD = trial_data(4).forcefilt;
-ED = trial_data(4).EMGavg;
-
-bx = regress(FD(:,1),[ones(size(ED,1),1) ED]); 
-by = regress(FD(:,2),[ones(size(ED,1),1) ED]); 
-
-fitx = bx(1)+bx(2)*ED(:,1)+bx(3)*ED(:,2);
-fity = by(1)+by(2)*ED(:,1)+by(3)*ED(:,2);
-
-figure 
-subplot(121)
-plot(tv,FD(:,1))
-hold on
-plot(tv,fitx)
-
-subplot(122)
-plot(tv,FD(:,2))
-hold on
-plot(tv,fity)
-
+% N = size(trial_data(4).EMGrect,1);
+% tv = (0:N-1)*dt;
+% 
+% FD = trial_data(4).forcefilt;
+% ED = trial_data(4).EMGavg;
+% 
+% bx = regress(FD(:,1),[ones(size(ED,1),1) ED]); 
+% by = regress(FD(:,2),[ones(size(ED,1),1) ED]); 
+% 
+% fitx = bx(1)+bx(2)*ED(:,1)+bx(3)*ED(:,2);
+% fity = by(1)+by(2)*ED(:,1)+by(3)*ED(:,2);
+% 
+% figure 
+% subplot(121)
+% plot(tv,FD(:,1))
+% hold on
+% plot(tv,fitx)
+% 
+% subplot(122)
+% plot(tv,FD(:,2))
+% hold on
+% plot(tv,fity)

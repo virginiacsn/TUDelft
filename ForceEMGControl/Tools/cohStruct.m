@@ -5,7 +5,8 @@ channelName = varargin{2};
 EMG_fields = varargin{3};
 
 
-window = hanning(128);
+window = [];
+tseg = 1;
 nseg = 10;
 fs = 1024;
 alp = 0.05;
@@ -15,9 +16,14 @@ end
 
 for i = 1:length(trial_data)
     trial_data_coh(i).angle = trial_data(i).angle;
-    nsamp = length(trial_data(i).ts);
-    win = window(floor(nsamp/nseg));
-    overlap = length(win)/2;
+    
+    if isempty(window)
+        win = hanning(128);
+    else
+        win = window(round(length(trial_data(i).ts)/nseg));
+        %win = window(round(tseg*trial_data(i).ts(2)));
+    end
+    overlap = round(length(win)/2);
     
     EMG_struct = trial_data(i).EMG;
     
@@ -26,9 +32,10 @@ for i = 1:length(trial_data)
             for l = k+1:length(channelName)-1
                 trial_data_coh(i).(EMG_fields{j}).muscles{k+l-2} = {channelName{k},channelName{l}};
                 [trial_data_coh(i).(EMG_fields{j}).coh(:,k+l-2),trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2)] = mscohere(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),win,overlap,[],fs);
-                trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2) = trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2);%/pi*fs;
-                
-                L = floor(length(trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2)/length(window)));
+                %trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2) = trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2);%/pi*fs;
+                [trial_data_coh(i).(EMG_fields{j}).corr(:,k+l-2),trial_data_coh(i).(EMG_fields{j}).lags(:,k+l-2)] = xcorr(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),'unbiased');
+
+                L = round(length(EMG_struct.(EMG_fields{j})(:,k))/length(win));
                 trial_data_coh(i).(EMG_fields{j}).CL(k+l-2) = 1-alp^(1/(L-1)); 
                 
                 %[~,fcoh250] = min(abs(trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2)-250));
