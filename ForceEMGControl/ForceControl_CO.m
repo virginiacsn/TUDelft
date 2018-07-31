@@ -16,6 +16,7 @@ filenameEMG = [date,'_',task,'_EMG_',code,'.mat'];
 filepath =  [pwd '\Data\' date '\'];
 
 % Task parameters
+numTrials =         30;
 targetForce =       5; % [N]
 numTargets =        8;
 rCirTarget =        targetForce/10; % [N]
@@ -93,7 +94,9 @@ if ~isempty(device)
     disp('Creating NI DAQ session.')
     s = daq.createSession('ni');
     addAnalogInputChannel(s,device.ID,0:6,'Voltage');
-    addAnalogOutputChannel(s,device.ID,'ao0','Voltage');
+    if saveEMG
+        addAnalogOutputChannel(s,device.ID,'ao0','Voltage');
+    end
     
     % Initialize EMG
     if saveEMG
@@ -114,7 +117,9 @@ if ~isempty(device)
     
     % Obtain offset by averaging 2 sec of still data
     fprintf('\nObtaining offset values...\n')
-    queueOutputData(s,zeros(2*scanRate,1));
+    if saveEMG
+        queueOutputData(s,zeros(2*scanRate,1));
+    end
     forceOffsetData = s.startForeground();
     forceOffset = mean(forceOffsetData(:,1:6),1);
     disp('Offset obtained.')
@@ -122,7 +127,9 @@ if ~isempty(device)
     % Obtain Fz calibration by averaging 2 sec of holding data
     input('\nPress enter when holding knob.')
     fprintf('Obtaining Fz calibration values...\n')
-    queueOutputData(s,zeros(2*scanRate,1));
+    if saveEMG
+        queueOutputData(s,zeros(2*scanRate,1));
+    end
     calforceDataz = FzCalibration(s.startForeground,forceOffset);
     disp('Fz calibration obtained.')
     
@@ -165,18 +172,25 @@ if ~isempty(device)
         sampler.start()
     end
     
-    % Add event listener and start acquisition
-    outputData = [4*ones(1,availSamples),zeros(1,scanRate-availSamples)]';
-    queueOutputData(s,outputData);
-    hlout = addlistener(s,'DataRequired',@(src,event) src.queueOutputData(outputData));
-
+    % Add event listeners and start acquisition
+    if saveEMG
+        outputData = [4*ones(1,availSamples),zeros(1,scanRate-availSamples)]';
+        queueOutputData(s,outputData);
+        hlout = addlistener(s,'DataRequired',@(src,event) src.queueOutputData(outputData));
+    end
+    
     hlin = addlistener(s,'DataAvailable',@(src,event) processForceData(event,forceOffset,calforceDataz,hp));
+    %hstop = addlistener(s,'DataAvailable',@(src,event) stopTrialNum(trialNum,numTrials));
     s.IsContinuous = true;
     s.Rate = scanRate; % scans/sec, samples/sec?
     s.NotifyWhenDataAvailableExceeds = availSamples; % Call listener when x samples are available
     s.startBackground();
     
-    input('\Press enter to stop acquisition.') 
+    if trialNum == numTrials
+        s.stop();
+    else
+        input('\Press enter to stop acquisition.')
+    end
     
     % Save data
     if saveforce
@@ -190,7 +204,10 @@ if ~isempty(device)
     % Close session and delete handles
     s.stop()
     delete(hlin)
-    delete(hlout)
+    if saveEMG
+        delete(hlout)
+    end
+    %delete(hstop)
     close(hf)
     
     % Close EMG
@@ -357,6 +374,13 @@ end
         if saveforce 
             sampleNum = sampleNum+1;
             forceDataOut_ForceCO(sampleNum,:) = {trialNum,iAngle,state,timeStamp,forceData(:,1),forceData(:,2),forceData(:,3),triggerData};
+        end
+    end
+
+    function stopTrialNum(trialNum,numTrials)
+        if trialNum == numTrials
+            s.stop();
+            close(hf)
         end
     end
 end

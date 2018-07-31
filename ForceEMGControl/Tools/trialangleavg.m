@@ -15,6 +15,7 @@ for iangle = 1:length(angles)
 
         field_data_mean = [];
         field_data = [];
+        field_data_fft = [];
         
         for itrial = 1:length(angle_data)
             idx1 = angle_data(itrial).(epoch{1});
@@ -23,13 +24,15 @@ for iangle = 1:length(angles)
             sampv = idx1+round(nsampextra/2):idx2-round(nsampextra/2)-1;
             field_data_mean(itrial,:) = mean(angle_data(itrial).(field_str{1}).(field_str{2})(idx1:idx2,:),1);
             field_data = [field_data reshape(angle_data(itrial).(field_str{1}).(field_str{2})(sampv,:),field_col*length(sampv),1)];
+            field_data_fft = [field_data_fft reshape(abs(fft(angle_data(itrial).(field_str{1}).(field_str{2})(sampv,:),[],2)),field_col*length(sampv),1)];
         end
         trial_data_avg(iangle).ts = (0:nsamp-1)*angle_data(1).dt;
         trial_data_avg(iangle).fv = (0:nsamp-1)/trial_data_avg(iangle).ts(end);
         trial_data_avg(iangle).(field_str{1}).([field_str{2},'_mean']) = mean(field_data_mean,1);
         trial_data_avg(iangle).(field_str{1}).(field_str{2}) = reshape(mean(field_data,2),length(sampv),field_col);
+        %trial_data_avg(iangle).(field_str{1}).(field_str{2}) = ifft(reshape(mean(field_data_fft,2),length(sampv),field_col),[],2);%reshape(mean(field_data,2),length(sampv),field_col);
         trial_data_avg(iangle).(field_str{1}).([field_str{2},'_fft']) = fft(trial_data_avg(iangle).(field_str{1}).(field_str{2}));
-        
+        %trial_data_avg(iangle).(field_str{1}).([field_str{2},'_fft']) = reshape(mean(field_data_fft,2),length(sampv),field_col);
     end
 end
 end

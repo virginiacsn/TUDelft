@@ -7,7 +7,7 @@ function EMGControl_CO(varargin)
 % Default parameters
 % File parameters
 saveforce =  0;
-saveEMG =    1;
+saveEMG =    0;
 date =      '20180717';
 task =      'CO';
 code =      '001';
@@ -16,8 +16,8 @@ filenameEMG = [date,'_',task,'_EMG_',code,'.mat'];
 filepath =  [pwd '\Data\' date '\'];
 
 % Task parameters
-numTrials =         3;
-
+numTrialsEMG =      30;
+numTrials =         30;        
 % targetForce =       1000; % [N]
 targetEMG =         0.5; 
 numTargets =        3;
@@ -212,7 +212,7 @@ if EMGEnabled
     if ~isempty(device)
         % Initialize variables
         global tmove trelax tfail tsuccess tholdstart
-        global targetCir iAngle
+        global targetCir iAngle trialNum
         global htrg hsta
         
         trialNum = 0;
@@ -229,14 +229,15 @@ if EMGEnabled
         hlout = addlistener(s,'DataRequired',@(src,event) src.queueOutputData(outputData));
         
         hlin = addlistener(s,'DataAvailable',@(src,event) processForceData(event,forceOffset,EMGOffset,EMGScale,hp));
+        %hstop = addlistener(s,'DataAvailable',@(src,event) stopTrialNum(trialNum,numTrials));
         s.IsContinuous = true;
         s.Rate = scanRate; % scans/sec, samples/sec?
         s.NotifyWhenDataAvailableExceeds = availSamplesEMG; % Call listener when x samples are available
         s.startBackground();
         
-        input('\Press enter to stop acquisition.')
+        input('\Press enter to stop acquisition.');
         
-    else        
+    else
         % Save EMG file header
         if saveEMG
             samplenum = 1;
@@ -246,7 +247,7 @@ if EMGEnabled
         EMGDataBuffer = zeros(length(channelSubset)-1,smoothWin);
         emg_save = [];
         
-        for itrial = 1:numTrials
+        for itrial = 1:numTrialsEMG
             
             nextTrial = false;
             cursorHoldOut = 0;
@@ -368,6 +369,7 @@ if EMGEnabled
         s.stop()
         delete(hlin)
         delete(hlout)
+        %delete(hstop)
     end
     
     % Close EMG
@@ -511,4 +513,10 @@ library.destroy()
             forceDataOut_EMGCO(samplenum,:) = {trialNum,iAngle,state,timeStamp,forceData(:,1),forceData(:,2),forceData(:,3),triggerData};
         end
     end
+
+%     function stopTrialNum(trialNum,numTrials)
+%         if trialNum == numTrials
+%             s.stop();
+%         end
+%     end
 end

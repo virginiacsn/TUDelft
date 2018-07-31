@@ -50,11 +50,11 @@ trial_data_avg = trialAngleAvg(trial_data, epoch, fields);
 trial_data_app = trialAngleApp(trial_data, epoch, fields);
 
 %% EMG 
-data_analysis = trial_data_app;
+data_analysis = trial_data_avg;
 
 %% Frequency analysis
 cohparams.tseg = 1;
-cohparams.nseg = 20;
+cohparams.nseg = 10;
 cohparams.window = @(N) hanning(N);
 field = 'rect';
 trial_data_coh = cohStruct(data_analysis,EMGparams.channelName,{field},cohparams);
@@ -144,6 +144,7 @@ for j = 1:nmusccomb
 end
 
 %% Force analysis - only with trial_data_avg
+% LPF force in time
 figure;
 set(gcf,'Name','Force in time');
 for i = 1:nangles
@@ -162,6 +163,7 @@ for i = 1:nangles
     legend('Fx','Fy')
 end
 
+% LPF force trajectory
 figure;
 set(gcf,'Name','Force trajectory');
 for i = 1:nangles
@@ -184,6 +186,7 @@ end
 itrial = 4;
 
 %% EMG
+% Rectified and smoothed EMG
 figure;
 set(gcf,'Name','Rectified EMG');
 for j = 1:nmusc
@@ -196,6 +199,7 @@ for j = 1:nmusc
     title(['Musc: ',EMGparams.channelName{j},'; Target: ',num2str(rad2deg(trial_data(itrial).angle)),' deg']);
 end
 
+% FFT of rectified EMG
 figure;
 set(gcf,'Name','FFT Rectified EMG');
 for j = 1:nmusc
@@ -208,6 +212,7 @@ title(['Target: ',num2str(rad2deg(trial_data(itrial).angle)),' deg']);
 legend(EMGparams.channelName{1:end-1});
 
 %% Force
+% LPF force in time
 figure;
 set(gcf,'Name','Force in time');
 for j = 1:2
@@ -219,6 +224,7 @@ xlabel('Time [s]'); ylabel('Force [N]');
 title(['Trial: ',num2str(itrial),'; Target: ',num2str(rad2deg(trial_data(itrial).angle)),' deg']);
 legend('Fx','Fy')
 
+% LPF force trajectory
 figure;
 set(gcf,'Name','Force trajectory');
 plot(trial_data(itrial).force.filt(:,1),trial_data(itrial).force.filt(:,2));
