@@ -1,5 +1,5 @@
 %% Data Analysis
-addpath('Tools');
+addpath(genpath('Tools'));
 
 date =      '20180726';
 task =      'ForceCO';
@@ -96,7 +96,7 @@ for j = 1:nmusccomb
         else
             subplot(1,nangles,i);
         end
-        plot(trial_data_coh(i).(field).fcoh(:,j),trial_data_coh(i).(field).coh(:,j));
+        plot(trial_data_coh(i).(field).my_fcoh(:,j),trial_data_coh(i).(field).my_coh(:,j));
         hold on;
         line(xlim,trial_data_coh(i).(field).CL(j)*[1 1]);
         xlim([trial_data_coh(i).(field).fcoh(2,j) fc])

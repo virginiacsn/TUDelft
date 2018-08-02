@@ -12,9 +12,9 @@ fileparams = struct(...
     'task',         'ForceCO',...
     'code',         '001');
 
-fileparams.filenameforce =       [fileparams.date,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
+fileparams.filenameforce =  [fileparams.date,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
 fileparams.filenameEMG =    [fileparams.date,'_',fileparams.task,'_EMG_',fileparams.code,'.mat'];
-if ~exist(['D:\Student_experiments\Virginia\Data\' fileparams.date],'dir')
+if ~exist(['D:\Student_experiments\Virginia\Data\' fileparams.date],'dir') && (fileparams.saveEMG || fileparams.saveforce)
     mkdir(['D:\Student_experiments\Virginia\Data\' fileparams.date])
 end
 fileparams.filepath =       ['D:\Student_experiments\Virginia\Data\' fileparams.date '\'];
@@ -23,6 +23,7 @@ EMGparams = struct(...
     'plotEMG',          0,...
     'EMGEnabled',       0,...
     'channelSubset',    [1 2 17],...
+    'channelControl',   [1 2],...
     'channelName',      {{'BB','TL','Trigger'}},...
     'sampleRateEMG',    1024,... [samples/sec]
     'fchEMG',           10,... % [Hz]
@@ -42,15 +43,13 @@ taskparams = struct(...
     'numTargets',       8,...
     'numTrials',        3,...
     'numTrialsEMG',     30,...
-    'movemtime',        5,... % sec
     'targetForce',      10,... % [N]
     'targetEMG',        0.2,...
-    'holdtime',         1,... % sec
+    'tolTarget',        0.1,...
+    'movemtime',        5,... % sec
+    'holdtime',         3,... % sec
     'timeout',          1,... % sec
-    'relaxtime',        2 ); % sec
-
-taskparams.rCirTarget =     taskparams.targetForce/10; % [N]
-taskparams.rCirCursor =     taskparams.targetForce/20; % [N]
+    'relaxtime',        2); % sec
 
 %% Force-control task
 if strcmp(fileparams.task,'ForceCO')
@@ -77,7 +76,7 @@ trial_data = procEMG(trial_data,PreAparams);
 trial_data = procForce(trial_data,PreAparams);
 
 epoch = {'ihold','iend'};
-fields = {'EMGrect'};
+fields = {'EMG.rect'};
 trial_data_avg = trialAngleAvg(trial_data, epoch, fields);
 
 EMGparams.EMGScale = max(reshape([trial_data_avg.EMGrect],2,length(trial_data_avg)),[],2);
@@ -90,14 +89,10 @@ fileparams.filenameEMG =    [fileparams.date,'_',fileparams.task,'_EMG_',filepar
 
 if strcmp(fileparams.task,'EMGCO')
     taskparams.numTargets =     3;
-    taskparams.rCirTarget =     taskparams.targetEMG/10; % [N]
-    taskparams.rCirCursor =     taskparams.targetEMG/20; % [N]
-    
     EMGControl_CO(fileparams,taskparams,forceparams,EMGparams);
 end
 
 %% Save params
-
 if ~exist([fileparams.filepath,'Parameters/'],'dir')
     mkdir([fileparams.filepath,'Parameters/'])
 end

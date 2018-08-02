@@ -32,6 +32,7 @@ for i = 1:length(trial_data)
             for l = k+1:length(channelName)-1
                 trial_data_coh(i).(EMG_fields{j}).muscles{k+l-2} = {channelName{k},channelName{l}};
                 [trial_data_coh(i).(EMG_fields{j}).coh(:,k+l-2),trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2)] = mscohere(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),win,overlap,[],fs);
+                [trial_data_coh(i).(EMG_fields{j}).my_coh(:,k+l-2),trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,k+l-2)] = coherence(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),fs,win,overlap,nseg);
                 %trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2) = trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2);%/pi*fs;
                 [trial_data_coh(i).(EMG_fields{j}).corr(:,k+l-2),trial_data_coh(i).(EMG_fields{j}).lags(:,k+l-2)] = xcorr(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),'unbiased');
 

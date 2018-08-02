@@ -18,9 +18,8 @@ filepath =  [pwd '\Data\' date '\'];
 % Task parameters
 numTrials =         30;
 targetForce =       5; % [N]
+targetTol =         0.1;
 numTargets =        8;
-rCirTarget =        targetForce/10; % [N]
-rCirCursor =        targetForce/20; % [N]
 
 fclF =              5; % [Hz]
 scanRate =          2000; % [scans/sec]
@@ -46,6 +45,9 @@ if ~isempty(varargin)
         struct2vars(who,varargin{ii});
     end
 end
+
+rCirTarget =        targetForce*targetTol; % [N]
+rCirCursor =        targetForce*targetTol/2; % [N]
 
 if length(channelSubset)~=length(channelName)
     error('Names for all channels not available.')
@@ -150,8 +152,8 @@ if ~isempty(device)
     tempState = 'start';
     
     % Set target forces
-    targetAngles = [0:2*pi/numTargets:2*pi]; % [rad]
-    targetAngles(targetAngles == 2*pi) = [];
+    targetAngles = [pi/4:3*pi/(2*(numTargets-1)):7*pi/4]; % [rad]
+    %targetAngles(targetAngles == 2*pi) = [];
     targetPosx = targetForce*cos(targetAngles)';
     targetPosy = targetForce*sin(targetAngles)';
     
@@ -377,10 +379,10 @@ end
         end
     end
 
-    function stopTrialNum(trialNum,numTrials)
-        if trialNum == numTrials
-            s.stop();
-            close(hf)
-        end
-    end
+%     function stopTrialNum(trialNum,numTrials)
+%         if trialNum == numTrials
+%             s.stop();
+%             close(hf)
+%         end
+%     end
 end

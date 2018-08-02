@@ -20,9 +20,8 @@ numTrialsEMG =      30;
 numTrials =         30;        
 % targetForce =       1000; % [N]
 targetEMG =         0.5; 
+targetTol =         0.1;
 numTargets =        3;
-rCirTarget =        targetEMG/10; % [N]
-rCirCursor =        targetEMG/20; % [N]
 
 fchEMG =            10; % [Hz]
 
@@ -39,6 +38,7 @@ relaxtime =         1; % sec
 % EMG parameters
 plotEMG =           0;
 channelSubset =     [1 2];
+channelControl =    [1 2];
 channelName =       {'BB','TL'};
 sampleRateEMG =     1024;
 smoothWin =         500;
@@ -52,6 +52,9 @@ if ~isempty(varargin)
         struct2vars(who,varargin{ii});
     end
 end
+
+rCirTarget =        targetEMG*targetTol; % [N]
+rCirCursor =        targetEMG*targetTol/2; % [N]
 
 if length(channelSubset)~=length(channelName)
     error('Names for all channels not available.')
@@ -151,7 +154,6 @@ if EMGEnabled
     
     % Initialize force DAQ
     if saveforce
-        
         device = daq.getDevices;
         
         if ~isempty(device)
@@ -190,10 +192,7 @@ if EMGEnabled
     countState = 0;
     
     % Set target forces
-%     targetForce = MVCScale(1)/2;
-%     rCirTarget = targetForce/10;
-%     rCirCursor = targetForce/20;
-    targetAngles = [pi/4:pi/(2*(numTargets-1)):3*pi/4]; % [rad]
+    targetAngles = [pi/4:pi/(numTargets-2):5*pi/4]; % [rad]
     targetPosx = targetEMG*cos(targetAngles)';
     targetPosy = targetEMG*sin(targetAngles)';
     
@@ -248,14 +247,12 @@ if EMGEnabled
         emg_save = [];
         
         for itrial = 1:numTrialsEMG
-            
             nextTrial = false;
             cursorHoldOut = 0;
             state = 'start';
             tempState = 'start';
             
             while ~nextTrial
-                
                 countBuffer = 0;
                 
                 samples = sampler.sample();
@@ -266,7 +263,7 @@ if EMGEnabled
                 appendSamples = (samples(channelSubset,:));%-repmat(EMGOffset,1,nSamples))./repmat(MVCScale,1,nSamples);
                 
                 emg_data.append(appendSamples)
-                EMGSamples = appendSamples(1:end-1,:);
+                EMGSamples = samples(channelControl,:);
                 
                 if nSamples < smoothWin
                     bufferTemp = EMGDataBuffer;
@@ -415,10 +412,10 @@ library.destroy()
         
         samples = sampler.sample();
         nSamples = size(samples,2);
-        appendSamples = (samples(channelSubset,:));%-repmat(EMGOffset,1,nSamples))./repmat(EMGScale,1,nSamples);
+        appendSamples = samples(channelSubset,:);%-repmat(EMGOffset,1,nSamples))./repmat(EMGScale,1,nSamples);
         
         emg_data.append(appendSamples)
-        EMGSamples = appendSamples(1:end-1,:);
+        EMGSamples = samples(channelControl,:);
         
         if nSamples < smoothWin
             bufferTemp = EMGDataBuffer;

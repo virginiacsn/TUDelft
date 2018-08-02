@@ -47,12 +47,10 @@ taskparams = struct(...
     'movemtime',        5,... % sec
     'targetForce',      5,... % [N]
     'targetEMG',        0.2,...
+    'targetTol',        0.1,...
     'holdtime',         5,... % sec
     'timeout',          1,... % sec
     'relaxtime',        2 ); % sec
-
-taskparams.rCirTarget =     taskparams.targetForce/10; % [N]
-taskparams.rCirCursor =     taskparams.targetForce/20; % [N]
 
 % Data acquisition
 if strcmp(fileparams.task,'BAR')
@@ -65,7 +63,5 @@ elseif strcmp(fileparams.task,'ForceCO')
     end
 elseif strcmp(fileparams.task,'EMGCO')
     taskparams.numTargets = 3;
-    taskparams.rCirTarget = taskparams.targetEMG/10;
-    taskparams.rCirCursor = taskparams.targetEMG/20;
     EMGControl_CO(fileparams,taskparams,forceparams,EMGparams);
 end
