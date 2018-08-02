@@ -54,7 +54,7 @@ if ~isempty(varargin)
 end
 
 rCirTarget =        targetEMG*targetTol; % [N]
-rCirCursor =        targetEMG*targetTol/2; % [N]
+rCirCursor =        targetEMG*targetTol/cursorTol; % [N]
 
 if length(channelSubset)~=length(channelName)
     error('Names for all channels not available.')

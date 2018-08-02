@@ -19,6 +19,7 @@ filepath =  [pwd '\Data\' date '\'];
 numTrials =         30;
 targetForce =       5; % [N]
 targetTol =         0.1;
+cursorTol =         1.5;
 numTargets =        8;
 
 fclF =              5; % [Hz]
@@ -47,7 +48,7 @@ if ~isempty(varargin)
 end
 
 rCirTarget =        targetForce*targetTol; % [N]
-rCirCursor =        targetForce*targetTol/2; % [N]
+rCirCursor =        targetForce*targetTol/cursorTol; % [N]
 
 if length(channelSubset)~=length(channelName)
     error('Names for all channels not available.')

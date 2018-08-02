@@ -1,4 +1,4 @@
-function[coh,fcoh] = coherence(varargin)
+function[coh,fcoh,totseg] = coherence(varargin)
 
 x = varargin{1};
 y = varargin{2};
@@ -15,7 +15,11 @@ N = length(x);
 if length(varargin) > 2
     
     sampseg = floor(length(x)/nseg);
-    totseg = floor(length(x)/(sampseg-overlap));
+    if sampseg <= overlap
+        error('Overlap should be less than samples per segement. Reduce number of segments.')
+    else
+        totseg = floor(length(x)/(sampseg-overlap));
+    end
     
     X = zeros(sampseg,totseg-1);
     Y = zeros(sampseg,totseg-1);
@@ -43,4 +47,5 @@ end
 
 coh = abs(Sxy).^2./(Sxx.*Syy);
 fcoh = (0:length(coh)-1)/(length(coh)/fs);
+
 end

@@ -50,11 +50,12 @@ trial_data_avg = trialAngleAvg(trial_data, epoch, fields);
 trial_data_app = trialAngleApp(trial_data, epoch, fields);
 
 %% EMG 
-data_analysis = trial_data_avg;
+data_analysis = trial_data_app;
 
 %% Frequency analysis
 cohparams.tseg = 1;
-cohparams.nseg = 10;
+cohparams.nseg = 20;
+cohparams.my_nseg = 20;
 cohparams.window = @(N) hanning(N);
 field = 'rect';
 trial_data_coh = cohStruct(data_analysis,EMGparams.channelName,{field},cohparams);
@@ -96,10 +97,31 @@ for j = 1:nmusccomb
         else
             subplot(1,nangles,i);
         end
-        plot(trial_data_coh(i).(field).my_fcoh(:,j),trial_data_coh(i).(field).my_coh(:,j));
+        plot(trial_data_coh(i).(field).fcoh(:,j),trial_data_coh(i).(field).coh(:,j));
         hold on;
         line(xlim,trial_data_coh(i).(field).CL(j)*[1 1]);
         xlim([trial_data_coh(i).(field).fcoh(2,j) fc])
+        xlabel('Frequency [Hz]'); ylabel('Coh [-]');
+        title(['Musc: ',trial_data_coh(i).(field).muscles{j}{1},',',trial_data_coh(i).(field).muscles{j}{2},'; Target: ',num2str(rad2deg(trial_data_coh(i).angle)),' deg']);
+    end
+end
+
+% My coherence
+for j = 1:nmusccomb
+    figure;
+    
+    set(gcf,'Name','My coherence');
+    for i = 1:nangles
+        if rem(nangles,2) == 0
+            subplot(2,nangles/2,i);
+        else
+            subplot(1,nangles,i);
+        end
+        plot(trial_data_coh(i).(field).my_fcoh(:,j),trial_data_coh(i).(field).my_coh(:,j));
+        hold on;
+        %plot(trial_data_coh(i).(field).my_fcoh(:,j),movingAvg(trial_data_coh(i).(field).my_coh(:,j),3));
+        line(xlim,trial_data_coh(i).(field).my_CL(j)*[1 1]);
+        xlim([trial_data_coh(i).(field).my_fcoh(2,j) fc])
         xlabel('Frequency [Hz]'); ylabel('Coh [-]');
         title(['Musc: ',trial_data_coh(i).(field).muscles{j}{1},',',trial_data_coh(i).(field).muscles{j}{2},'; Target: ',num2str(rad2deg(trial_data_coh(i).angle)),' deg']);
     end
