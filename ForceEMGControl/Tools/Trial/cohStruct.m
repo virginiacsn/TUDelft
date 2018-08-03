@@ -34,6 +34,9 @@ for i = 1:length(trial_data)
     my_overlap = round(length(my_win)/2);
     
     EMG_struct = trial_data(i).EMG;
+    if isfield(trial_data,'iapp');
+        iapp = trial_data(i).iapp;
+    end
     
     for j = 1:length(EMG_fields)
         for k = 1:length(channelName)-1
@@ -43,9 +46,13 @@ for i = 1:length(trial_data)
 
                 L = round(length(EMG_struct.(EMG_fields{j})(:,k))/length(win));%*trial_data(i).ntrials;
                 trial_data_coh(i).(EMG_fields{j}).CL(k+l-2) = 1-alp^(1/(L-1)); 
-                                
-                [trial_data_coh(i).(EMG_fields{j}).my_coh(:,k+l-2),trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,k+l-2),my_nsegtot] = coherence(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),fs,my_win,my_overlap,my_nseg);
-                trial_data_coh(i).(EMG_fields{j}).my_CL(k+l-2) = 1-alp^(1/(my_nsegtot-1)); 
+                
+                if isfield(trial_data,'iapp');
+                    [trial_data_coh(i).(EMG_fields{j}).my_coh(:,k+l-2),trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,k+l-2),my_nsegtot] = coherence(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),fs,my_win,my_overlap,my_nseg,iapp);
+                else
+                    [trial_data_coh(i).(EMG_fields{j}).my_coh(:,k+l-2),trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,k+l-2),my_nsegtot] = coherence(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),fs,my_win,my_overlap,my_nseg);
+                end
+                trial_data_coh(i).(EMG_fields{j}).my_CL(k+l-2) = 1-alp^(1/(my_nsegtot-1));
                 
                 alp_freq = find(trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2)>=alp_band(1) & trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2)<=alp_band(2));
                 beta_freq = find(trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2)>=beta_band(1) & trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2)<=beta_band(2));
