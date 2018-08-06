@@ -27,6 +27,7 @@ scanRate =          2000; % [scans/sec]
 availSamples =      40; % [samples]
 bufferWin =         200; % [samples]
 iterUpdatePlot =    10;
+rotAngPlot =        0;
 
 movemtime =         5; % sec
 holdtime =          1; % sec
@@ -280,12 +281,9 @@ end
         forceDatay = mean(forceDataFilt(:,2));
         forceDataz = mean(forceDataFilt(:,3));
         
-%         fmx = mean(forceData(:,1));
-%         fmy = mean(forceData(:,2));
-%         fprintf('[%f,%f]   [%f,%f]\n',fmx,fmy,forceDatax,forceDatay)
-        
         calCirCursor = rCirCursor*(1 + abs(forceDataz/calforceDataz));
-        cursorCir = circle(calCirCursor,forceDatax,forceDatay);
+        forceDataRot = Rot([forceDatax,forceDatay], rotAngPlot);
+        cursorCir = circle(calCirCursor,forceDataRot(1),forceDataRot(2));
         set(hp,'xdata',cursorCir(:,1)','ydata',cursorCir(:,2)');
         
         if countBuffer == iterUpdatePlot

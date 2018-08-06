@@ -1,9 +1,9 @@
 %% Data Analysis
 addpath(genpath('Tools'));
 
-date =      '20180726';
-task =      'ForceCO';
-code =      '002';
+date =      '20180806';
+task =      'EMGCO';
+code =      '003';
 EMG =       1;
 filenameforce =  [date,'_',task,'_Force_',code,'.mat'];
 filenameEMG = [date,'_',task,'_EMG_',code,'.mat'];
@@ -44,13 +44,13 @@ trial_data = procEMG(trial_data,Aparams);
 trial_data = procForce(trial_data,Aparams);
 
 %% Trial-average
-epoch = {'ihold','iend'};
+epoch = {'imove','iend'};
 fields = {'EMG.filt','EMG.rect','EMG.avg','force.filt'};
 trial_data_avg = trialAngleAvg(trial_data, epoch, fields);
 trial_data_app = trialAngleApp(trial_data, epoch, fields);
 
 %% EMG 
-data_analysis = trial_data_app;
+data_analysis = trial_data_avg;
 
 %% Frequency analysis
 cohparams.tseg = 1;

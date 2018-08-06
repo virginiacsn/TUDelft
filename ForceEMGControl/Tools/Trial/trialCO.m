@@ -72,14 +72,18 @@ for itrial = 1:length(trials)
         trial_data(itrial).outcome = trial_outcomes{3};
         iend = [];
     end
-    
-    trial_data(itrial).angle = target_angles(data_trial{2,idh_ang(2:end)});
-    
-    trial_data(itrial).dt = 1/fs;
-    
+
     istart = find(ismember(data_outcome,'start'),1);
     imove = find(ismember(data_outcome,'movement'),1);
     ihold = find(ismember(data_outcome,'hold'),1);
+    
+    if ~isempty(imove)
+        trial_data(itrial).angle = target_angles(data_trial{2,idh_ang(2:end)});
+    else
+        trial_data(itrial).angle = target_angles(data_trial{1,idh_ang(2:end)});
+    end
+    
+    trial_data(itrial).dt = 1/fs;
     
     if ~isempty(istart) && ~isempty(imove)
         tsstart = data_ts{istart};        
