@@ -2,7 +2,7 @@
 addpath(genpath('Tools'));
 
 date =      '20180806';
-task =      'EMGCO';
+task =      'ForceCO';
 code =      '003';
 EMG =       1;
 filenameforce =  [date,'_',task,'_Force_',code,'.mat'];
@@ -26,7 +26,7 @@ Aparams.downsample = forceparams.scanRate/EMGparams.sampleRateEMG;
 Aparams.channelNameEMG = EMGparams.channelName;
 if strcmp(task,'ForceCO')
     forceEMGData = {forceDataOut_ForceCO,EMGDataOut_ForceCO};
-    Aparams.target_angles = [0:2*pi/8:2*pi-pi/8];
+    Aparams.target_angles = [pi/4:3*pi/6:7*pi/4];
 elseif strcmp(task,'EMGCO')
     forceEMGData = {forceDataOut_EMGCO,EMGDataOut_EMGCO};
     Aparams.target_angles = [pi/4:pi/4:3*pi/4];
@@ -44,13 +44,13 @@ trial_data = procEMG(trial_data,Aparams);
 trial_data = procForce(trial_data,Aparams);
 
 %% Trial-average
-epoch = {'imove','iend'};
+epoch = {'ihold','iend'};
 fields = {'EMG.filt','EMG.rect','EMG.avg','force.filt'};
 trial_data_avg = trialAngleAvg(trial_data, epoch, fields);
 trial_data_app = trialAngleApp(trial_data, epoch, fields);
 
 %% EMG 
-data_analysis = trial_data_avg;
+data_analysis = trial_data_app;
 
 %% Frequency analysis
 cohparams.tseg = 1;
@@ -179,7 +179,7 @@ for i = 1:nangles
         plot(trial_data_avg(i).ts,trial_data_avg(i).force.filt(:,j));
         hold on;
     end
-    ylim(taskparams.targetForce*[-1.5 1.5]);
+    ylim(taskparams.targetForce*[-2 2]);
     xlabel('Time [s]'); ylabel('Force [N]');
     title(['Target: ',num2str(rad2deg(trial_data_avg(i).angle)),' deg']);
     legend('Fx','Fy')
@@ -198,14 +198,14 @@ for i = 1:nangles
     hold on;
     plot(trial_data_avg(i).force.filt(1,1),trial_data_avg(i).force.filt(1,2),'go');
     plot(trial_data_avg(i).force.filt(end,1),trial_data_avg(i).force.filt(end,2),'ro');
-    xlim(taskparams.targetForce*[-1.5 1.5]);ylim(taskparams.targetForce*[-1.5 1.5]);
+    xlim(taskparams.targetForce*[-2 2]);ylim(taskparams.targetForce*[-2 2]);
     grid on;
     xlabel('Fx [N]'); ylabel('Fy [N]');
     title(['Target: ',num2str(rad2deg(trial_data_avg(i).angle)),' deg']);
 end
 
 %% Single-trial analysis
-itrial = 4;
+itrial = 8;
 
 %% EMG
 % Rectified and smoothed EMG

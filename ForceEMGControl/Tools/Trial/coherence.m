@@ -13,7 +13,7 @@ if length(varargin) > 2
     end
 end
 
-if length(varargin) > 2 && length(varargin) < 6
+if length(varargin) > 2 && length(varargin) <= 6
     
     N = length(x);
     sampseg = floor(N/nseg);
@@ -42,6 +42,7 @@ if length(varargin) > 2 && length(varargin) < 6
 elseif length(varargin) > 6
    
    N = min(diff([find(iapp); length(iapp)])); 
+   idxapp = find(iapp);
    napp = sum(iapp);
    sampseg = floor(N/nseg);
    overlap = floor(sampseg/2);
@@ -53,15 +54,18 @@ elseif length(varargin) > 6
     end
     
     count = 1;
-    for j = 0:napp-1
-        X = zeros(sampseg,totseg-1);
-        Y = zeros(sampseg,totseg-1);
+    X = [];
+    Y = [];
+    for j = 1:napp-1
+        %         for i = 0:totseg-1
+        %             X(:,count) = fft(x(idxapp(j)+(sampseg-overlap)*i:idxapp(j)+(sampseg-overlap)*i+sampseg-1)*window(sampseg));
+        %             Y(:,count) = fft(y(idxapp(j)+(sampseg-overlap)*i:idxapp(j)+(sampseg-overlap)*i+sampseg-1)*window(sampseg));
+        %             count = count+1;
+        %         end
         
-        for i = 0:totseg-2
-            X(:,count) = fft(x(1+i*(sampseg-overlap):i*(sampseg-overlap)+sampseg)*window(sampseg));
-            Y(:,count) = fft(y(1+i*(sampseg-overlap):i*(sampseg-overlap)+sampseg)*window(sampseg));
-            count = count+1;
-        end
+        X(:,count) = fft(x(idxapp(j):idxapp(j)+N-1).*window(N));
+        Y(:,count) = fft(y(idxapp(j):idxapp(j)+N-1).*window(N));
+        count = count+1;
     end
     
     Sxx = mean(nseg/sampseg*real(conj(X).*X),2);
@@ -69,15 +73,20 @@ elseif length(varargin) > 6
     Sxy = mean(nseg/sampseg*conj(X).*Y,2);
     
 else
+    N = length(x);
+    
     X = fft(x);
     Y = fft(y);
     
     Sxx = 1/N*X.*conj(X);
     Syy = 1/N*Y.*conj(Y);
     Sxy = 1/N*X.*conj(Y);
+    
+    totseg = [];
 end
 
 coh = abs(Sxy).^2./(Sxx.*Syy);
-fcoh = (0:length(coh)-1)/(length(coh)/fs);
+coh_avg = movingAvg(coh,3);
+fcoh = (0:length(coh_avg)-1)/(length(coh_avg)/fs);
 
 end
