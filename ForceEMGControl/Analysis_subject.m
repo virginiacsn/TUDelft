@@ -1,35 +1,36 @@
-%% Data Analysis
+%% Data Analysis for individual subject
 addpath(genpath('Tools'));
 
 date =      '20180806';
-task =      'ForceCO';
-code =      '003';
-EMG =       1;
-filenameforce =  [date,'_',task,'_Force_',code,'.mat'];
-filenameEMG = [date,'_',task,'_EMG_',code,'.mat'];
-filenameparams = [date,'_params_',code,'.mat'];
+subject =   '01';
+task =      'EMGCO';
 
 switch computer
     case 'PCWIN'
-        filepath =  ['D:\Student_experiments\Virginia\Data\' date '\'];
+        filepath =  ['D:\Student_experiments\Virginia\Data\',date,'\s',subject,'\'];
     case 'MACI64'
-        filepath =  ['/Users/virginia/Documents/MATLAB/Thesis/Data/' date '/'];
+        filepath =  ['/Users/virginia/Documents/MATLAB/Thesis/Data/',date,'/s',subject,'/'];
 end
 
+%% Individual block
+code =      '003';
+
+filenameforce =  [date,'_s',subject,'_',task,'_Force_',code,'.mat'];
+filenameEMG = [date,'_s',subject,'_',task,'_EMG_',code,'.mat'];
+filenameparams = [date,'_s',subject,'_params_',code,'.mat'];
+
 load([filepath,filenameforce]);
-if EMG
-    load([filepath,filenameEMG]);
-end 
-load([filepath,'Parameters/',filenameparams]);
+load([filepath,filenameEMG]);
+load([filepath,'Parameters\',filenameparams]);
 
 Aparams.downsample = forceparams.scanRate/EMGparams.sampleRateEMG;
 Aparams.channelNameEMG = EMGparams.channelName;
 if strcmp(task,'ForceCO')
     forceEMGData = {forceDataOut_ForceCO,EMGDataOut_ForceCO};
-    Aparams.target_angles = [pi/4:3*pi/6:7*pi/4];
+    Aparams.target_angles =  [pi/4:pi/2:7*pi/4];%taskparams.targetAnglesForce;
 elseif strcmp(task,'EMGCO')
     forceEMGData = {forceDataOut_EMGCO,EMGDataOut_EMGCO};
-    Aparams.target_angles = [pi/4:pi/4:3*pi/4];
+    Aparams.target_angles = [pi/4:pi/4:3*pi/4];%taskparams.targetAnglesEMG;
 end
 Aparams.avgWindow = 100;
 Aparams.fclF = 5;
@@ -43,6 +44,45 @@ trial_data = removeFailTrials(trial_data);
 trial_data = procEMG(trial_data,Aparams);
 trial_data = procForce(trial_data,Aparams);
 
+%% All blocks
+code =      {'002','003'};
+
+trial_data_block = [];
+
+for i = 1:length(code)
+    filenameforce =  [date,'_s',subject,'_',task,'_Force_',code{i},'.mat'];
+    filenameEMG = [date,'_s',subject,'_',task,'_EMG_',code{i},'.mat'];
+    filenameparams = [date,'_s',subject,'_params_',code{i},'.mat'];
+    
+    load([filepath,filenameforce]);
+    load([filepath,filenameEMG]);
+    load([filepath,'Parameters/',filenameparams]);
+    
+    Aparams.downsample = forceparams.scanRate/EMGparams.sampleRateEMG;
+    Aparams.channelNameEMG = EMGparams.channelName;
+    if strcmp(task,'ForceCO')
+        forceEMGData = {forceDataOut_ForceCO,EMGDataOut_ForceCO};
+        Aparams.target_angles = [pi/4:pi/2:7*pi/4];%taskparams.targetAnglesForce;
+    elseif strcmp(task,'EMGCO')
+        forceEMGData = {forceDataOut_EMGCO,EMGDataOut_EMGCO};
+        Aparams.target_angles = [pi/4:pi/4:3*pi/4];%taskparams.targetAnglesEMG;
+    end
+    Aparams.avgWindow = 100;
+    Aparams.fclF = 5;
+    Aparams.fchEMG = 10;
+    Aparams.fs = min(forceparams.scanRate,EMGparams.sampleRateEMG);
+    Aparams.block = str2double(code{i});
+    
+    trial_data = trialCO(forceEMGData,Aparams);
+    
+    trial_data = removeFailTrials(trial_data);
+    
+    trial_data = procEMG(trial_data,Aparams);
+    trial_data = procForce(trial_data,Aparams);
+    
+    trial_data_block =  [trial_data_block, trial_data];
+end
+
 %% Trial-average
 epoch = {'ihold','iend'};
 fields = {'EMG.filt','EMG.rect','EMG.avg','force.filt'};
@@ -50,22 +90,22 @@ trial_data_avg = trialAngleAvg(trial_data, epoch, fields);
 trial_data_app = trialAngleApp(trial_data, epoch, fields);
 
 %% EMG 
-data_analysis = trial_data_app;
-
-%% Frequency analysis
-cohparams.tseg = 1;
-cohparams.nseg = 20;
-cohparams.my_nseg = 20;
-cohparams.window = @(N) hanning(N);
-field = 'rect';
-trial_data_coh = cohStruct(data_analysis,EMGparams.channelName,{field},cohparams);
+data_analysis = trial_data_avg;
 
 target_angles = sort(unique(extractfield(data_analysis,'angle')));
 nangles = length(target_angles);
 nmusc = length(EMGparams.channelName)-1;
+musccont = EMGparams.channelControl;
 nmusccomb = (length(EMGparams.channelName)-1)*(length(EMGparams.channelName)-2)/2; % n*(n-1)/2
-
 fc = 80;
+
+%% Frequency analysis
+cohparams.tseg = 1;
+cohparams.nseg = 10;
+cohparams.my_nseg = 10;
+cohparams.window = @(N) hanning(N);
+field = 'rect';
+trial_data_coh = cohStruct(data_analysis,EMGparams.channelName,{field},cohparams);
 
 % FFT
 figure;
@@ -220,6 +260,19 @@ for j = 1:nmusc
     ylim([0 max(trial_data(itrial).EMG.rect(:))+50]);
     title(['Musc: ',EMGparams.channelName{j},'; Target: ',num2str(rad2deg(trial_data(itrial).angle)),' deg']);
 end
+
+% EMG trajectory
+figure;
+set(gcf,'Name','Trajectory Rectified EMG');
+plot(trial_data(itrial).EMG.avg(:,musccont(1)),trial_data(itrial).EMG.avg(:,musccont(2)));
+hold on;
+h1 = plot(trial_data(itrial).EMG.avg(1,musccont(1)),trial_data(itrial).EMG.avg(1,musccont(2)),'go');
+h2 = plot(trial_data(itrial).EMG.avg(end,musccont(1)),trial_data(itrial).EMG.avg(end,musccont(2)),'ro');
+grid on;
+axis square;
+xlabel(EMGparams.channelName{musccont(1)}); ylabel(EMGparams.channelName{musccont(2)});
+title(['Musc: ',EMGparams.channelName{musccont(1)},',',EMGparams.channelName{musccont(2)},'; Target: ',num2str(rad2deg(trial_data(itrial).angle)),' deg']);
+legend([h1,h2],'Start','End');
 
 % FFT of rectified EMG
 figure;

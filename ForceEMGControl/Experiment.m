@@ -8,16 +8,20 @@ addpath(genpath('Tools'));
 fileparams = struct(...
     'saveforce',    1,...
     'saveEMG',      1,...
-    'date',         '20180806',...
+    'date',         '20180807',...
+    'subject',      '01',...
     'task',         'ForceCO',...
-    'code',         '004');
+    'code',         '001');
 
-fileparams.filenameforce =  [fileparams.date,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
-fileparams.filenameEMG =    [fileparams.date,'_',fileparams.task,'_EMG_',fileparams.code,'.mat'];
-if ~exist(['D:\Student_experiments\Virginia\Data\' fileparams.date],'dir') && (fileparams.saveEMG || fileparams.saveforce)
-    mkdir(['D:\Student_experiments\Virginia\Data\' fileparams.date])
+fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
+fileparams.filenameEMG =    [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_EMG_',fileparams.code,'.mat'];
+if ~exist(['D:\Student_experiments\Virginia\Data\',fileparams.date],'dir') && (fileparams.saveEMG || fileparams.saveforce)
+    mkdir(['D:\Student_experiments\Virginia\Data\',fileparams.date])
 end
-fileparams.filepath =       ['D:\Student_experiments\Virginia\Data\' fileparams.date '\'];
+if ~exist(['D:\Student_experiments\Virginia\Data\',fileparams.date,'\s',fileparams.subject],'dir') && (fileparams.saveEMG || fileparams.saveforce)
+    mkdir(['D:\Student_experiments\Virginia\Data\',fileparams.date,'\s',fileparams.subject])
+end
+fileparams.filepath =       ['D:\Student_experiments\Virginia\Data\',fileparams.date,'\s',fileparams.subject,'\'];
 
 EMGparams = struct(...
     'plotEMG',          0,...
@@ -25,9 +29,10 @@ EMGparams = struct(...
     'channelSubset',    [1 2 3 17],...
     'channelControl',   [1 2],...
     'channelName',      {{'BB','TL','TLH','Trigger'}},...
-    'sampleRateEMG',    1024,... [samples/sec]
+    'sampleRateEMG',    1024,... % [samples/sec]
     'fchEMG',           10,... % [Hz]
-    'smoothWin',        600,...
+    'fclEMG',           30,... % [Hz]
+    'smoothWin',        600,... % [samples]
     'pauseSamp',        0.04,... % [s]
     'iterUpdatePlotEMG',1);
 
@@ -43,6 +48,8 @@ forceparams = struct(...
 taskparams = struct(...
     'numTargets',       4,...
     'numTargetsEMG',    3,...
+    'targetAnglesForce',[pi/4:pi/2:7*pi/4],...
+    'targetAnglesEMG',  [pi/4:pi/4:3*pi/4],... % [rad]
     'numTrials',        3,...
     'numTrialsEMG',     30,...
     'targetForce',      10,... % [N]
@@ -67,7 +74,7 @@ load([fileparams.filepath,fileparams.filenameEMG]);
 forceEMGData = {forceDataOut_ForceCO,EMGDataOut_ForceCO};
 
 PreAparams.downsample = 2;
-PreAparams.target_angles = [pi/4:3*pi/6:7*pi/4];
+PreAparams.target_angles = taskparams.targetAnglesForce;
 PreAparams.avgWindow = 200;
 PreAparams.fclF = 5;
 PreAparams.fchEMG = 10;
@@ -93,7 +100,7 @@ EMGparams.EMGScale = max(EMGmean,[],1)';
 %% EMG-control task
 fileparams.task = 'EMGCO';
 
-fileparams.filenameforce =       [fileparams.date,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
+fileparams.filenameforce =  [fileparams.date,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
 fileparams.filenameEMG =    [fileparams.date,'_',fileparams.task,'_EMG_',fileparams.code,'.mat'];
 
 if strcmp(fileparams.task,'EMGCO') 
@@ -105,5 +112,5 @@ if ~exist([fileparams.filepath,'Parameters/'],'dir')
     mkdir([fileparams.filepath,'Parameters/'])
 end
 
-paramsfilename =  [fileparams.date,'_params_',fileparams.code,'.mat'];
+paramsfilename =  [fileparams.date,'_s',fileparams.subject,'_params_',fileparams.code,'.mat'];
 save([fileparams.filepath,'Parameters/',paramsfilename],'taskparams','forceparams','EMGparams');

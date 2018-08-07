@@ -28,7 +28,6 @@ for i = 1:size(y,1)
     end
 end
 
-
 if size(x,2)<size(x,1)
     y = y';
 end

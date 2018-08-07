@@ -24,18 +24,21 @@ targetTol =         0.1;
 targetTolEMG =      0.2;
 cursorTol =         1.5;
 numTargetsEMG =     3;
-
-fchEMG =            10; % [Hz]
-
-scanRate =          1000; % [scans/sec]
-availSamplesEMG =   500; % [samples]
-bufferWin =         200; % [samples]
-iterUpdatePlot =    10;
-
+if numTargetsEMG == 3
+    targetAnglesEMG = [pi/4:pi/(2*(numTargetsEMG-1)):3*pi/4]; % [rad]
+elseif numTargetsEMG == 2
+    targetAnglesEMG = [pi/4:5*pi/4]; % [rad]
+end
 movemtime =         5; % sec
 holdtime =          1; % sec
 timeout =           1; % sec
 relaxtime =         1; % sec
+
+% Force parameters
+scanRate =          1000; % [scans/sec]
+availSamplesEMG =   500; % [samples]
+bufferWin =         200; % [samples]
+iterUpdatePlot =    10;
 
 % EMG parameters
 plotEMG =           0;
@@ -43,6 +46,8 @@ channelSubset =     [1 2];
 channelControl =    [1 2];
 channelName =       {'BB','TL'};
 sampleRateEMG =     1024;
+fchEMG =            10; % [Hz]
+fclEMG =            30;
 smoothWin =         500;
 pauseSamp =         0.04;
 iterUpdatePlotEMG = 1;
@@ -112,12 +117,15 @@ if EMGEnabled
         samplesOffset = [samplesOffset, samples(channelControl,:)];
     end
     sampler.stop()
-    wn = (2/sampleRateEMG)*fchEMG;
-    [b,a] = butter(2,wn,'high');
-    [d,c] = butter(2,(2/sampleRateEMG)*30,'low');
+    
+    wnh = (2/sampleRateEMG)*fchEMG;
+    wnl = (2/sampleRateEMG)*fchEMG;
+    [b,a] = butter(2,wnh,'high');
+    [d,c] = butter(2,wnl,'low');
     samplesOffsetFilt = filtfilt(b,a,samplesOffset')';
     samplesOffsetFilt = filter(d,c,samplesOffsetFilt')';
     EMGOffset = mean(abs(samplesOffsetFilt),2);
+    
     fprintf('EMG offset:\n')
     for k = 1:length(channelControl)
         fprintf('%s: %1.3f\n',channelName{channelSubset==channelControl(k)},EMGOffset(k))
@@ -137,12 +145,14 @@ if EMGEnabled
                 samplesMVC = [samplesMVC, samples(channelControl(j),:)];
             end
             sampler.stop()
+            
             wn = (2/sampleRateEMG)*fchEMG;
             [b,a] = butter(2,wn,'high');
             samplesMVCFilt = filtfilt(b,a,samplesMVC);
             MVCScale(j) = mean(abs(samplesMVCFilt),2);
         end
         EMGScale = MVCScale;
+        
         fprintf('EMG MVC Scaling:\n')
     for k = 1:length(channelControl)
         fprintf('%s: %1.3f\n',channelName{channelSubset==channelControl(k)},EMGScale(k))
@@ -196,13 +206,8 @@ if EMGEnabled
     countState = 0;
     
     % Set target forces
-    if numTargetsEMG == 3
-        targetAngles = [pi/4:pi/(2*(numTargetsEMG-1)):3*pi/4]; % [rad]
-    elseif numTargetsEMG == 2
-        targetAngles = [pi/4:5*pi/4]; % [rad]
-    end
-    targetPosx = targetEMG*cos(targetAngles)';
-    targetPosy = targetEMG*sin(targetAngles)';
+    targetPosx = targetEMG*cos(targetAnglesEMG)';
+    targetPosy = targetEMG*sin(targetAnglesEMG)';
     
     % Set figure
     hf = figure('Name','CO EMG Control Task');
@@ -437,7 +442,7 @@ library.destroy()
         end
         
         wnh = (2/sampleRateEMG)*fchEMG;
-        wnl = (2/sampleRateEMG)*30;
+        wnl = (2/sampleRateEMG)*fclEMG;
         [b,a] = butter(2,wnh,'high');
         [d,c] = butter(2,wnl,'low');
         

@@ -4,6 +4,7 @@ if nargin > 1
     downsample = 1;
     fs = 1024;
     target_angles = [0:2*pi/8:2*pi];
+    block = 1;
     struct2vars(who,varargin{2});
 end
 
@@ -56,6 +57,8 @@ trials = 0:max(trial_nums);
 cum_samp_trial = 0;
 
 for itrial = 1:length(trials)
+    trial_data(itrial).block = block;
+    
     data_trial = force_data(trial_nums==trials(itrial),2:end);
     data_outcome = data_trial(:,idh_sta(2:end));
     data_ts = data_trial(:,idh_ts(2:end));

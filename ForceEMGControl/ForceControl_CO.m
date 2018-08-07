@@ -20,19 +20,20 @@ numTrials =         30;
 targetForce =       5; % [N]
 targetTol =         0.1;
 cursorTol =         1.5;
-numTargets =        8;
+numTargetsForce =   4;
+targetAnglesForce = [pi/4:3*pi/(2*(numTargetsForce-1)):7*pi/4]; % [rad]
+movemtime =         5; % sec
+holdtime =          1; % sec
+timeout =           1; % sec
+relaxtime =         1; % sec
 
+% Force parameters
 fclF =              5; % [Hz]
 scanRate =          2000; % [scans/sec]
 availSamples =      40; % [samples]
 bufferWin =         200; % [samples]
 iterUpdatePlot =    10;
 rotAngPlot =        0;
-
-movemtime =         5; % sec
-holdtime =          1; % sec
-timeout =           1; % sec
-relaxtime =         1; % sec
 
 % EMG parameters
 EMGEnabled = 0;
@@ -154,10 +155,9 @@ if ~isempty(device)
     tempState = 'start';
     
     % Set target forces
-    targetAngles = [pi/4:3*pi/(2*(numTargets-1)):7*pi/4]; % [rad]
     %targetAngles(targetAngles == 2*pi) = [];
-    targetPosx = targetForce*cos(targetAngles)';
-    targetPosy = targetForce*sin(targetAngles)';
+    targetPosx = targetForce*cos(targetAnglesForce)';
+    targetPosy = targetForce*sin(targetAnglesForce)';
     
     % Set figure
     hf = figure('Name','CO Force Control Task');
@@ -310,7 +310,7 @@ end
                 delete(htrl)
                 htrl = text(xl(2)+0.3*xl(2),yl(2),['Trial: ',num2str(trialNum)],'clipping','off','Fontsize',14);
                 
-                iAngle = randi(numTargets);
+                iAngle = randi(numTargetsForce);
                 targetCir = circle(rCirTarget,targetPosx(iAngle),targetPosy(iAngle));
                 htrg = plot(targetCir(:,1),targetCir(:,2),'r','Linewidth',3);
                 
@@ -336,6 +336,10 @@ end
                 else
                     if ~cursorInTarget(cursorCir,targetCir) && toc(tholdstart) <= holdtime
                         cursorHoldOut = cursorHoldOut+1;
+                    elseif cursorHoldOut >= 3  && toc(tholdstart) <= holdtime
+                        cursorHoldOut = 0;
+                        state = 'fail';
+                        tfail = tic;
                     elseif cursorHoldOut > 3 && toc(tholdstart) > holdtime
                         cursorHoldOut = 0;
                         state = 'fail';
