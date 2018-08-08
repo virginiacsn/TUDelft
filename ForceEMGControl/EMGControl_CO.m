@@ -6,14 +6,15 @@ function EMGControl_CO(varargin)
 %% Parameter assignment
 % Default parameters
 % File parameters
-saveforce =  0;
-saveEMG =    0;
-date =      '20180717';
-task =      'CO';
-code =      '001';
-filenameforce = [date,'_',task,'_Force_',code,'.mat'];
-filenameEMG = [date,'_',task,'_EMG_',code,'.mat'];
-filepath =  [pwd '\Data\' date '\'];
+saveforce =     0;
+saveEMG =       0;
+date =          '20180711';
+subject =       100;
+task =          'CO';
+code =          '001';
+filenameforce =  [date,'_s',subject,'_',task,'_Force_',code,'.mat'];
+filenameEMG = [date,'_s',subject,'_',task,'_EMG_',code,'.mat'];
+filepath =  [pwd '\Data\' date '\s' subject '\'];
 
 % Task parameters
 numTrialsEMG =      30;
@@ -119,7 +120,7 @@ if EMGEnabled
     sampler.stop()
     
     wnh = (2/sampleRateEMG)*fchEMG;
-    wnl = (2/sampleRateEMG)*fchEMG;
+    wnl = (2/sampleRateEMG)*fclEMG;
     [b,a] = butter(2,wnh,'high');
     [d,c] = butter(2,wnl,'low');
     samplesOffsetFilt = filtfilt(b,a,samplesOffset')';
@@ -146,9 +147,13 @@ if EMGEnabled
             end
             sampler.stop()
             
-            wn = (2/sampleRateEMG)*fchEMG;
-            [b,a] = butter(2,wn,'high');
+            wnh = (2/sampleRateEMG)*fchEMG;
+            wnl = (2/sampleRateEMG)*fclEMG;
+            [b,a] = butter(2,wnh,'high');
+            [d,c] = butter(2,wnl,'low');
+            
             samplesMVCFilt = filtfilt(b,a,samplesMVC);
+            samplesMVCFilt = filter(d,c,samplesMVCFilt);
             MVCScale(j) = mean(abs(samplesMVCFilt),2);
         end
         EMGScale = MVCScale;
@@ -395,7 +400,7 @@ if EMGEnabled
             save([filepath,filenameforce],'forceDataOut_EMGCO')
         end
         EMGDataOut_EMGCO = emg_data.samples;
-        %save('emg_proc','emg_save')
+        save('emg_proc','emg_save')
     end
     if saveEMG
         save([filepath,filenameEMG],'EMGDataOut_EMGCO','EMGOffset','EMGScale')
@@ -447,7 +452,7 @@ library.destroy()
         [d,c] = butter(2,wnl,'low');
         
         filtEMGBuffer = filtfilt(b,a,EMGDataBuffer')';
-        filtEMGBuffer = filter(d,c,filtEMGBuffer')';
+        filtEMGBuffer = filter(d,c,filtEMGBuffer,[],2);
  
         avgRectEMGBuffer = (mean(abs(filtEMGBuffer),2)-EMGOffset)./(EMGScale); % Rectify, smooth and scale
         avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;

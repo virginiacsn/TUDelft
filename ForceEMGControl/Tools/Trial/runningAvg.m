@@ -8,7 +8,7 @@ end
 
 j = 0;
 ytemp = zeros(size(xtemp,1),floor(size(xtemp,2)/window));
-for n = 0:floor(size(xtemp,2)/(window*overlap))-1
+for n = 0:floor(size(xtemp,2)/(window-overlap))-1
     j = j+1;
     ytemp(:,j) = mean(xtemp(:,1+(window-overlap)*n:n*(window-overlap)+window),2);
 end

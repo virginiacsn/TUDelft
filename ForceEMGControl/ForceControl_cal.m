@@ -2,16 +2,16 @@
 % Virginia Casasnovas
 % 11/07/2018
 
-function ForceControl_CO(varargin)
+function ForceControl_cal(varargin)
 %% Parameter assignment
 % Default parameters
 % File parameters
 saveforce =     0;
 saveEMG =       0;
 date =          '20180711';
-subject =       1;
+subject =       100;
 task =          'CO';
-code =          '001';
+code =          'calib';
 filenameforce =  [date,'_s',subject,'_',task,'_Force_',code,'.mat'];
 filenameEMG = [date,'_s',subject,'_',task,'_EMG_',code,'.mat'];
 filepath =  [pwd '\Data\' date '\s' subject '\'];
@@ -54,7 +54,8 @@ rCirTarget =        targetForce*targetTol; % [N]
 rCirCursor =        targetForce*targetTol/cursorTol; % [N]
 
 if strcmp(code,'calib');
-    targetForce = 10;
+    targetForce = 15;
+    timeout = 0.5;
 end
 
 if length(channelSubset)~=length(channelName)
@@ -159,6 +160,7 @@ if ~isempty(device)
     forceDataBuffer = zeros(bufferWin,3);
     state = 'start';
     tempState = 'start';
+    iAngle = 0;
     
     % Set target forces
     %targetAngles(targetAngles == 2*pi) = [];
@@ -167,7 +169,7 @@ if ~isempty(device)
     
     % Set figure
     hf = figure('Name','CO Force Control Task');
-    [hf,hp] = Figinit(hf,targetForce*[1 1]);
+    [hf,hp] = Figinit(hf,[max(targetPosx) max(targetPosy)]./1.2);
     title('2D Force');
     xlabel('F_x [N]'); ylabel('F_y [N]');
     
@@ -316,9 +318,12 @@ end
                 delete(htrl)
                 htrl = text(xl(2)+0.3*xl(2),yl(2),['Trial: ',num2str(trialNum)],'clipping','off','Fontsize',14);
                 
-                iAngle = randi(numTargetsForce);
-                targetCir = circle(rCirTarget,targetPosx(iAngle),targetPosy(iAngle));
-                htrg = plot(targetCir(:,1),targetCir(:,2),'r','Linewidth',3);
+                if iAngle > length(targetAnglesForce)
+                    iAngle = 0;
+                end
+                
+                iAngle = 1+iAngle;
+                htrg = plot([0 targetPosx(iAngle)],[0 targetPosy(iAngle)],'r','Linewidth',3);
                 
                 state = 'movement';
                 tmove = tic;
@@ -327,12 +332,9 @@ end
                     state = 'fail';
                     tfail = tic;
                 else
-                    if cursorInTarget(cursorCir,targetCir) && toc(tmove) <= movemtime
+                    if toc(tmove) > movemtime
                         state = 'hold';
                         tholdstart = tic;
-                    elseif ~cursorInTarget(cursorCir,targetCir) && toc(tmove) > movemtime
-                        state = 'fail';
-                        tfail = tic;
                     end
                 end
             case 'hold'
@@ -340,27 +342,10 @@ end
                     state = 'fail';
                     tfail = tic;
                 else
-                    if ~cursorInTarget(cursorCir,targetCir) && toc(tholdstart) <= holdtime
-                        cursorHoldOut = cursorHoldOut+1;
-                    elseif cursorHoldOut >= 3  && toc(tholdstart) <= holdtime
-                        cursorHoldOut = 0;
-                        state = 'fail';
-                        tfail = tic;
-                    elseif cursorHoldOut > 3 && toc(tholdstart) > holdtime
-                        cursorHoldOut = 0;
-                        state = 'fail';
-                        tfail = tic;
-                    elseif cursorHoldOut <= 3 && toc(tholdstart) > holdtime
-                        cursorHoldOut = 0;
+                    if toc(tholdstart) > holdtime
                         state = 'success';
                         tsuccess = tic;
                     end
-                end
-            case 'fail'
-                if toc(tfail) > timeout
-                    state = 'relax';
-                    trelax = tic;
-                    delete(htrg)
                 end
             case 'success'
                 if toc(tsuccess) > timeout

@@ -1,9 +1,9 @@
 %% Data Analysis for individual subject
 addpath(genpath('Tools'));
 
-date =      '20180806';
+date =      '20180808';
 subject =   '01';
-task =      'EMGCO';
+task =      'ForceCO';
 
 switch computer
     case 'PCWIN'
@@ -13,7 +13,7 @@ switch computer
 end
 
 %% Individual block
-code =      '003';
+code =      '001';
 
 filenameforce =  [date,'_s',subject,'_',task,'_Force_',code,'.mat'];
 filenameEMG = [date,'_s',subject,'_',task,'_EMG_',code,'.mat'];
