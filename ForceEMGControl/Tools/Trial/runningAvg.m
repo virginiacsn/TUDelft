@@ -1,18 +1,35 @@
 function[y] = runningAvg(x,window,overlap)
-
+sampleRateEMG = 1024;
 if size(x,2)<size(x,1)
-    xtemp = x';
+    xtemp = x'; % Row is channel
 else
     xtemp = x;
 end
 
-j = 0;
-ytemp = zeros(size(xtemp,1),floor(size(xtemp,2)/window));
-for n = 0:floor(size(xtemp,2)/(window-overlap))-1
-    j = j+1;
-    ytemp(:,j) = mean(xtemp(:,1+(window-overlap)*n:n*(window-overlap)+window),2);
-end
+buffer = zeros(size(xtemp,1),window);
 
+j = 0;
+ytemp = [];
+
+for n = 0:floor(size(xtemp,2)/(overlap))-1
+    j = j+1;
+    bufferTemp = buffer;
+    bufferTemp(:,1:overlap) = xtemp(:,1+(overlap)*n:overlap*(n+1));
+    bufferTemp(:,overlap+1:end) = buffer(:,1:window-overlap);
+    buffer = bufferTemp;
+    
+    wnh = (2/sampleRateEMG)*10;
+    wnl = (2/sampleRateEMG)*30;
+    [b,a] = butter(2,wnh,'high');
+    [d,c] = butter(2,wnl,'low');
+    
+    filtEMGBuffer = filtfilt(b,a,buffer')';
+    filtEMGBuffer = filter(d,c,filtEMGBuffer,[],1);
+    rectEMG = abs(filtEMGBuffer);
+
+    ytemp(:,j) = mean(rectEMG,2);
+end
+        
 % nytemp = floor(size(xtemp,2)/window)*window;
 % if nytemp ~= size(xtemp,2)
 %     ytemp(:,j+1) = mean(xtemp(:,window*(1+n)+1:end),2);

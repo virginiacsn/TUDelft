@@ -39,7 +39,7 @@ Aparams.fs = min(forceparams.scanRate,EMGparams.sampleRateEMG);
 
 trial_data = trialCO(forceEMGData,Aparams);
 
-%trial_data = removeFailTrials(trial_data);
+trial_data = removeFailTrials(trial_data);
 
 trial_data = procEMG(trial_data,Aparams);
 trial_data = procForce(trial_data,Aparams);
@@ -306,7 +306,7 @@ plot(trial_data(itrial).force.filt(:,1),trial_data(itrial).force.filt(:,2));
 hold on;
 h1 = plot(trial_data(itrial).force.filt(1,1),trial_data(itrial).force.filt(1,2),'go');
 h2 = plot(trial_data(itrial).force.filt(end,1),trial_data(itrial).force.filt(end,2),'ro');
-%xlim(taskparams.targetForce*[-1.5 1.5]);ylim(taskparams.targetForce*[-1.5 1.5]);
+xlim(taskparams.targetForce*[-2 2]);ylim(taskparams.targetForce*[-2 2]);
 grid on;
 axis square;
 xlabel('Fx [N]'); ylabel('Fy [N]');

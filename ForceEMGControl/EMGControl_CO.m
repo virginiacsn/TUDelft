@@ -191,8 +191,9 @@ if EMGEnabled
             disp('Offset obtained.')
             
             % Save force file header
-            samplenum = 1;
-            forceDataOut_EMGCO(samplenum,:) = {'Trialnum', 'TargetAng', 'State', 'TimeStamp', 'Fx', 'Fy', 'Fz','Trigger'};
+            sampleNum = 1;
+            forceDataOut_EMGCO(sampleNum,:) = {'Trialnum', 'TargetAng', 'State', 'TimeStamp', 'Fx', 'Fy', 'Fz','Trigger'};
+            EMGDataOut_EMGCO(sampleNum,:) = {'EMG'};
         else
             device = [];
             disp('DAQ device not found.')
@@ -257,8 +258,8 @@ if EMGEnabled
     else
         % Save EMG file header
         if saveEMG
-            samplenum = 1;
-            EMGDataOut_EMGCO(samplenum,:) = {'Trialnum', 'TargetAng', 'State', 'EMG'};
+            sampleNum = 1;
+            EMGDataOut_EMGCO(sampleNum,:) = {'Trialnum', 'TargetAng', 'State', 'EMG'};
         end
         
         EMGDataBuffer = zeros(length(channelControl),smoothWin);
@@ -374,8 +375,8 @@ if EMGEnabled
                 end
                 % Appending trial data
                 if saveEMG
-                    samplenum = samplenum+1;
-                    EMGDataOut_EMGCO(samplenum,:) = {itrial,iAngle,state,appendSamples};
+                    sampleNum = sampleNum+1;
+                    EMGDataOut_EMGCO(sampleNum,:) = {itrial,iAngle,state,appendSamples};
                 end
             end
         end
@@ -399,7 +400,7 @@ if EMGEnabled
         if saveforce
             save([filepath,filenameforce],'forceDataOut_EMGCO')
         end
-        EMGDataOut_EMGCO = emg_data.samples;
+        %EMGDataOut_EMGCO = emg_data.samples;
         save('emg_proc','emg_save')
     end
     if saveEMG
@@ -435,7 +436,7 @@ library.destroy()
         nSamples = size(samples,2);
         appendSamples = samples(channelSubset,:);%-repmat(EMGOffset,1,nSamples))./repmat(EMGScale,1,nSamples);
         
-        emg_data.append(appendSamples)
+        %emg_data.append(appendSamples)
         EMGSamples = samples(channelControl,:);
         
         if nSamples < smoothWin
@@ -534,10 +535,13 @@ library.destroy()
                 end
         end
                 
-        % Appending trial data
+        % Appending trial data            
+        sampleNum = sampleNum+1;
         if saveforce
-            samplenum = samplenum+1;
-            forceDataOut_EMGCO(samplenum,:) = {trialNum,iAngle,state,timeStamp,forceData(:,1),forceData(:,2),forceData(:,3),triggerData};
+            forceDataOut_EMGCO(sampleNum,:) = {trialNum,iAngle,state,timeStamp,forceData(:,1),forceData(:,2),forceData(:,3),triggerData};
+        end
+        if saveEMG
+            EMGDataOut_EMGCO(sampleNum,:) = {appendSamples'};
         end
     end
 

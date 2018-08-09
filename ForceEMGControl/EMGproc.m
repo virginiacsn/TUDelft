@@ -2,20 +2,20 @@ itrial = 8;
 sampleRateEMG = 1024;
 fchEMG = 10;
 fclEMG = 30;
-window = 600;
-overlap = 200;
+window = 800;
+overlap = 100;
 
 EMGDataBuffer = trial_data(itrial).EMG.raw;
+avgrectEMG = runningAvg(EMGDataBuffer,window,overlap);
 
-wnh = (2/sampleRateEMG)*fchEMG;
-wnl = (2/sampleRateEMG)*fclEMG;
-[b,a] = butter(2,wnh,'high');
-[d,c] = butter(2,wnl,'low');
-
-filtEMGBuffer = filtfilt(b,a,EMGDataBuffer);
-filtEMGBuffer = filter(d,c,filtEMGBuffer,[],1);
-rectEMG = abs(filtEMGBuffer);
-avgrectEMG = runningAvg(rectEMG,window,overlap);
+% wnh = (2/sampleRateEMG)*fchEMG;
+% wnl = (2/sampleRateEMG)*fclEMG;
+% [b,a] = butter(2,wnh,'high');
+% [d,c] = butter(2,wnl,'low');
+% 
+% filtEMGBuffer = filtfilt(b,a,EMGDataBuffer);
+% filtEMGBuffer = filter(d,c,filtEMGBuffer,[],1);
+% rectEMG = abs(filtEMGBuffer);
 
 % Rectified and smoothed EMG
 figure;

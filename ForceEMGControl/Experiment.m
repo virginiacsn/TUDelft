@@ -102,7 +102,7 @@ EMGparams.EMGScale = max(EMGmean,[],1)';
 taskparams.targetForce = round(mean(forcemean))*0.5;
 
 %% Force-control task
-fileparams.code = '001';
+fileparams.code = '002';
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
 fileparams.filenameEMG =    [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_EMG_',fileparams.code,'.mat'];

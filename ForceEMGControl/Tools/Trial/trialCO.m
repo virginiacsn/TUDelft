@@ -12,6 +12,10 @@ forceDataOut = varargin{1}{1};
 if length(varargin{1}) > 1
     EMGDataOut = varargin{1}{2};
     
+    if iscell(EMGDataOut)
+        EMGDataOut = cell2mat(EMGDataOut(2:end))';
+    end
+    
     EMG_data = EMGDataOut(1:end-1,:);
     
     EMG_trigger = EMGDataOut(end,:);

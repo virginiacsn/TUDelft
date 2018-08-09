@@ -311,8 +311,7 @@ end
             countState = 0;
             delete(hsta)
         end
-        
-        
+               
         % Trial
         tempState = state;
         

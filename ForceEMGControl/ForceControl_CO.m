@@ -176,6 +176,7 @@ if ~isempty(device)
     if saveforce
         sampleNum = 1;
         forceDataOut_ForceCO(sampleNum,:) = {'Trialnum', 'TargetAng', 'State', 'TimeStamp', 'Fx', 'Fy', 'Fz','Trigger'};
+        EMGDataOut_ForceCO(sampleNum,:) = {'EMG'};
     end
 
     % Start EMG data sampling
@@ -197,18 +198,20 @@ if ~isempty(device)
     s.NotifyWhenDataAvailableExceeds = availSamples; % Call listener when x samples are available
     s.startBackground();
     
-    if trialNum == numTrials
-        s.stop();
-    else
-        input('\Press enter to stop acquisition.')
-    end
+%     if trialNum == numTrials
+%         s.stop();
+%     else
+%         input('\Press enter to stop acquisition.')
+%     end
+
+    input('\Press enter to stop acquisition.')
     
     % Save data
     if saveforce
         save([filepath,filenameforce],'forceDataOut_ForceCO')
     end
     if saveEMG && EMGEnabled
-        EMGDataOut_ForceCO = emg_data.samples;
+        %EMGDataOut_ForceCO = emg_data.samples;
         save([filepath,filenameEMG],'EMGDataOut_ForceCO')
     end
      
@@ -379,13 +382,16 @@ end
         % Appending EMG data
         if EMGEnabled
             samples = sampler.sample();
-            emg_data.append(samples(channelSubset,:));
+            appendSamples = samples(channelSubset,:);
         end
         
         % Appending trial data 
-        if saveforce 
-            sampleNum = sampleNum+1;
+        sampleNum = sampleNum+1;
+        if saveforce
             forceDataOut_ForceCO(sampleNum,:) = {trialNum,iAngle,state,timeStamp,forceData(:,1),forceData(:,2),forceData(:,3),triggerData};
+        end
+        if saveEMG
+            EMGDataOut_ForceCO(sampleNum,:) = {appendSamples'};
         end
     end
 
