@@ -9,7 +9,7 @@ function ForceControl_CO(varargin)
 saveforce =     0;
 saveEMG =       0;
 date =          '20180711';
-subject =       1;
+subject =       100;
 task =          'CO';
 code =          '001';
 filenameforce =  [date,'_s',subject,'_',task,'_Force_',code,'.mat'];
@@ -99,14 +99,6 @@ if ~isempty(device)
     else
         fprintf('Not saving data.\n\n')
     end
-        
-    % Create NI DAQ session
-    disp('Creating NI DAQ session.')
-    s = daq.createSession('ni');
-    addAnalogInputChannel(s,device.ID,0:6,'Voltage');
-    if saveEMG
-        addAnalogOutputChannel(s,device.ID,'ao0','Voltage');
-    end
     
     % Initialize EMG
     if saveEMG
@@ -124,10 +116,19 @@ if ~isempty(device)
     else
         disp('EMG could not be initialized.')
     end
+    fprintf('\n')
+
+    % Create NI DAQ session
+    disp('Creating NI DAQ session.')
+    s = daq.createSession('ni');
+    addAnalogInputChannel(s,device.ID,0:6,'Voltage');
+    if saveEMG
+        addAnalogOutputChannel(s,device.ID,'ao0','Voltage');
+    end
     
     % Obtain offset by averaging 2 sec of still data
     input('Press enter when prepared for sensor offset calculation.')
-    fprintf('\nObtaining offset values...\n')
+    fprintf('Obtaining offset values...\n')
     if saveEMG
         queueOutputData(s,zeros(2*scanRate,1));
     end

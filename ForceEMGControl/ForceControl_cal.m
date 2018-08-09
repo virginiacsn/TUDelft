@@ -56,6 +56,7 @@ rCirCursor =        targetForce*targetTol/cursorTol; % [N]
 if strcmp(code,'calib');
     targetForce = 15;
     timeout = 0.5;
+    movemtime = 2;
 end
 
 if length(channelSubset)~=length(channelName)
@@ -101,13 +102,7 @@ if ~isempty(device)
         fprintf('Not saving data.\n\n')
     end
         
-    % Create NI DAQ session
-    disp('Creating NI DAQ session.')
-    s = daq.createSession('ni');
-    addAnalogInputChannel(s,device.ID,0:6,'Voltage');
-    if saveEMG
-        addAnalogOutputChannel(s,device.ID,'ao0','Voltage');
-    end
+
     
     % Initialize EMG
     if saveEMG
@@ -125,10 +120,19 @@ if ~isempty(device)
     else
         disp('EMG could not be initialized.')
     end
+    fprintf('\n')
+
+        % Create NI DAQ session
+    disp('Creating NI DAQ session.')
+    s = daq.createSession('ni');
+    addAnalogInputChannel(s,device.ID,0:6,'Voltage');
+    if saveEMG
+        addAnalogOutputChannel(s,device.ID,'ao0','Voltage');
+    end
     
     % Obtain offset by averaging 2 sec of still data
     input('Press enter when prepared for sensor offset calculation.')
-    fprintf('\nObtaining offset values...\n')
+    fprintf('Obtaining offset values...\n')
     if saveEMG
         queueOutputData(s,zeros(2*scanRate,1));
     end
@@ -150,17 +154,17 @@ if ~isempty(device)
     
     % Initialize variables
     global tmove trelax tfail tsuccess tholdstart
-    global targetCir iAngle
+    global iAngle reptarg
     global htrg hsta htrl
     
     trialNum = 0;
-    cursorHoldOut = 0;
     countState = 0;
     countBuffer = 0;
     forceDataBuffer = zeros(bufferWin,3);
     state = 'start';
     tempState = 'start';
     iAngle = 0;
+    reptarg = 0;
     
     % Set target forces
     %targetAngles(targetAngles == 2*pi) = [];
@@ -317,13 +321,23 @@ end
                 xl = xlim; yl = ylim;
                 delete(htrl)
                 htrl = text(xl(2)+0.3*xl(2),yl(2),['Trial: ',num2str(trialNum)],'clipping','off','Fontsize',14);
+       
+                iAngle = iAngle+1;
                 
+                if reptarg
+                    if iAngle == 1
+                        iAngle = length(targetAnglesForce);
+                    else
+                        iAngle = iAngle-1;
+                    end
+                    reptarg = 0;
+                end
                 if iAngle > length(targetAnglesForce)
-                    iAngle = 0;
+                    iAngle = 1;
                 end
                 
-                iAngle = 1+iAngle;
                 htrg = plot([0 targetPosx(iAngle)],[0 targetPosy(iAngle)],'r','Linewidth',3);
+                
                 
                 state = 'movement';
                 tmove = tic;
@@ -352,6 +366,13 @@ end
                     state = 'relax';
                     trelax = tic;
                     delete(htrg)
+                end
+            case 'fail'
+                if toc(tfail) > timeout
+                    state = 'relax';
+                    trelax = tic;
+                    delete(htrg)
+                    reptarg = 1;
                 end
             case 'relax'
                 if cursorInTarget(cursorCir,circle(1.5*calCirCursor,0,0)) && toc(trelax) > relaxtime && calCirCursor <= 2*rCirCursor

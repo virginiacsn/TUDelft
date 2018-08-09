@@ -8,7 +8,7 @@ addpath(genpath('Tools'));
 fileparams = struct(...
     'saveforce',    1,...
     'saveEMG',      1,...
-    'date',         '20180808',...
+    'date',         '20180809',...
     'subject',      '01',...
     'task',         'ForceCO');
 
@@ -23,13 +23,13 @@ fileparams.filepath =       ['D:\Student_experiments\Virginia\Data\',fileparams.
 EMGparams = struct(...
     'plotEMG',          0,...
     'EMGEnabled',       0,...
-    'channelSubset',    [1 3 17],...
-    'channelControl',   [1 3],...
-    'channelName',      {{'BB','TLH','Trigger'}},...
+    'channelSubset',    [1 2 17],...
+    'channelControl',   [1 2],...
+    'channelName',      {{'BB','TL','Trigger'}},...
     'sampleRateEMG',    1024,... % [samples/sec]
     'fchEMG',           10,... % [Hz]
     'fclEMG',           30,... % [Hz]
-    'smoothWin',        600,... % [samples]
+    'smoothWin',        800,... % [samples]
     'pauseSamp',        0.04,... % [s]
     'iterUpdatePlotEMG',1);
 
@@ -69,26 +69,15 @@ if strcmp(fileparams.task,'ForceCO')
     ForceControl_cal(fileparams,taskparams,forceparams,EMGparams);
 end
 
-%% Force-control task
-fileparams.code = '001';
-
-fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
-fileparams.filenameEMG =    [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_EMG_',fileparams.code,'.mat'];
-
-if strcmp(fileparams.task,'ForceCO')
-    ForceControl_CO(fileparams,taskparams,forceparams,EMGparams);
-end
-
 %% Pre-analysis
 load([fileparams.filepath,fileparams.filenameforce]);
 load([fileparams.filepath,fileparams.filenameEMG]);
 
 forceEMGData = {forceDataOut_ForceCO,EMGDataOut_ForceCO};
-
 PreAparams.downsample = 2;
 PreAparams.target_angles = taskparams.targetAnglesForce;
 PreAparams.avgWindow = 200;
-PreAparams.fclF = 5;
+PreAparams.fclF = forceparams.fclF;
 PreAparams.fchEMG = 10;
 
 trial_data = trialCO(forceEMGData,PreAparams);
@@ -99,26 +88,39 @@ trial_data = procEMG(trial_data,PreAparams);
 trial_data = procForce(trial_data,PreAparams);
 
 epoch = {'ihold','iend'};
-fields = {'EMG.rect'};
+fields = {'EMG.rect','force.filtmag','force.rawmag','force.filt','force.raw'};
 trial_data_avg = trialAngleAvg(trial_data, epoch, fields);
 
 EMGmean = zeros(length(trial_data_avg),length(EMGparams.channelControl));
+forcemean = zeros(length(trial_data_avg),1);
 for i = 1:length(trial_data_avg)
     EMGmean(i,:) = trial_data_avg(i).EMG.rect_mean;
+    forcemean(i) = trial_data_avg(i).force.filtmag_mean;
 end
 
 EMGparams.EMGScale = max(EMGmean,[],1)';
+taskparams.targetForce = round(mean(forcemean))*0.5;
+
+%% Force-control task
+fileparams.code = '001';
+
+fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
+fileparams.filenameEMG =    [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_EMG_',fileparams.code,'.mat'];
+
+if strcmp(fileparams.task,'ForceCO')
+    ForceControl_CO(fileparams,taskparams,forceparams,EMGparams);
+end
 
 %% EMG-control task
 fileparams.task = 'EMGCO';
 
-fileparams.filenameforce =  [fileparams.date,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
-fileparams.filenameEMG =    [fileparams.date,'_',fileparams.task,'_EMG_',fileparams.code,'.mat'];
+fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
+fileparams.filenameEMG =    [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_EMG_',fileparams.code,'.mat'];
 
 EMGparams.fchEMG = 10;
 EMGparams.fclEMG = 30;
 EMGparams.smoothWin = 800;
-taskparams.targetEMG = 0.3;
+taskparams.targetEMG = 1;
     
 if strcmp(fileparams.task,'EMGCO') 
     EMGControl_CO(fileparams,taskparams,forceparams,EMGparams);

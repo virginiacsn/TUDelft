@@ -1,9 +1,9 @@
 %% Data Analysis for individual subject
 addpath(genpath('Tools'));
 
-date =      '20180808';
+date =      '20180809';
 subject =   '01';
-task =      'ForceCO';
+task =      'EMGCO';
 
 switch computer
     case 'PCWIN'
@@ -39,7 +39,7 @@ Aparams.fs = min(forceparams.scanRate,EMGparams.sampleRateEMG);
 
 trial_data = trialCO(forceEMGData,Aparams);
 
-trial_data = removeFailTrials(trial_data);
+%trial_data = removeFailTrials(trial_data);
 
 trial_data = procEMG(trial_data,Aparams);
 trial_data = procForce(trial_data,Aparams);

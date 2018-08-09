@@ -184,7 +184,7 @@ if EMGEnabled
             
             % Obtain offset by averaging 2 sec of still data
             input('Press enter when prepared for sensor offset calculation.')
-            fprintf('\nObtaining offset values...\n')
+            fprintf('Obtaining offset values...\n')
             queueOutputData(s,zeros(2*scanRate,1));
             forceOffsetData = s.startForeground();
             forceOffset = mean(forceOffsetData(:,1:6),1);
