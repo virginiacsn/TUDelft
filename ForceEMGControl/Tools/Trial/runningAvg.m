@@ -23,11 +23,11 @@ for n = 0:floor(size(xtemp,2)/(overlap))-1
     [b,a] = butter(2,wnh,'high');
     [d,c] = butter(2,wnl,'low');
     
-    filtEMGBuffer = filtfilt(b,a,buffer')';
-    filtEMGBuffer = filter(d,c,filtEMGBuffer,[],1);
-    rectEMG = abs(filtEMGBuffer);
+    filtEMGBuffer = filtfilt(b,a,buffer')';    
+    filtEMGBuffer = filtfilt(d,c,filtEMGBuffer')';
+    finEMG = abs(filtEMGBuffer);
 
-    ytemp(:,j) = mean(rectEMG,2);
+    ytemp(:,j) = mean(finEMG,2);
 end
         
 % nytemp = floor(size(xtemp,2)/window)*window;

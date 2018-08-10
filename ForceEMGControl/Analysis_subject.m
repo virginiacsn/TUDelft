@@ -1,9 +1,9 @@
 %% Data Analysis for individual subject
 addpath(genpath('Tools'));
 
-date =      '20180809';
+date =      '20180810';
 subject =   '01';
-task =      'EMGCO';
+task =      'ForceCO';
 
 switch computer
     case 'PCWIN'
@@ -85,15 +85,16 @@ end
 
 %% Trial-average
 epoch = {'ihold','iend'};
-fields = {'EMG.filt','EMG.rect','EMG.avg','force.filt'};
+fields = {'EMG.raw','EMG.filt','EMG.rect','EMG.avg','force.filt'};
 trial_data_avg = trialAngleAvg(trial_data, epoch, fields);
 trial_data_app = trialAngleApp(trial_data, epoch, fields);
 
-%% EMG 
 data_analysis = trial_data_avg;
 
 target_angles = sort(unique(extractfield(data_analysis,'angle')));
 nangles = length(target_angles);
+
+%% EMG 
 nmusc = length(EMGparams.channelName)-1;
 musccont = EMGparams.channelControl;
 nmusccomb = (length(EMGparams.channelName)-1)*(length(EMGparams.channelName)-2)/2; % n*(n-1)/2
@@ -147,25 +148,25 @@ for j = 1:nmusccomb
 end
 
 % My coherence
-for j = 1:nmusccomb
-    figure;
-    
-    set(gcf,'Name','My coherence');
-    for i = 1:nangles
-        if rem(nangles,2) == 0
-            subplot(2,nangles/2,i);
-        else
-            subplot(1,nangles,i);
-        end
-        plot(trial_data_coh(i).(field).my_fcoh(:,j),trial_data_coh(i).(field).my_coh(:,j));
-        hold on;
-        %plot(trial_data_coh(i).(field).my_fcoh(:,j),movingAvg(trial_data_coh(i).(field).my_coh(:,j),3));
-        line(xlim,trial_data_coh(i).(field).my_CL(j)*[1 1]);
-        xlim([trial_data_coh(i).(field).my_fcoh(2,j) fc])
-        xlabel('Frequency [Hz]'); ylabel('Coh [-]');
-        title(['Musc: ',trial_data_coh(i).(field).muscles{j}{1},',',trial_data_coh(i).(field).muscles{j}{2},'; Target: ',num2str(rad2deg(trial_data_coh(i).angle)),' deg']);
-    end
-end
+% for j = 1:nmusccomb
+%     figure;
+%     
+%     set(gcf,'Name','My coherence');
+%     for i = 1:nangles
+%         if rem(nangles,2) == 0
+%             subplot(2,nangles/2,i);
+%         else
+%             subplot(1,nangles,i);
+%         end
+%         plot(trial_data_coh(i).(field).my_fcoh(:,j),trial_data_coh(i).(field).my_coh(:,j));
+%         hold on;
+%         %plot(trial_data_coh(i).(field).my_fcoh(:,j),movingAvg(trial_data_coh(i).(field).my_coh(:,j),3));
+%         line(xlim,trial_data_coh(i).(field).my_CL(j)*[1 1]);
+%         xlim([trial_data_coh(i).(field).my_fcoh(2,j) fc])
+%         xlabel('Frequency [Hz]'); ylabel('Coh [-]');
+%         title(['Musc: ',trial_data_coh(i).(field).muscles{j}{1},',',trial_data_coh(i).(field).muscles{j}{2},'; Target: ',num2str(rad2deg(trial_data_coh(i).angle)),' deg']);
+%     end
+% end
 
 %% Time analysis
 % Rectified and smoothed EMG
