@@ -1,19 +1,21 @@
 %% Data Analysis for individual subject
 addpath(genpath('Tools'));
 
-date =      '20180809';
+date =      '20180806';
 subject =   '01';
 task =      'EMGCO';
 
 switch computer
     case 'PCWIN'
         filepath =  ['D:\Student_experiments\Virginia\Data\',date,'\s',subject,'\'];
+        paramfolder = 'Parameters\';
     case 'MACI64'
         filepath =  ['/Users/virginia/Documents/MATLAB/Thesis/Data/',date,'/s',subject,'/'];
+        paramfolder = 'Parameters/';
 end
 
 %% Individual block
-code =      '001';
+code =      '003';
 
 filenameforce =  [date,'_s',subject,'_',task,'_Force_',code,'.mat'];
 filenameEMG = [date,'_s',subject,'_',task,'_EMG_',code,'.mat'];
@@ -21,7 +23,7 @@ filenameparams = [date,'_s',subject,'_params_',code,'.mat'];
 
 load([filepath,filenameforce]);
 load([filepath,filenameEMG]);
-load([filepath,'Parameters\',filenameparams]);
+load([filepath,paramfolder,filenameparams]);
 
 Aparams.downsample = forceparams.scanRate/EMGparams.sampleRateEMG;
 Aparams.channelNameEMG = EMGparams.channelName;

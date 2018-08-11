@@ -1,12 +1,12 @@
-itrial = 8;
+itrial = 2;
 sampleRateEMG = 1024;
 fchEMG = 10;
 fclEMG = 30;
 window = 800;
-overlap = 100;
+overlap = 200;
 
 EMGDataBuffer = trial_data(itrial).EMG.raw;
-avgrectEMG = runningAvg(EMGDataBuffer,window,overlap);
+avgrectEMG = runningAvg(EMGDataBuffer,window,overlap,fchEMG,fclEMG);
 
 % wnh = (2/sampleRateEMG)*fchEMG;
 % wnl = (2/sampleRateEMG)*fclEMG;
