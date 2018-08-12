@@ -46,6 +46,7 @@ plotEMG =           0;
 channelSubset =     [1 2];
 channelControl =    [1 2];
 channelName =       {'BB','TL'};
+channelAngle =      [];
 sampleRateEMG =     1024;
 fchEMG =            10; % [Hz]
 fclEMG =            30;
@@ -66,6 +67,17 @@ rCirCursor =        targetEMG*targetTol/cursorTol; % [N]
 
 if length(channelSubset)~=length(channelName)
     error('Names for all channels not available.')
+end
+
+if ~isempty(channelAngle)
+    if numTargetsEMG == 2
+        [targetAnglesEMG,isort] = sort(channelAngle(channelControl));
+        channelControl = channelControl(isort);
+    elseif numTargetsEMG == 3
+        [targetAnglesEMG,isort] = sort([channelAngle(channelControl(1)) mean(channelAngle(channelControl)) channelAngle(channelControl(2))]);
+        channelControlTemp = [channelControl(1) 0 channelControl(2)];
+        channelControl = channelControlTemp(isort([1 3]));
+    end
 end
 
 %% Initialization
@@ -134,7 +146,7 @@ if EMGEnabled
     fprintf('\n')
     
     if isempty(EMGScale)
-        MVCScale = zeros(length(channelControl),1);
+        MVCScale = zeros(length(channelSubset)-1,1);
         for j = 1:length(channelControl)
             str = ['Press enter when prepared for ',channelName{channelSubset==channelControl(j)},' EMG MVC calculation.'];
             input(str)
@@ -154,7 +166,7 @@ if EMGEnabled
             
             samplesMVCFilt = filtfilt(b,a,samplesMVC);
             samplesMVCFilt = filter(d,c,samplesMVCFilt);
-            MVCScale(j) = mean(abs(samplesMVCFilt),2);
+            MVCScale(channelControl(j)) = mean(abs(samplesMVCFilt),2);
         end
         EMGScale = MVCScale;
         
@@ -219,7 +231,7 @@ if EMGEnabled
     hf = figure('Name','CO EMG Control Task');
     [hf,hp] = Figinit(hf,targetEMG*[1 1]);
     title('EMG');
-    xlabel(channelName{1}); ylabel(channelName{2});
+    xlabel(channelName{channelControl(1)}); ylabel(channelName{channelControl(2)});
     xl = xlim; yl = ylim;
     htrl = text(xl(2)+0.3*xl(2),yl(2),'Trial: 0','clipping','off','Fontsize',14);
     %set(gca,'XTickLabel',[],'YTickLabel',[])
@@ -455,10 +467,14 @@ library.destroy()
         filtEMGBuffer = filtfilt(b,a,EMGDataBuffer')';
         filtEMGBuffer = filter(d,c,filtEMGBuffer,[],2);
  
-        avgRectEMGBuffer = (mean(abs(filtEMGBuffer),2)-EMGOffset)./(EMGScale); % Rectify, smooth and scale
+        avgRectEMGBuffer = (mean(abs(filtEMGBuffer),2)-EMGOffset)./(EMGScale(channelControl)); % Rectify, smooth and scale
         avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;
         emg_save = [emg_save,avgRectEMGBuffer];
-        [EMGDatax,EMGDatay] = EMG2xy(avgRectEMGBuffer,numTargetsEMG);
+        [minAng,minMusc] = min(targetAnglesEMG);
+        if minMusc == 2
+            avgRectEMGBuffer = flip(avgRectEMGBuffer);
+        end
+        [EMGDatax,EMGDatay] = EMG2xy(avgRectEMGBuffer,minAng);
         
         cursorCir = circle(rCirCursor,EMGDatax,EMGDatay);
         set(hp,'xdata',cursorCir(:,1)','ydata',cursorCir(:,2)');

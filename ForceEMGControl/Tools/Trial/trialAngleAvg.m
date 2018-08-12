@@ -34,7 +34,20 @@ for iangle = 1:length(angles)
         trial_data_avg(iangle).(field_str{1}).([field_str{2},'_fft']) = fft(trial_data_avg(iangle).(field_str{1}).(field_str{2}));
         %trial_data_avg(iangle).(field_str{1}).([field_str{2},'_fft']) = reshape(mean(field_data_fft,2),length(sampv),field_col);
     end
-end
+%     for ifield = 1:length(fields)
+%         field_str = strsplit(fields{ifield},'.');
+%         if strcmp(field_str{2},'rect')
+%             trial_data_avg(iangle).(field_str{1}).([field_str{2},'_mean']) = mean(field_data_mean,1);
+%             trial_data_avg(iangle).(field_str{1}).(field_str{2}) = reshape(mean(field_data,2),length(sampv),field_col);
+%             %trial_data_avg(iangle).(field_str{1}).(field_str{2}) = ifft(reshape(mean(field_data_fft,2),length(sampv),field_col),[],2);%reshape(mean(field_data,2),length(sampv),field_col);
+%             trial_data_avg(iangle).(field_str{1}).([field_str{2},'_fft']) = fft(trial_data_avg(iangle).(field_str{1}).(field_str{2}));
+%         elseif strcmp(field_str{2},'avg')
+%             trial_data_avg(iangle).(field_str{1}).([field_str{2},'_mean']) = mean(field_data_mean,1);
+%             trial_data_avg(iangle).(field_str{1}).(field_str{2}) = reshape(mean(field_data,2),length(sampv),field_col);
+%             %trial_data_avg(iangle).(field_str{1}).(field_str{2}) = ifft(reshape(mean(field_data_fft,2),length(sampv),field_col),[],2);%reshape(mean(field_data,2),length(sampv),field_col);
+%             trial_data_avg(iangle).(field_str{1}).([field_str{2},'_fft']) = fft(trial_data_avg(iangle).(field_str{1}).(field_str{2}));   
+%         end
+%     end
 end
 
         
