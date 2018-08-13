@@ -28,8 +28,8 @@ EMGparams = struct(...
     'channelName',      {{'ECRB','FCR','BB','TLat','TLH','DA','DP','Trigger'}},...
     'channelAngle',     [0 0 pi pi/2 pi/2 pi/2 0],...
     'sampleRateEMG',    1024,... % [samples/sec]
-    'fchEMG',           10,... % [Hz]
-    'fclEMG',           30,... % [Hz]
+    'fchEMG',           30,... % [Hz]
+    'fclEMG',           60,... % [Hz]
     'smoothWin',        800,... % [samples]
     'pauseSamp',        0.04,... % [s]
     'iterUpdatePlotEMG',1);
@@ -79,7 +79,7 @@ PreAparams.downsample = 2;
 PreAparams.target_angles = taskparams.targetAnglesForce;
 PreAparams.avgWindow = 200;
 PreAparams.fclF = forceparams.fclF;
-PreAparams.fchEMG = 10;
+PreAparams.fchEMG = 20;
 
 trial_data = trialCO(forceEMGData,PreAparams);
 
@@ -89,18 +89,19 @@ trial_data = procEMG(trial_data,PreAparams);
 trial_data = procForce(trial_data,PreAparams);
 
 epoch = {'ihold','iend'};
-fields = {'EMG.rect','force.filtmag','force.rawmag','force.filt','force.raw'};
+fields = {'EMG.raw','force.filtmag','force.rawmag','force.filt','force.raw'};
 trial_data_avg = trialAngleAvg(trial_data, epoch, fields);
+trial_data_avg = procEMG(trial_data_avg,PreAparams);
 
 EMGmean = zeros(length(trial_data_avg),length(EMGparams.channelSubset)-1);
 forcemean = zeros(length(trial_data_avg),1);
 for i = 1:length(trial_data_avg)
-    EMGmean(i,:) = trial_data_avg(i).EMG.rect_mean;
+    EMGmean(i,:) = mean(trial_data_avg(i).EMG.rect,1);
     forcemean(i) = trial_data_avg(i).force.filtmag_mean;
 end
 
-EMGparams.EMGScale = max(EMGmean,[],1)';
-taskparams.targetForce = round(mean(forcemean))*0.5;
+% EMGparams.EMGScale = max(EMGmean,[],1)';
+% taskparams.targetForce = round(mean(forcemean))*0.5;
 
 %% Force-control task
 fileparams.code = '001';

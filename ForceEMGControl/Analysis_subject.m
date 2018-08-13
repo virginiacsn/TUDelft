@@ -25,7 +25,7 @@ load([filepath,filenameforce]);
 load([filepath,filenameEMG]);
 load([filepath,paramfolder,filenameparams]);
 
-Aparams.downsample = forceparams.scanRate/EMGparams.sampleRateEMG;
+Aparams.downsamp = forceparams.scanRate/EMGparams.sampleRateEMG;
 Aparams.channelNameEMG = EMGparams.channelName;
 if strcmp(task,'ForceCO')
     forceEMGData = {forceDataOut_ForceCO,EMGDataOut_ForceCO};
@@ -48,7 +48,7 @@ trial_data = procEMG(trial_data,Aparams);
 trial_data = procForce(trial_data,Aparams);
 
 %% All blocks
-code =      {'002','003'};
+code = {'002','003'};
 
 trial_data_block = [];
 
@@ -61,7 +61,7 @@ for i = 1:length(code)
     load([filepath,filenameEMG]);
     load([filepath,'Parameters/',filenameparams]);
     
-    Aparams.downsample = forceparams.scanRate/EMGparams.sampleRateEMG;
+    Aparams.downsamp = forceparams.scanRate/EMGparams.sampleRateEMG;
     Aparams.channelNameEMG = EMGparams.channelName;
     if strcmp(task,'ForceCO')
         forceEMGData = {forceDataOut_ForceCO,EMGDataOut_ForceCO};

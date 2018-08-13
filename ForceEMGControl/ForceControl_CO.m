@@ -379,18 +379,17 @@ end
                 end
         end
         
-        % Appending EMG data
-        if EMGEnabled
-            samples = sampler.sample();
-            appendSamples = samples(channelSubset,:);
-        end
+
         
         % Appending trial data 
         sampleNum = sampleNum+1;
         if saveforce
             forceDataOut_ForceCO(sampleNum,:) = {trialNum,iAngle,state,timeStamp,forceData(:,1),forceData(:,2),forceData(:,3),triggerData};
         end
-        if saveEMG
+        % Appending EMG data
+        if saveEMG && EMGEnabled
+            samples = sampler.sample();
+            appendSamples = samples(channelSubset,:);
             EMGDataOut_ForceCO(sampleNum,:) = {appendSamples'};
         end
     end

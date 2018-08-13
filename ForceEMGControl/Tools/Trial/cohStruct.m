@@ -33,7 +33,7 @@ for i = 1:length(trial_data)
     my_overlap = round(length(my_win)/2);
     
     EMG_struct = trial_data(i).EMG;
-    if isfield(trial_data,'iapp');
+    if isfield(trial_data,'iapp')
         iapp = trial_data(i).iapp;
     end
     
@@ -45,7 +45,7 @@ for i = 1:length(trial_data)
                 trial_data_coh(i).(EMG_fields{j}).muscles{h} = {channelName{k},channelName{l}};
                 [trial_data_coh(i).(EMG_fields{j}).coh(:,h),trial_data_coh(i).(EMG_fields{j}).fcoh(:,h)] = mscohere(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),win,overlap,[],fs);
 
-                L = round(length(EMG_struct.(EMG_fields{j})(:,k))/length(win));%*trial_data(i).ntrials;
+                L = round(length(EMG_struct.(EMG_fields{j})(:,k))/(length(win)-overlap));%*trial_data(i).ntrials;
                 trial_data_coh(i).(EMG_fields{j}).CL(h) = 1-alp^(1/(L-1)); 
                 
                 if isfield(trial_data,'iapp')
