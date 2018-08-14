@@ -219,7 +219,7 @@ if EMGEnabled
     input('\nPress enter to start acquisition.')
     
     % Initialize variables
-    global htrl
+    global htrl 
     
     countState = 0;
     
@@ -243,12 +243,14 @@ if EMGEnabled
         % Initialize variables
         global tmove trelax tfail tsuccess tholdstart
         global targetCir iAngle trialNum
-        global htrg hsta
+        global htrg hsta hsuc
         
         trialNum = 0;
-        EMGDataBuffer = zeros(length(channelControl),smoothWin);
         countBuffer = 0;
+        countSuccess = 0;
         cursorHoldOut = 0;
+        EMGDataBuffer = zeros(length(channelControl),smoothWin);
+
         state = 'start';
         tempState = 'start';
         emg_save = [];
@@ -487,7 +489,7 @@ library.destroy()
         if strcmp(state,tempState) && countState == 0
             countState = countState+1;
             xl = xlim;
-            hsta = text(xl(2)+0.3*xl(2),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',16);
+            hsta = text(xl(2)+0.3*xl(2),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',24);
         elseif ~strcmp(state,tempState) && countState > 0
             countState = 0;
             delete(hsta)
@@ -500,8 +502,10 @@ library.destroy()
             case 'start'                
                 xl = xlim; yl = ylim;
                 delete(htrl)
+                delete(hsuc)
                 htrl = text(xl(2)+0.3*xl(2),yl(2),['Trial: ',num2str(trialNum)],'clipping','off','Fontsize',14);
-                
+                hsuc = text(xl(2)+0.3*xl(2),yl(2)-0.1*yl(2),['Successes: ',num2str(countSuccess)],'clipping','off','Fontsize',14);
+
                 iAngle = randi(numTargetsEMG);
                 targetCir = circle(rCirTarget,targetPosx(iAngle),targetPosy(iAngle));
                 htrg = plot(targetCir(:,1),targetCir(:,2),'r','Linewidth',3);
@@ -540,6 +544,7 @@ library.destroy()
                 end
             case 'success'
                 if toc(tsuccess) > timeout
+                    countSuccess = countSuccess+1;
                     state = 'relax';
                     trelax = tic;
                     delete(htrg)

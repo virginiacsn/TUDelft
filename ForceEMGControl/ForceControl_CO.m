@@ -151,13 +151,15 @@ if ~isempty(device)
     % Initialize variables
     global tmove trelax tfail tsuccess tholdstart
     global targetCir iAngle
-    global htrg hsta htrl
+    global htrg hsta htrl hsuc
     
     trialNum = 0;
-    cursorHoldOut = 0;
     countState = 0;
     countBuffer = 0;
+    countSuccess = 0;
+    cursorHoldOut = 0;
     forceDataBuffer = zeros(bufferWin,3);
+    
     state = 'start';
     tempState = 'start';
     
@@ -304,7 +306,7 @@ end
         if strcmp(state,tempState) && countState == 0
             countState = countState+1;
             xl = xlim;
-            hsta = text(xl(2)+0.3*xl(2),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',16);
+            hsta = text(xl(2)+0.3*xl(2),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',24);
         elseif ~strcmp(state,tempState) && countState > 0
             countState = 0;
             delete(hsta)
@@ -318,7 +320,9 @@ end
             case 'start'
                 xl = xlim; yl = ylim;
                 delete(htrl)
-                htrl = text(xl(2)+0.3*xl(2),yl(2),['Trial: ',num2str(trialNum)],'clipping','off','Fontsize',14);
+                delete(hsuc)
+                htrl = text(xl(2)+0.3*xl(2),yl(2),['Trial: ',num2str(trialNum)],'clipping','off','Fontsize',16);
+                hsuc = text(xl(2)+0.3*xl(2),yl(2)-0.1*yl(2),['Successes: ',num2str(countSuccess)],'clipping','off','Fontsize',16);
                 
                 iAngle = randi(numTargetsForce);
                 targetCir = circle(rCirTarget,targetPosx(iAngle),targetPosy(iAngle));
@@ -368,6 +372,7 @@ end
                 end
             case 'success'
                 if toc(tsuccess) > timeout
+                    countSuccess = countSuccess+1;
                     state = 'relax';
                     trelax = tic;
                     delete(htrg)
@@ -378,9 +383,7 @@ end
                     trialNum = trialNum+1;
                 end
         end
-        
-
-        
+   
         % Appending trial data 
         sampleNum = sampleNum+1;
         if saveforce

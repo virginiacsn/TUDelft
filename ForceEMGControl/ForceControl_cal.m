@@ -308,7 +308,7 @@ end
         if strcmp(state,tempState) && countState == 0
             countState = countState+1;
             xl = xlim;
-            hsta = text(xl(2)+0.3*xl(2),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',16);
+            hsta = text(xl(2)+0.3*xl(2),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',24);
         elseif ~strcmp(state,tempState) && countState > 0
             countState = 0;
             delete(hsta)
@@ -321,7 +321,7 @@ end
             case 'start'
                 xl = xlim; yl = ylim;
                 delete(htrl)
-                htrl = text(xl(2)+0.3*xl(2),yl(2),['Trial: ',num2str(trialNum)],'clipping','off','Fontsize',14);
+                htrl = text(xl(2)+0.3*xl(2),yl(2),['Trial: ',num2str(trialNum)],'clipping','off','Fontsize',16);
        
                 iAngle = iAngle+1;
                 
