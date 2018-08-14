@@ -21,12 +21,17 @@ for n = 0:floor(size(xtemp,2)/(overlap))-1
     buffer = bufferTemp;
     
     wnh = (2/sampleRateEMG)*fchEMG;
-    wnl = (2/sampleRateEMG)*fclEMG;
     [b,a] = butter(2,wnh,'high');
-    [d,c] = butter(2,wnl,'low'); 
+    
+    if ~isempty(fclEMG)
+        wnl = (2/sampleRateEMG)*fclEMG;
+        [d,c] = butter(2,wnl,'low');
+    end
 
-    filtEMGBuffer = filtfilt(b,a,buffer')';    
-    filtEMGBuffer = filtfilt(d,c,filtEMGBuffer')';
+    filtEMGBuffer = filtfilt(b,a,buffer')';
+    if ~isempty(fclEMG)
+        filtEMGBuffer = filtfilt(d,c,filtEMGBuffer')';
+    end
     finEMG = abs(filtEMGBuffer);
 
     ytemp(:,j) = mean(finEMG,2);

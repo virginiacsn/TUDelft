@@ -50,10 +50,10 @@ if ~isempty(varargin)
     end
 end
 
-rCirTarget =        targetForce*targetTol; % [N]
+%rCirTarget =        targetForce*targetTol; % [N]
 rCirCursor =        targetForce*targetTol/cursorTol; % [N]
 
-if strcmp(code,'calib');
+if strcmp(code,'calib')
     targetForce = 15;
     timeout = 0.5;
     movemtime = 2;
@@ -182,7 +182,10 @@ if ~isempty(device)
         sampleNum = 1;
         forceDataOut_ForceCO(sampleNum,:) = {'Trialnum', 'TargetAng', 'State', 'TimeStamp', 'Fx', 'Fy', 'Fz','Trigger'};
     end
-
+    if saveEMG
+        sampleNum = 1;
+        EMGDataOut_ForceCO(sampleNum,:) = {'EMG'};
+    end
     % Start EMG data sampling
     if EMGEnabled
         sampler.start()
@@ -213,7 +216,6 @@ if ~isempty(device)
         save([filepath,filenameforce],'forceDataOut_ForceCO')
     end
     if saveEMG && EMGEnabled
-        EMGDataOut_ForceCO = emg_data.samples;
         save([filepath,filenameEMG],'EMGDataOut_ForceCO')
     end
      
@@ -380,16 +382,16 @@ end
                 end
         end
         
-        % Appending EMG data
-        if EMGEnabled
-            samples = sampler.sample();
-            emg_data.append(samples(channelSubset,:));
-        end
-        
         % Appending trial data 
         if saveforce 
             sampleNum = sampleNum+1;
             forceDataOut_ForceCO(sampleNum,:) = {trialNum,iAngle,state,timeStamp,forceData(:,1),forceData(:,2),forceData(:,3),triggerData};
+        end
+        % Appending EMG data
+        if saveEMG && EMGEnabled
+            samples = sampler.sample();
+            appendSamples = samples(channelSubset,:);
+            EMGDataOut_ForceCO(sampleNum,:) = {appendSamples'};
         end
     end
 

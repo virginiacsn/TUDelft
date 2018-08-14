@@ -100,8 +100,8 @@ for i = 1:length(trial_data_avg)
     forcemean(i) = trial_data_avg(i).force.filtmag_mean;
 end
 
-% EMGparams.EMGScale = max(EMGmean,[],1)';
-% taskparams.targetForce = round(mean(forcemean))*0.5;
+EMGparams.EMGScale = max(EMGmean,[],1)';
+taskparams.targetForce = round(mean(forcemean))*0.5;
 
 %% Force-control task
 fileparams.code = '001';

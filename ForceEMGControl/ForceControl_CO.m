@@ -71,7 +71,7 @@ if ~isempty(device)
     
     if saveEMG || saveforce
         if exist([filepath,filenameEMG],'file')
-            savefile = input('\nThis file already exsists. Continue saving? (y/n) ','s');
+            savefile = input(['\n',filename,' already exsists. Continue saving? (y/n) '],'s');
             if strcmp(savefile,'y')
                 if saveEMG
                     fprintf('Saving EMG data in %s.\n',filenameEMG)
