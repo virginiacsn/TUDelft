@@ -8,13 +8,27 @@ switch computer
         filepath =  ['/Users/virginia/Documents/MATLAB/Thesis/Data/'];
 end
 
+trial_data_coh_force_pop = [];
+trial_data_coh_EMG_pop = [];
+
 datedir = dir(filepath);
-for i = 2:length(datedir)
+datedir = datedir([datedir.isdir]);
+for i = 3:length(datedir)
     subjectdir = dir([filepath,datedir(i).name]);
-    for j = 1:length(subjectdir)
+    subjectdir = subjectdir([subjectdir.isdir]);
+    for j = 3:length(subjectdir)
+        load([subjectdir(i).folder,'/',subjectdir(i).name,'/trial_data/trial_data_coh_force.mat']);
+        trial_data_coh_force_pop = [trial_data_coh_force_pop, trial_data_coh_force];
         
+        load([subjectdir(i).folder,'/',subjectdir(i).name,'/trial_data/trial_data_coh_EMG.mat']);
+        trial_data_coh_EMG_pop = [trial_data_coh_EMG_pop, trial_data_coh_EMG];
     end
 end
+
+tdc_force_pop_avg = trialAngleAvg(trial_data_coh_force_pop,[],{'rect.coh','rect.z'});
+tdc_EMG_pop_avg = trialAngleAvg(trial_data_coh_EMG_pop,[],{'rect.coh','rect.z'});
+
+%%
 date =      '20180806';
 subject =   '01';
 task =      'ForceCO';

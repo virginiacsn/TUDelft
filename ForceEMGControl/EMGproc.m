@@ -28,11 +28,11 @@ EMGscE = max(EMGmean,[],1)';
 
 EMGDataBuffer = cell2mat(EMGDataOut_EMGCO(2:end));%trial_data_EMG(itrial).EMG.raw;
 avgrectEMG = runningAvg(EMGDataBuffer(:,1:end-1),window,overlap,fchEMG,fclEMG);
-%avgrectEMG = avgrectEMG./repmat(EMGscE,[1 size(avgrectEMG,1)])';
+avgrectEMG = avgrectEMG./repmat(EMGScal,[1 size(avgrectEMG,1)])';
 
 EMGDataBufferF = cell2mat(EMGDataOut_ForceCO(2:end));%trial_data_EMG(itrial).EMG.raw;
 avgrectEMGF = runningAvg(EMGDataBufferF(:,1:end-1),window,overlap,fchEMG,fclEMG);
-%avgrectEMGF = avgrectEMGF./repmat(EMGscf,[1 size(avgrectEMGF,1)])';
+avgrectEMGF = avgrectEMGF./repmat(EMGScal,[1 size(avgrectEMGF,1)])';
 
 % wnh = (2/sampleRateEMG)*fchEMG;
 % wnl = (2/sampleRateEMG)*fclEMG;
@@ -47,22 +47,24 @@ avgrectEMGF = runningAvg(EMGDataBufferF(:,1:end-1),window,overlap,fchEMG,fclEMG)
 
 % Rectified and smoothed EMG
 figure;
-set(gcf,'Name','Run avg EMG');
+set(gcf,'Name','Run avg EMG - EMGCO');
 for j = 1:length(EMGparams.channelControl)
     %subplot(1,length(EMGparams.channelControl),j);
     plot(avgrectEMG(10:end,EMGparams.channelControl(j)));
     hold on;
     xlabel('Time [s]'); ylabel('EMG [-]');
 end
+legend(EMGparams.channelName(EMGparams.channelControl))
 
 figure;
-set(gcf,'Name','Run avg EMG - Force');
+set(gcf,'Name','Run avg EMG - ForceCO');
 for j = 1:length(EMGparams.channelControl)
     %subplot(1,length(EMGparams.channelControl),j);
     plot(avgrectEMGF(10:end,EMGparams.channelControl(j)));
     hold on;
     xlabel('Time [s]'); ylabel('EMG [-]');
 end
+legend(EMGparams.channelName(EMGparams.channelControl))
 
 % figure;
 % set(gcf,'Name','Rectified EMG');

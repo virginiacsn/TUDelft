@@ -22,8 +22,15 @@ if length(varargin{1}) > 1
     EMG_trigger(EMG_trigger ~= 6) = 0;
     EMG_trigger(EMG_trigger > 0) = 1;
     
+    EMGdiff = diff(EMG_trigger);
+    EMGpulseind = find(EMGdiff>0);
+    EMGindext = EMGpulseind(diff(EMGpulseind)>1024)+1;
+    EMG_trigger(EMGindext) = [];
+    EMG_data(:,EMGindext) = [];
+    
     EMG_data = EMG_data(:,find(EMG_trigger,1):end);
     EMG_trigger = EMG_trigger(:,find(EMG_trigger,1):end);
+    
 else
     EMG_data = [];
 end
@@ -120,7 +127,7 @@ for itrial = 1:length(trials)
     if ~isempty(iend) && ~isempty(istart)
         tsend = data_ts{iend};
         trial_data(itrial).iend = iend;
-        trial_data(itrial).tend = tsend(1);
+        trial_data(itrial).tend = tsend(end);
         
         %trial_data(itrial).ts = cell2mat(data_ts(istart:iend));
         trial_data(itrial).force.raw = cell2mat(data_force(istart:iend,:));
@@ -135,7 +142,7 @@ for itrial = 1:length(trials)
     elseif ~isempty(iend) && isempty(istart)
         tsend = data_ts{iend};
         trial_data(itrial).iend = iend;
-        trial_data(itrial).tend = tsend(1);
+        trial_data(itrial).tend = tsend(end);
         
         %trial_data(itrial).ts = cell2mat(data_ts(1:iend));
         trial_data(itrial).force.raw = cell2mat(data_force(1:iend,:));
