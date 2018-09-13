@@ -53,7 +53,7 @@ end
 rCirTarget =        targetForce*targetTol; % [N]
 rCirCursor =        targetForce*targetTol/cursorTol; % [N]
 
-if strcmp(code,'calib');
+if strcmp(code,'calib')
     targetForce = 10;
 end
 

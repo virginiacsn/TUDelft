@@ -29,10 +29,11 @@ for n = 0:floor(size(xtemp,2)/(overlap))-1
     end
 
     filtEMGBuffer = filtfilt(b,a,buffer')';
-    if ~isempty(fclEMG)
-        filtEMGBuffer = filtfilt(d,c,filtEMGBuffer')';
-    end
     finEMG = abs(filtEMGBuffer);
+    if ~isempty(fclEMG)
+        finEMG = filtfilt(d,c,finEMG')';
+    end
+    
 
     ytemp(:,j) = mean(finEMG,2);
 end

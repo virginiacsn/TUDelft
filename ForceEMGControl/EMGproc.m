@@ -7,7 +7,7 @@ plot(trial_data_force(1).force.filt(:,2))
 itrial = 5;
 sampleRateEMG = 1024;
 fchEMG = 30;
-fclEMG = [];
+fclEMG = 60;
 window = 800;
 overlap = 100;
 
@@ -28,11 +28,11 @@ EMGscE = max(EMGmean,[],1)';
 
 EMGDataBuffer = cell2mat(EMGDataOut_EMGCO(2:end));%trial_data_EMG(itrial).EMG.raw;
 avgrectEMG = runningAvg(EMGDataBuffer(:,1:end-1),window,overlap,fchEMG,fclEMG);
-avgrectEMG = avgrectEMG./repmat(EMGScal,[1 size(avgrectEMG,1)])';
+avgrectEMG = avgrectEMG./repmat(EMGscE,[1 size(avgrectEMG,1)])';
 
 EMGDataBufferF = cell2mat(EMGDataOut_ForceCO(2:end));%trial_data_EMG(itrial).EMG.raw;
 avgrectEMGF = runningAvg(EMGDataBufferF(:,1:end-1),window,overlap,fchEMG,fclEMG);
-avgrectEMGF = avgrectEMGF./repmat(EMGScal,[1 size(avgrectEMGF,1)])';
+avgrectEMGF = avgrectEMGF./repmat(EMGscf,[1 size(avgrectEMGF,1)])';
 
 % wnh = (2/sampleRateEMG)*fchEMG;
 % wnl = (2/sampleRateEMG)*fclEMG;
@@ -93,7 +93,7 @@ EMGDataBuffer = cell2mat(EMGDataOut_EMGCO(2:end));%trial_data_EMG(itrial).EMG.ra
 for i = 1:length(fchEMG)
 avgrectEMG = runningAvg(EMGDataBuffer(:,1:end-1),window,overlap,fchEMG(i),fclEMG(i));
 
-figure('Name',['fch = ',num2str(fchEMG(i))]);
+figure('Name',['fch = ',num2str(fchEMG(i)) ' ; fcl = ',num2str(fclEMG(i))]);
 for j = 1:length(EMGparams.channelControl)
     %subplot(1,length(EMGparams.channelControl),j);
     plot(avgrectEMG(10:end,EMGparams.channelControl(j)));

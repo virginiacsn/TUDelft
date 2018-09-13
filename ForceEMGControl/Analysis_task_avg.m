@@ -63,7 +63,7 @@ fields = {'EMG.raw','EMG.filt','force.filt'};
 trial_data_avg_force = trialAngleAvg(trial_data_force, Aparams.epoch, fields);
 trial_data_avg_force = procEMG(trial_data_avg_force,Aparams);
 
-trial_data_app_force = trialAngleApp(trial_data_force, Aparams.epoch, fields);
+trial_data_app_force = trialAngleApp(trial_data_force, Aparams.epoch, fields,[]);
 
 % EMGCO
 task = 'EMGCO';
@@ -100,7 +100,7 @@ Aparams.targetAnglesEMG = sort(unique(extractfield(trial_data_EMG,'angle')));
 trial_data_avg_EMG = trialAngleAvg(trial_data_EMG, Aparams.epoch, fields);
 trial_data_avg_EMG = procEMG(trial_data_avg_EMG,Aparams);
 
-trial_data_app_EMG = trialAngleApp(trial_data_EMG, Aparams.epoch, fields);
+trial_data_app_EMG = trialAngleApp(trial_data_EMG, Aparams.epoch, fields,[]);
 
 %% Force - only with trial_data_avg
 %% LPF force in time for both tasks, check target angles
