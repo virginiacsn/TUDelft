@@ -6,18 +6,13 @@ function ForceControl_CO(varargin)
 %% Parameter assignment
 % Default parameters
 % File parameters
-saveforce =     0;
-saveEMG =       0;
-date =          '20180711';
-subject =       100;
-task =          'CO';
-code =          '001';
-filenameforce =  [date,'_s',subject,'_',task,'_Force_',code,'.mat'];
-filenameEMG = [date,'_s',subject,'_',task,'_EMG_',code,'.mat'];
-filepath =  [pwd '\Data\' date '\s' subject '\'];
+saveforce =         0;
+saveEMG =           0;
+filenameforce =     [];
+filenameEMG =   	[];
+filepath =          [];
 
 % Task parameters
-numTrials =         30;
 targetForce =       5; % [N]
 targetTol =         0.1;
 cursorTol =         1.5;
@@ -53,10 +48,6 @@ end
 rCirTarget =        targetForce*targetTol; % [N]
 rCirCursor =        targetForce*targetTol/cursorTol; % [N]
 
-if strcmp(code,'calib')
-    targetForce = 10;
-end
-
 if length(channelSubset)~=length(channelName)
     error('Names for all channels not available.')
 end
@@ -70,8 +61,8 @@ if ~isempty(device)
     disp('DAQ device found.')
     
     if saveEMG || saveforce
-        if exist([filepath,filenameEMG],'file')
-            savefile = input(['\n',filename,' already exsists. Continue saving? (y/n) '],'s');
+        if exist([filepath,filenameEMG],'file') ||  exist([filepath,filenameforce],'file')
+            savefile = input(['\n',filenameforce,' already exsists. Continue saving? (y/n) '],'s');
             if strcmp(savefile,'y')
                 if saveEMG
                     fprintf('Saving EMG data in %s.\n',filenameEMG)
@@ -136,8 +127,8 @@ if ~isempty(device)
     forceOffset = mean(forceOffsetData(:,1:6),1);
     disp('Offset obtained.')
     
-    % Obtain Fz calibration by averaging 2 sec of holding data
-    input('\nPress enter when holding handle.')
+    % Obtain Fz calibration by averaging 2 sec of in position data
+    input('\nPress enter when in position.')
     fprintf('Obtaining Fz calibration values...\n')
     if saveEMG
         queueOutputData(s,zeros(2*scanRate,1));
@@ -396,11 +387,4 @@ end
             EMGDataOut_ForceCO(sampleNum,:) = {appendSamples'};
         end
     end
-
-%     function stopTrialNum(trialNum,numTrials)
-%         if trialNum == numTrials
-%             s.stop();
-%             close(hf)
-%         end
-%     end
 end

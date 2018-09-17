@@ -2,23 +2,18 @@
 % Virginia Casasnovas
 % 11/07/2018
 
-function ForceControl_cal(varargin)
+function ForceControl_Cal(varargin)
 %% Parameter assignment
 % Default parameters
 % File parameters
 saveforce =     0;
 saveEMG =       0;
-date =          '20180711';
-subject =       100;
-task =          'CO';
-code =          'calib';
-filenameforce =  [date,'_s',subject,'_',task,'_Force_',code,'.mat'];
-filenameEMG = [date,'_s',subject,'_',task,'_EMG_',code,'.mat'];
-filepath =  [pwd '\Data\' date '\s' subject '\'];
+filenameforce = [];
+filenameEMG =   [];
+filepath =      [];
 
 % Task parameters
-numTrials =         30;
-targetForce =       5; % [N]
+targetForceCal =    30; % [N]
 targetTol =         0.1;
 cursorTol =         1.5;
 numTargetsForce =   4;
@@ -50,11 +45,9 @@ if ~isempty(varargin)
     end
 end
 
-%rCirTarget =        targetForce*targetTol; % [N]
-rCirCursor =        targetForce*targetTol/cursorTol; % [N]
+rCirCursor =  targetForceCal*targetTol/cursorTol; % [N]
 
 if strcmp(code,'calib')
-    targetForce = 15;
     timeout = 0.5;
     movemtime = 2;
 end
@@ -72,8 +65,8 @@ if ~isempty(device)
     disp('DAQ device found.')
     
     if saveEMG || saveforce
-        if exist([filepath,filenameEMG],'file')
-            savefile = input('\nThis file already exsists. Continue saving? (y/n) ','s');
+        if exist([filepath,filenameEMG],'file') || exist([filepath,filenameforce],'file')
+            savefile = input(['\n',filenameforce,' already exsists. Continue saving? (y/n) '],'s');
             if strcmp(savefile,'y')
                 if saveEMG
                     fprintf('Saving EMG data in %s.\n',filenameEMG)
@@ -101,9 +94,7 @@ if ~isempty(device)
     else
         fprintf('Not saving data.\n\n')
     end
-        
-
-    
+         
     % Initialize EMG
     if saveEMG
         disp('Initializing EMG.')
@@ -122,7 +113,7 @@ if ~isempty(device)
     end
     fprintf('\n')
 
-        % Create NI DAQ session
+    % Create NI DAQ session
     disp('Creating NI DAQ session.')
     s = daq.createSession('ni');
     addAnalogInputChannel(s,device.ID,0:6,'Voltage');
@@ -140,8 +131,8 @@ if ~isempty(device)
     forceOffset = mean(forceOffsetData(:,1:6),1);
     disp('Offset obtained.')
     
-    % Obtain Fz calibration by averaging 2 sec of holding data
-    input('\nPress enter when holding handle.')
+    % Obtain Fz calibration by averaging 2 sec of in position data
+    input('\nPress enter when in position.')
     fprintf('Obtaining Fz calibration values...\n')
     if saveEMG
         queueOutputData(s,zeros(2*scanRate,1));
@@ -168,8 +159,8 @@ if ~isempty(device)
     
     % Set target forces
     %targetAngles(targetAngles == 2*pi) = [];
-    targetPosx = targetForce*cos(targetAnglesForce)';
-    targetPosy = targetForce*sin(targetAnglesForce)';
+    targetPosx = targetForceCal*cos(targetAnglesForce)';
+    targetPosy = targetForceCal*sin(targetAnglesForce)';
     
     % Set figure
     hf = figure('Name','CO Force Control Task');
@@ -186,6 +177,7 @@ if ~isempty(device)
         sampleNum = 1;
         EMGDataOut_ForceCO(sampleNum,:) = {'EMG'};
     end
+    
     % Start EMG data sampling
     if EMGEnabled
         sampler.start()
@@ -199,17 +191,12 @@ if ~isempty(device)
     end
     
     hlin = addlistener(s,'DataAvailable',@(src,event) processForceData(event,forceOffset,calforceDataz,hp));
-    %hstop = addlistener(s,'DataAvailable',@(src,event) stopTrialNum(trialNum,numTrials));
     s.IsContinuous = true;
     s.Rate = scanRate; % scans/sec, samples/sec?
     s.NotifyWhenDataAvailableExceeds = availSamples; % Call listener when x samples are available
     s.startBackground();
     
-    if trialNum == numTrials
-        s.stop();
-    else
-        input('\Press enter to stop acquisition.')
-    end
+    input('\Press enter to stop acquisition.')
     
     % Save data
     if saveforce
@@ -339,7 +326,6 @@ end
                 
                 htrg = plot([0 targetPosx(iAngle)],[0 targetPosy(iAngle)],'r','Linewidth',3);
                 
-                
                 state = 'movement';
                 tmove = tic;
             case 'movement'
@@ -394,11 +380,4 @@ end
             EMGDataOut_ForceCO(sampleNum,:) = {appendSamples'};
         end
     end
-
-%     function stopTrialNum(trialNum,numTrials)
-%         if trialNum == numTrials
-%             s.stop();
-%             close(hf)
-%         end
-%     end
 end
