@@ -47,17 +47,12 @@ end
 
 rCirCursor =  targetForceCal*targetTol/cursorTol; % [N]
 
-if strcmp(code,'calib')
-    timeout = 0.5;
-    movemtime = 2;
-end
-
 if length(channelSubset)~=length(channelName)
     error('Names for all channels not available.')
 end
 
 %% Initialization
-disp('Running DataAcquisition for CO force task with EMG.')
+disp('Running DataAcquisition for calibration with force task.')
 
 device = daq.getDevices;
 

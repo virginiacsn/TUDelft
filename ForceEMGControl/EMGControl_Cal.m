@@ -2,7 +2,7 @@
 % Virginia Casasnovas
 % 11/07/2018
 
-function EMGControl_CO(varargin)
+function EMGControl_Cal(varargin)
 %% Parameter assignment
 % Default parameters
 % File parameters
@@ -13,7 +13,7 @@ filenameEMG =       [];
 filepath =          [];
 
 % Task parameters
-targetEMG =         0.5; 
+targetEMGCal =      100; 
 targetTol =         0.1;
 targetTolEMG =      0.2;
 cursorTol =         1.5;
@@ -34,7 +34,7 @@ plotEMG =           0;
 channelSubset =     [1 2];
 channelControl =    [1 2];
 channelName =       {'BB','TL'};
-channelAngle =      [];
+channelAngle =      [0 pi/2 pi 3*pi/2];
 sampleRateEMG =     1024;
 fchEMG =            10; % [Hz]
 fclEMG =            30;
@@ -49,27 +49,19 @@ if ~isempty(varargin)
     end
 end
 
-rCirTarget = targetEMG*targetTolEMG; % [N]
-rCirCursor = targetEMG*targetTol/cursorTol; % [N]
+rCirTarget = targetEMGCal*targetTolEMG; % [N]
+rCirCursor = targetEMGCal*targetTol/cursorTol; % [N]
 
 if length(channelSubset)~=length(channelName)
     error('Names for all channels not available.')
 end
 
-if ~isempty(channelAngle)
-    targetAnglesEMG = channelAngle;
-    if numTargetsEMG == 2
-        [targetAnglesEMG,isort] = sort(channelAngle(channelControl));
-        channelControl = channelControl(isort);
-    elseif numTargetsEMG == 3
-        [targetAnglesEMG,isort] = sort([channelAngle(channelControl(1)) mean(channelAngle(channelControl)) channelAngle(channelControl(2))]);
-        channelControlTemp = [channelControl(1) 0 channelControl(2)];
-        channelControl = channelControlTemp(isort([1 3]));
-    end
-end
+[targetAnglesEMG,isort] = sort(channelAngle);
+channelSubsetTemp = channelSubset(1:end-1);
+channelSubset = [channelSubsetTemp(isort) channelSubset(end)];
 
 %% Initialization
-disp('Running DataAcquisition for CO EMG task.')
+disp('Running DataAcquisition for calibration with EMG task.')
 
 library = TMSi.Library('usb');
 [EMGEnabled,sampler,emg_data,channels] = EMGinit(library,channelSubset,channelName,sampleRateEMG);
@@ -115,7 +107,7 @@ if EMGEnabled
     for n = 1:10
         samples = sampler.sample();
         pause(0.2)
-        samplesOffset = [samplesOffset, samples(channelControl,:)];
+        samplesOffset = [samplesOffset, samples(channelSubset(1:end-1),:)];
     end
     sampler.stop()
     
@@ -124,12 +116,12 @@ if EMGEnabled
     [b,a] = butter(2,wnh,'high');
     [d,c] = butter(2,wnl,'low');
     samplesOffsetFilt = filtfilt(b,a,samplesOffset')';
-    samplesOffsetFilt = filter(d,c,samplesOffsetFilt')';
-    EMGOffset = mean(abs(samplesOffsetFilt),2);
+    samplesOffsetFilt = filter(d,c,abs(samplesOffsetFilt'))';
+    EMGOffset = mean((samplesOffsetFilt),2);
     
     fprintf('EMG offset:\n')
-    for k = 1:length(channelControl)
-        fprintf('%s: %1.3f\n',channelName{channelSubset==channelControl(k)},EMGOffset(k))
+    for k = 1:length(channelSubset)-1
+        fprintf('%s: %1.3f\n',channelName{k},EMGOffset(k))
     end
     fprintf('\n')
     
@@ -180,12 +172,12 @@ if EMGEnabled
     countState = 0;
     
     % Set target forces
-    targetPosx = targetEMG*cos(targetAnglesEMG)';
-    targetPosy = targetEMG*sin(targetAnglesEMG)';
+    targetPosx = targetEMGCal*cos(targetAnglesEMG)';
+    targetPosy = targetEMGCal*sin(targetAnglesEMG)';
     
     % Set figure
     hf = figure('Name','CO EMG Control Task');
-    [hf,hp] = Figinit(hf,targetEMG*[1 1]);
+    [hf,hp] = Figinit(hf,[max(targetPosx) max(targetPosy)]./1.2);
     title('EMG');
     xlabel(channelName{channelControl(1)}); ylabel(channelName{channelControl(2)});
     xl = xlim; yl = ylim;
@@ -198,17 +190,17 @@ if EMGEnabled
     if ~isempty(device)
         % Initialize variables
         global tmove trelax tfail tsuccess tholdstart
-        global targetCir iAngle trialNum
-        global htrg hsta hsuc
+        global iAngle trialNum
+        global htrg hsta 
         
         trialNum = 0;
         countBuffer = 0;
-        countSuccess = 0;
-        cursorHoldOut = 0;
-        EMGDataBuffer = zeros(length(channelControl),smoothWin);
-
+        EMGDataBuffer = zeros(length(channelSubset)-1,smoothWin);
         state = 'start';
         tempState = 'start';
+        iAngle = 1;
+        reptarg = 0;
+        
         emg_save = [];
         
         % Add event listener and start acquisition
@@ -282,7 +274,7 @@ library.destroy()
         appendSamples = samples(channelSubset,:);%-repmat(EMGOffset,1,nSamples))./repmat(EMGScale,1,nSamples);
         
         %emg_data.append(appendSamples)
-        EMGSamples = samples(channelControl,:);
+        EMGSamples = samples(channelSubset(1:end-1),:);
         
         if nSamples < smoothWin
             bufferTemp = EMGDataBuffer;
@@ -300,14 +292,15 @@ library.destroy()
         filtEMGBuffer = filtfilt(b,a,EMGDataBuffer')';
         filtEMGBuffer = filter(d,c,abs(filtEMGBuffer),[],2);
  
-        avgRectEMGBuffer = (mean((filtEMGBuffer),2)-EMGOffset)./(EMGScale(channelControl)); % Rectify, smooth and scale
+        avgRectEMGBuffer = (mean((filtEMGBuffer),2)-EMGOffset);%./(EMGScale(channelControl)); % Rectify, smooth and scale
         avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;
         emg_save = [emg_save,avgRectEMGBuffer];
 %         [minAng,minMusc] = max(targetAnglesEMG);
 %         if minMusc == 2
 %             avgRectEMGBuffer = flip(avgRectEMGBuffer);
 %         end
-        [EMGDatax,EMGDatay] = EMG2xy(avgRectEMGBuffer,targetAnglesEMG(1));
+        
+        [EMGDatax,EMGDatay] = EMG2xy([avgRectEMGBuffer(iAngle); 0],targetAnglesEMG(iAngle));
         
         cursorCir = circle(rCirCursor,EMGDatax,EMGDatay);
         set(hp,'xdata',cursorCir(:,1)','ydata',cursorCir(:,2)');
@@ -330,64 +323,60 @@ library.destroy()
         
         % Trial
         switch state
-            case 'start'                
+            case 'start'
                 xl = xlim; yl = ylim;
                 delete(htrl)
-                delete(hsuc)
-                htrl = text(xl(2)+0.3*xl(2),yl(2),['Trial: ',num2str(trialNum)],'clipping','off','Fontsize',14);
-                hsuc = text(xl(2)+0.3*xl(2),yl(2)-0.1*yl(2),['Successes: ',num2str(countSuccess)],'clipping','off','Fontsize',14);
-
-                iAngle = randi(numTargetsEMG);
-                targetCir = circle(rCirTarget,targetPosx(iAngle),targetPosy(iAngle));
-                htrg = plot(targetCir(:,1),targetCir(:,2),'r','Linewidth',3);
+                htrl = text(xl(2)+0.3*xl(2),yl(2),['Trial: ',num2str(trialNum)],'clipping','off','Fontsize',16);
+                
+                iAngle = iAngle+1;
+                
+                if reptarg
+                    if iAngle == 1
+                        iAngle = length(targetAnglesEMG);
+                    else
+                        iAngle = iAngle-1;
+                    end
+                    reptarg = 0;
+                end
+                if iAngle > length(targetAnglesEMG)
+                    iAngle = 1;
+                end
+                
+                htrg = plot([0 targetPosx(iAngle)],[0 targetPosy(iAngle)],'r','Linewidth',3);
                 
                 state = 'movement';
                 tmove = tic;
             case 'movement'
-                if cursorInTarget(cursorCir,targetCir) && toc(tmove) <= movemtime
+                if toc(tmove) > movemtime
                     state = 'hold';
                     tholdstart = tic;
-                elseif ~cursorInTarget(cursorCir,targetCir) && toc(tmove) > movemtime
-                    state = 'fail';
-                    tfail = tic;
                 end
             case 'hold'
-                if ~cursorInTarget(cursorCir,targetCir) && toc(tholdstart) <= holdtime
-                    cursorHoldOut = cursorHoldOut+1;
-                elseif cursorHoldOut >= 10  && toc(tholdstart) <= holdtime
-                    cursorHoldOut = 0;
-                    state = 'fail';
-                    tfail = tic;
-                elseif cursorHoldOut > 10 && toc(tholdstart) > holdtime
-                    cursorHoldOut = 0;
-                    state = 'fail';
-                    tfail = tic;
-                elseif cursorHoldOut <= 10 && toc(tholdstart) > holdtime
-                    cursorHoldOut = 0;
+                if toc(tholdstart) > holdtime
                     state = 'success';
                     tsuccess = tic;
+                end
+            case 'success'
+                if toc(tsuccess) > timeout
+                    state = 'relax';
+                    trelax = tic;
+                    delete(htrg)
                 end
             case 'fail'
                 if toc(tfail) > timeout
                     state = 'relax';
                     trelax = tic;
                     delete(htrg)
-                end
-            case 'success'
-                if toc(tsuccess) > timeout
-                    countSuccess = countSuccess+1;
-                    state = 'relax';
-                    trelax = tic;
-                    delete(htrg)
+                    reptarg = 1;
                 end
             case 'relax'
                 if cursorInTarget(cursorCir,circle(2*rCirCursor,0,0)) && toc(trelax) > relaxtime
                     state = 'start';
-                    trialNum = trialNum + 1;
+                    trialNum = trialNum+1;
                 end
         end
-                
-        % Appending trial data            
+        
+        % Appending trial data
         sampleNum = sampleNum+1;
         if saveforce
             forceDataOut_EMGCO(sampleNum,:) = {trialNum,iAngle,state,timeStamp,forceData(:,1),forceData(:,2),forceData(:,3),triggerData};

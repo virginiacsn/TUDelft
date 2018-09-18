@@ -17,7 +17,6 @@ targetForce =       5; % [N]
 targetTol =         0.1;
 cursorTol =         1.5;
 numTargetsForce =   4;
-targetAnglesForce = [pi/4:3*pi/(2*(numTargetsForce-1)):7*pi/4]; % [rad]
 movemtime =         5; % sec
 holdtime =          1; % sec
 timeout =           1; % sec
@@ -48,6 +47,8 @@ end
 rCirTarget =        targetForce*targetTol; % [N]
 rCirCursor =        targetForce*targetTol/cursorTol; % [N]
 
+%targetAnglesForce = [pi/4:3*pi/(2*(numTargetsForce-1)):7*pi/4]; % [rad]
+targetAnglesForce = [0:pi/4:7*pi/4];
 if length(channelSubset)~=length(channelName)
     error('Names for all channels not available.')
 end

@@ -8,8 +8,8 @@ addpath(genpath('Tools'));
 fileparams = struct(...
     'saveforce',    1,...
     'saveEMG',      1,...
-    'date',         '20180917',...
-    'subject',      '01',...
+    'date',         '20180918',...
+    'subject',      '02',...
     'task',         'ForceCO');
 
 if ~exist(['D:\Student_experiments\Virginia\Data\',fileparams.date],'dir') && (fileparams.saveEMG || fileparams.saveforce)
@@ -23,10 +23,10 @@ fileparams.filepath =       ['D:\Student_experiments\Virginia\Data\',fileparams.
 EMGparams = struct(...
     'plotEMG',          0,...
     'EMGEnabled',       0,...
-    'channelSubset',    [1 2 17],...
-    'channelControl',   [4 7],...
-    'channelName',      {{'BB','TLH','Trigger'}},...
-    'channelAngle',     [pi, pi/2],...%[0 0 5*pi/4 pi/4 pi/4 pi/4 7*pi/4],...
+    'channelSubset',    [1 2 3 4 17],...
+    'channelControl',   [1 3],...
+    'channelName',      {{'BB','TLH','DA','DP','Trigger'}},...
+    'channelAngle',     [5*pi/4,pi/4,3*pi/4,7*pi/4],...%[0 0 5*pi/4 pi/4 pi/4 pi/4 7*pi/4],...
     'sampleRateEMG',    1024,... % [samples/sec]
     'fchEMG',           30,... % [Hz]
     'fclEMG',           60,... % [Hz]
@@ -51,6 +51,7 @@ taskparams = struct(...
     'targetForce',      10,... % [N]
     'targetForceCal',   30,... % [N]
     'targetEMG',        0.2,...
+    'targetEMGCal',     50,...
     'targetTol',        0.1,...
     'targetTolEMG',     0.2,...
     'cursorTol',        2,...
@@ -65,7 +66,16 @@ fileparams.code = 'calib';
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
 fileparams.filenameEMG =    [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_EMG_',fileparams.code,'.mat'];
 
-ForceControl_cal(fileparams,taskparams,forceparams,EMGparams);
+ForceControl_Cal(fileparams,taskparams,forceparams,EMGparams);
+
+%% Calibration with EMG-control task
+fileparams.code = 'calib';
+fileparams.task = 'EMGCO';
+
+fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
+fileparams.filenameEMG =    [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_EMG_',fileparams.code,'.mat'];
+
+EMGControl_Cal(fileparams,taskparams,forceparams,EMGparams);
 
 %% Calibration with MVC task
 EMGparams.EMGScaleMVC = MVCtest(EMGparams);
@@ -74,7 +84,7 @@ EMGparams.EMGScaleMVC = MVCtest(EMGparams);
 load([fileparams.filepath,fileparams.filenameforce]);
 load([fileparams.filepath,fileparams.filenameEMG]);
 
-forceEMGData = {forceDataOut_ForceCO,EMGDataOut_ForceCO};
+forceEMGData = {forceDataOut_EMGCO,EMGDataOut_EMGCO};
 PreAparams.downsample = 2;
 PreAparams.target_angles = taskparams.targetAnglesForce;
 PreAparams.avgWindow = 200;
@@ -101,10 +111,12 @@ for i = 1:length(trial_data_avg)
 end
 
 EMGparams.EMGScaleMVF = max(EMGmean,[],1)';
-taskparams.targetForce = round(mean(forcemean))*0.5;
+taskparams.targetForce = round(mean(forcemean));
 
 %% Force-control task
-fileparams.code = '001';
+fileparams.code = '002';
+fileparams.task = 'ForceCO';
+taskparams.numTargetsForce = 8;
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
 fileparams.filenameEMG =    [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_EMG_',fileparams.code,'.mat'];
@@ -114,8 +126,7 @@ if strcmp(fileparams.task,'ForceCO')
 end
 
 %% EMG-control task
-fileparams.code = '001';
-
+fileparams.code = '002';
 fileparams.task = 'EMGCO';
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
@@ -124,9 +135,10 @@ fileparams.filenameEMG =    [fileparams.date,'_s',fileparams.subject,'_',filepar
 EMGparams.fchEMG = 30;
 EMGparams.fclEMG = 60;
 EMGparams.smoothWin = 800;
-EMGparams.channelControl = [1 2];
-EMGparams.EMGScale = EMGScaleMVF;
-taskparams.targetEMG = 0.8;
+EMGparams.channelControl = [2 3];
+EMGparams.EMGScale = EMGparams.EMGScaleMVF;
+taskparams.targetEMG = 1;
+taskparams.numTargetsEMG = 3;
 forceparams.availSamplesEMG = 200;
     
 if strcmp(fileparams.task,'EMGCO') 

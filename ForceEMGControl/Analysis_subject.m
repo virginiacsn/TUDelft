@@ -1,7 +1,7 @@
 %% Data Analysis for individual subject
 addpath(genpath('Tools'));
 
-date =      '20180810';
+date =      '20180918';
 subject =   '01';
 task =      'ForceCO';
 
