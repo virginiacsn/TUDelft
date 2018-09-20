@@ -3,8 +3,8 @@
 % clear all
 addpath(genpath('Tools'));
 
-date =      '20180810';
-subject =   '01';
+date =      '20180918';
+subject =   '02';
 
 switch computer
     case 'PCWIN'
@@ -16,8 +16,8 @@ switch computer
 end
 
 %% All blocks for ForceCO, individual block for EMGCO
-codeF = {'001','002'};
-codeE = '003';
+codeF = {'002'};
+codeE = '001';
 tasks = {'ForceCO','EMGCO'};
 
 % ForceCO
@@ -40,16 +40,16 @@ for i = 1:length(codeF)
     
     Aparams.downsamp = forceparams.scanRate/EMGparams.sampleRateEMG;
     Aparams.channelNameEMG = EMGparams.channelName;
-    Aparams.target_angles =  taskparams.targetAnglesForce;
+    Aparams.target_angles = [0:pi/4:7*pi/4];%taskparams.targetAnglesForce;%
     Aparams.avgWindow = 200;
     Aparams.fclF = 5;
     Aparams.fchEMG = 20;
-    Aparams.fclEMG = 60;
+    Aparams.fclEMG = 400;
     Aparams.fs = min(forceparams.scanRate,EMGparams.sampleRateEMG);
     Aparams.block = str2double(code);
 
     trial_data = trialCO(forceEMGData,Aparams);
-    trial_data = removeFailTrials(trial_data);
+    trial_data = removeFailTrials(trial_data(1:end));
     
     trial_data = procEMG(trial_data,Aparams);
     trial_data_force = [trial_data_force, procForce(trial_data,Aparams)];
@@ -57,7 +57,7 @@ end
 
 Aparams.targetAnglesForce = sort(unique(extractfield(trial_data_force,'angle')));
 
-Aparams.epoch = {'ihold','iend'};
+Aparams.epoch = {'imove','iend'};
 fields = {'EMG.raw','EMG.filt','force.filt'};
 
 trial_data_avg_force = trialAngleAvg(trial_data_force, Aparams.epoch, fields);
@@ -81,16 +81,19 @@ forceEMGData = {forceDataOut_EMGCO,EMGDataOut_EMGCO};
 
 Aparams.downsamp = forceparams.scanRate/EMGparams.sampleRateEMG;
 Aparams.channelNameEMG = EMGparams.channelName;
+[angsort,isort] = sort(EMGparams.channelAngle(EMGparams.channelControl));
+taskparams.targetAnglesEMG = [angsort(1) mean(angsort) angsort(2)]; 
+EMGparams.channelControl = EMGparams.channelControl(isort);
 Aparams.target_angles = taskparams.targetAnglesEMG;
 Aparams.avgWindow = 200;
 Aparams.fclF = 5;
-Aparams.fchEMG = 30;
-Aparams.fclEMG = 60;
+Aparams.fchEMG = 20;
+Aparams.fclEMG = 400;
 Aparams.fs = min(forceparams.scanRate,EMGparams.sampleRateEMG);
 Aparams.block = str2double(code);
 
 trial_data = trialCO(forceEMGData,Aparams);
-trial_data = removeFailTrials(trial_data);
+trial_data = removeFailTrials(trial_data(10:end));
 
 trial_data = procEMG(trial_data,Aparams);
 trial_data_EMG = procForce(trial_data,Aparams);
@@ -103,6 +106,7 @@ trial_data_avg_EMG = procEMG(trial_data_avg_EMG,Aparams);
 trial_data_app_EMG = trialAngleApp(trial_data_EMG, Aparams.epoch, fields,[]);
 
 %% Force - only with trial_data_avg
+Flim = 2;
 %% LPF force in time for both tasks, check target angles
 figure;
 set(gcf,'Name','ForceCO; Force in time');
@@ -116,7 +120,7 @@ for i = 1:length(Aparams.targetAnglesForce)
         plot(trial_data_avg_force(i).ts,trial_data_avg_force(i).force.filt(:,j));
         hold on;
     end
-    ylim(taskparams.targetForce*[-5 5]);
+    ylim(taskparams.targetForce*[-Flim Flim]);
     xlabel('Time [s]'); ylabel('Force [N]');
     title(['Target: ',num2str(rad2deg(trial_data_avg_force(i).angle)),' deg']);
     legend('Fx','Fy')
@@ -134,7 +138,7 @@ for i = 1:length(Aparams.targetAnglesEMG)
         plot(trial_data_avg_EMG(i).ts,trial_data_avg_EMG(i).force.filt(:,j));
         hold on;
     end
-    ylim(taskparams.targetForce*[-5 5]);
+    ylim(taskparams.targetForce*[-Flim Flim]);
     xlabel('Time [s]'); ylabel('Force [N]');
     title(['Target: ',num2str(rad2deg(trial_data_avg_EMG(i).angle)),' deg']);
     legend('Fx','Fy')
@@ -155,7 +159,7 @@ for i = 1:length(Aparams.targetAnglesForce)
     h2 = plot(trial_data_avg_force(i).force.filt(end,1),trial_data_avg_force(i).force.filt(end,2),'ro');
     axis square;
     grid on;
-    xlim(taskparams.targetForce*[-5 5]);ylim(taskparams.targetForce*[-5 5]);
+    xlim(taskparams.targetForce*[-Flim Flim]);ylim(taskparams.targetForce*[-Flim Flim]);
     xlabel('Fx [N]'); ylabel('Fy [N]');
     title(['Target: ',num2str(rad2deg(trial_data_avg_force(i).angle)),' deg']);
     legend([h1,h2],'Start','End');
@@ -175,7 +179,7 @@ for i = 1:length(Aparams.targetAnglesEMG)
     h2 = plot(trial_data_avg_EMG(i).force.filt(end,1),trial_data_avg_EMG(i).force.filt(end,2),'ro');
     axis square;
     grid on;
-    xlim(taskparams.targetForce*[-5 5]);ylim(taskparams.targetForce*[-5 5]);
+    xlim(taskparams.targetForce*[-Flim Flim]);ylim(taskparams.targetForce*[-Flim Flim]);
     xlabel('Fx [N]'); ylabel('Fy [N]');
     title(['Target: ',num2str(rad2deg(trial_data_avg_EMG(i).angle)),' deg']);
     legend([h1,h2],'Start','End');
@@ -183,6 +187,7 @@ end
 
 %% EMG 
 %% Time analysis
+EMGlim = 80;
 %% Fig per muscle, subplot per target
 for j = 1:length(EMGparams.channelName)-1
     figure('Name',['ForceCO; EMG ',EMGparams.channelName{j}]);
@@ -195,7 +200,7 @@ for j = 1:length(EMGparams.channelName)-1
         plot(trial_data_avg_force(i).ts,trial_data_avg_force(i).EMG.rect(:,j));
         hold on;
         plot(trial_data_avg_force(i).ts,trial_data_avg_force(i).EMG.avg(:,j));
-        ylim([0 40]);%ylim([0 max(trial_data_avg_force(i).EMG.rect(:))+50]);
+        ylim([0 EMGlim]);%ylim([0 max(trial_data_avg_force(i).EMG.rect(:))+50]);
         xlim([0 trial_data_avg_force(i).ts(end)]);
         xlabel('Time [s]'); ylabel('EMG [-]');
         title(['Target: ',num2str(rad2deg(trial_data_avg_force(i).angle)),' deg']);
@@ -213,7 +218,7 @@ for j = 1:length(EMGparams.channelName)-1
         plot(trial_data_avg_EMG(i).ts,trial_data_avg_EMG(i).EMG.rect(:,j));
         hold on;
         plot(trial_data_avg_EMG(i).ts,trial_data_avg_EMG(i).EMG.avg(:,j));
-        ylim([0 40]);%ylim([0 max(trial_data_avg_EMG(i).EMG.rect(:))+50]);
+        ylim([0 EMGlim]);%ylim([0 max(trial_data_avg_EMG(i).EMG.rect(:))+50]);
         xlim([0 trial_data_avg_EMG(i).ts(end)]);
         xlabel('Time [s]'); ylabel('EMG [-]');
         title(['Target: ',num2str(rad2deg(trial_data_avg_EMG(i).angle)),' deg']);
@@ -232,7 +237,7 @@ for j = 1:length(Aparams.targetAnglesForce)
         plot(trial_data_avg_force(j).ts,trial_data_avg_force(j).EMG.rect(:,i));
         hold on;
         plot(trial_data_avg_force(j).ts,trial_data_avg_force(j).EMG.avg(:,i));
-        ylim([0 40]);%ylim([0 max(trial_data_avg_force(j).EMG.rect(:))+50]);
+        ylim([0 EMGlim]);%ylim([0 max(trial_data_avg_force(j).EMG.rect(:))+50]);
         xlim([0 trial_data_avg_force(j).ts(end)]);
         xlabel('Time [s]'); ylabel('EMG [-]');
         title(['Musc: ',EMGparams.channelName{i}]);
@@ -250,7 +255,7 @@ for j = 1:length(Aparams.targetAnglesEMG)
         plot(trial_data_avg_EMG(j).ts,trial_data_avg_EMG(j).EMG.rect(:,i));
         hold on;
         plot(trial_data_avg_EMG(j).ts,trial_data_avg_EMG(j).EMG.avg(:,i));
-        ylim([0 40]);%ylim([0 max(trial_data_avg_EMG(j).EMG.rect(:))+50]);
+        ylim([0 EMGlim]);%ylim([0 max(trial_data_avg_EMG(j).EMG.rect(:))+50]);
         xlim([0 trial_data_avg_EMG(j).ts(end)]);
         xlabel('Time [s]'); ylabel('EMG [-]');
         title(['Musc: ',EMGparams.channelName{i}]);
@@ -267,7 +272,7 @@ for j = 1:length(Aparams.targetAnglesForce)
         plot(trial_data_avg_force(j).ts,trial_data_avg_force(j).EMG.rect(:,i));
         hold on;
         plot(trial_data_avg_force(j).ts,trial_data_avg_force(j).EMG.avg(:,i));
-        ylim([0 40]);%ylim([0 max(trial_data_avg_force(j).EMG.rect(:))+50]);
+        ylim([0 EMGlim]);%ylim([0 max(trial_data_avg_force(j).EMG.rect(:))+50]);
         xlim([0 trial_data_avg_force(j).ts(end)]);
         if j == length(Aparams.targetAnglesForce)
             xlabel('Time [s]');
@@ -291,7 +296,7 @@ for j = 1:length(Aparams.targetAnglesEMG)
         plot(trial_data_avg_EMG(j).ts,trial_data_avg_EMG(j).EMG.rect(:,i));
         hold on;
         plot(trial_data_avg_EMG(j).ts,trial_data_avg_EMG(j).EMG.avg(:,i));
-        ylim([0 40]);%ylim([0 max(trial_data_avg_EMG(j).EMG.rect(:))+50]);
+        ylim([0 EMGlim]);%ylim([0 max(trial_data_avg_EMG(j).EMG.rect(:))+50]);
         xlim([0 trial_data_avg_EMG(j).ts(end)]);
         if j == length(Aparams.targetAnglesEMG)
             xlabel('Time [s]');
@@ -306,7 +311,7 @@ for j = 1:length(Aparams.targetAnglesEMG)
 end
 
 %% EMG comparison between tasks. Fig per muscle, subplot per task
-Aparams.angComp = {deg2rad([225 45]),deg2rad([45 135])};
+Aparams.angComp = {deg2rad([135 135]),deg2rad([225 225])};
 
 for i = 1:length(EMGparams.channelName)-1
     figure('Name',EMGparams.channelName{i})
@@ -345,7 +350,7 @@ for j = 1:length(Aparams.angComp)
         plot(trial_data_avg_force(iangf).ts,trial_data_avg_force(iangf).EMG.rect(:,i))
         hold on
         plot(trial_data_avg_force(iangf).ts,trial_data_avg_force(iangf).EMG.avg(:,i),'r')
-        ylim([0 40]);%ylim([0 max(trial_data_avg_force(iangf).EMG.rect(:))+10]);
+        ylim([0 EMGlim]);%ylim([0 max(trial_data_avg_force(iangf).EMG.rect(:))+10]);
         xlim([0 trial_data_avg_force(iangf).ts(end)]);
         xlabel('Time [s]'); ylabel('EMG [-]');
         title([EMGparams.channelName{i}]);
@@ -355,7 +360,7 @@ for j = 1:length(Aparams.angComp)
         plot(trial_data_avg_EMG(iangE).ts,trial_data_avg_EMG(iangE).EMG.rect(:,i))
         hold on
         plot(trial_data_avg_EMG(iangE).ts,trial_data_avg_EMG(iangE).EMG.avg(:,i),'r')
-        ylim([0 40]);%ylim([0 max(trial_data_avg_EMG(iangE).EMG.rect(:))+10]);
+        ylim([0 EMGlim]);%ylim([0 max(trial_data_avg_EMG(iangE).EMG.rect(:))+10]);
         xlim([0 trial_data_avg_EMG(iangE).ts(end)]);
         xlabel('Time [s]'); ylabel('EMG [-]');
         title([EMGparams.channelName{i}]);

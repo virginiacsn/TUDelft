@@ -18,7 +18,7 @@ targetTol =         0.1;
 targetTolEMG =      0.2;
 cursorTol =         1.5;
 numTargetsEMG =     3;
-targetAnglesEMG = [pi/4:pi/(2*(numTargetsEMG-1)):3*pi/4]; % [rad]
+targetAnglesEMG =   [pi/4:pi/(2*(numTargetsEMG-1)):3*pi/4]; % [rad]
 
 movemtime =         5; % sec
 holdtime =          1; % sec
