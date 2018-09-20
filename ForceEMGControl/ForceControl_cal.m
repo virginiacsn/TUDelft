@@ -14,7 +14,7 @@ filepath =      [];
 
 % Task parameters
 targetForceCal =    30; % [N]
-targetTol =         0.1;
+targetTolForce =    0.1;
 cursorTol =         1.5;
 numTargetsForce =   4;
 targetAnglesForce = [pi/4:3*pi/(2*(numTargetsForce-1)):7*pi/4]; % [rad]
@@ -45,7 +45,7 @@ if ~isempty(varargin)
     end
 end
 
-rCirCursor =  targetForceCal*targetTol/cursorTol; % [N]
+rCirCursor =  targetForceCal*targetTolForce/cursorTol; % [N]
 
 if length(channelSubset)~=length(channelName)
     error('Names for all channels not available.')

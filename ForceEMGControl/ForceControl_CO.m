@@ -14,7 +14,7 @@ filepath =          [];
 
 % Task parameters
 targetForce =       5; % [N]
-targetTol =         0.1;
+targetTolForce =         0.1;
 cursorTol =         1.5;
 numTargetsForce =   4;
 movemtime =         5; % sec
@@ -44,8 +44,8 @@ if ~isempty(varargin)
     end
 end
 
-rCirTarget =        targetForce*targetTol; % [N]
-rCirCursor =        targetForce*targetTol/cursorTol; % [N]
+rCirTarget =        targetForce*targetTolForce; % [N]
+rCirCursor =        targetForce*targetTolForce/cursorTol; % [N]
 
 %targetAnglesForce = [pi/4:3*pi/(2*(numTargetsForce-1)):7*pi/4]; % [rad]
 targetAnglesForce = [0:pi/4:7*pi/4];
