@@ -1,6 +1,10 @@
-%% DAQ from EMG - CO Task
 % Virginia Casasnovas
-% 11/07/2018
+% 18/09/2018
+
+% Function for calibration using EMG-control task. Center-out type. Saves
+% EMG and force data in separate txt files.
+% Input: structs with parameters: fileparams, taskparams, EMGparams,
+% forceparams. Input values will overwrite defaults.
 
 function EMGControl_Cal(varargin)
 %% Parameter assignment
@@ -14,16 +18,15 @@ filepath =          [];
 
 % Task parameters
 targetEMGCal =      100; 
-targetTol =         0.1;
 targetTolEMG =      0.2;
 cursorTol =         1.5;
-numTargetsEMG =     3;
-targetAnglesEMG = [pi/4:pi/(2*(numTargetsEMG-1)):3*pi/4]; % [rad]
 
-movemtime =         5; % sec
-holdtime =          1; % sec
+movemtimeCal =      2; % sec
+holdtimeCal =       2; % sec
 timeout =           1; % sec
 relaxtime =         1; % sec
+
+setFig =            1;
 
 % Force parameters
 scanRate =          1000; % [scans/sec]
@@ -49,8 +52,7 @@ if ~isempty(varargin)
     end
 end
 
-rCirTarget = targetEMGCal*targetTolEMG; % [N]
-rCirCursor = targetEMGCal*targetTol/cursorTol; % [N]
+rCirCursor = targetEMGCal*targetTolEMG/cursorTol; % [N]
 
 if length(channelSubset)~=length(channelName)
     error('Names for all channels not available.')
@@ -60,33 +62,11 @@ end
 channelSubsetTemp = channelSubset(1:end-1);
 channelSubset = [channelSubsetTemp(isort) channelSubset(end)];
 
-%% Initialization
-disp('Running DataAcquisition for calibration with EMG task.')
-
-library = TMSi.Library('usb');
-[EMGEnabled,sampler,emg_data,channels] = EMGinit(library,channelSubset,channelName,sampleRateEMG);
-
-if EMGEnabled
-    disp('EMG initialized.')
-    
-    if saveEMG || saveforce
-        if exist([filepath,filenameEMG],'file')||exist([filepath,filenameforce],'file')
-            savefile = input(['\n',filenameEMG,' already exsists. Continue saving? (y/n) '],'s');
-            if strcmp(savefile,'y')
-                if saveEMG
-                    fprintf('Saving EMG data in %s.\n',filenameEMG)
-                end
-                if saveforce
-                    fprintf('Saving force data in %s.\n\n',filenameforce)
-                else
-                    fprintf('\n')
-                end
-            else
-                saveEMG = 0;
-                saveforce = 0;
-                fprintf('Not saving data.\n\n')
-            end
-        else
+%% Saving file check
+if saveEMG || saveforce
+    if exist([filepath,filenameEMG],'file')||exist([filepath,filenameforce],'file')
+        savefile = input(['\n',filenameEMG,' already exsists. Continue saving? (y/n) '],'s');
+        if strcmp(savefile,'y')
             if saveEMG
                 fprintf('Saving EMG data in %s.\n',filenameEMG)
             end
@@ -95,10 +75,33 @@ if EMGEnabled
             else
                 fprintf('\n')
             end
+        else
+            saveEMG = 0;
+            saveforce = 0;
+            fprintf('Not saving data.\n\n')
         end
     else
-        fprintf('Not saving data.\n\n')
+        if saveEMG
+            fprintf('Saving EMG data in %s.\n',filenameEMG)
+        end
+        if saveforce
+            fprintf('Saving force data in %s.\n\n',filenameforce)
+        else
+            fprintf('\n')
+        end
     end
+else
+    fprintf('Not saving data.\n\n')
+end
+
+%% Initialization
+disp('Running DataAcquisition for calibration with EMG task.')
+
+library = TMSi.Library('usb');
+[EMGEnabled,sampler,emg_data,channels] = EMGinit(library,channelSubset,channelName,sampleRateEMG);
+
+if EMGEnabled
+    disp('EMG initialized.')
     
     % Get EMG offset
     input('Press enter when prepared for EMG offset calculation.')
@@ -178,11 +181,15 @@ if EMGEnabled
     % Set figure
     hf = figure('Name','CO EMG Control Task');
     [hf,hp] = Figinit(hf,[max(targetPosx) max(targetPosy)]./1.2);
-    title('EMG');
-    xlabel(channelName{channelControl(1)}); ylabel(channelName{channelControl(2)});
+    if setFig
+        title('EMG');
+        xlabel(channelName{channelControl(1)}); ylabel(channelName{channelControl(2)});
+    else
+        set(gca,'XTickLabel',[],'YTickLabel',[]);
+        set(gca,'Color','k');
+    end
     xl = xlim; yl = ylim;
     htrl = text(xl(2)+0.3*xl(2),yl(2),'Trial: 0','clipping','off','Fontsize',14);
-    %set(gca,'XTickLabel',[],'YTickLabel',[])
     
     % Start EMG data sampling
     sampler.start()
@@ -347,12 +354,12 @@ library.destroy()
                 state = 'movement';
                 tmove = tic;
             case 'movement'
-                if toc(tmove) > movemtime
+                if toc(tmove) > movemtimeCal
                     state = 'hold';
                     tholdstart = tic;
                 end
             case 'hold'
-                if toc(tholdstart) > holdtime
+                if toc(tholdstart) > holdtimeCal
                     state = 'success';
                     tsuccess = tic;
                 end

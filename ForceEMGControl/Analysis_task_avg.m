@@ -1,10 +1,10 @@
 %% Data Analysis for individual subject to compare tasks
 % close all
-% clear all
+clear all
 addpath(genpath('Tools'));
 
 date =      '20180918';
-subject =   '02';
+subject =   '01';
 
 switch computer
     case 'PCWIN'
@@ -15,18 +15,129 @@ switch computer
         paramfolder = 'Parameters/';
 end
 
-%% All blocks for ForceCO, individual block for EMGCO
-codeF = {'002'};
-codeE = '001';
-tasks = {'ForceCO','EMGCO'};
+%% DATA LOADING AND PREPROC
+%% Calibration
+calibtype = 'ForceCO';
 
-% ForceCO
+filenameforce =  [date,'_s',subject,'_',calibtype,'_Force_calib.mat'];
+filenameEMG = [date,'_s',subject,'_',calibtype,'_EMG_calib.mat'];
+filenameparams = [date,'_s',subject,'_params_','001','.mat'];
+
+load([filepath,filenameforce]);
+load([filepath,filenameEMG]);
+load([filepath,paramfolder,filenameparams]);
+
+forceEMGData = {forceDataOut_ForceCO,EMGDataOut_ForceCO};
+
+% Parameters for analysis
+Aparams.downsamp = forceparams.scanRate/EMGparams.sampleRateEMG;
+Aparams.channelNameEMG = EMGparams.channelName;
+Aparams.target_angles = taskparams.targetAnglesForce;%[0:pi/4:7*pi/4];%
+Aparams.avgWindow = 200;
+Aparams.fclF = 5;
+Aparams.fchEMG = 20;
+Aparams.fclEMG = 400;
+Aparams.fs = min(forceparams.scanRate,EMGparams.sampleRateEMG);
+
+% Create trial data struct and remove failed or incomplete trials
+trial_data = trialCO(forceEMGData,Aparams);
+trial_data = removeFailTrials(trial_data(1:end));
+
+% Process EMG and force data and add in struct
+trial_data = procEMG(trial_data,Aparams);
+trial_data_force = procForce(trial_data,Aparams);
+
+% Actual target angles (should be the same as taskparams.targetAnglesForce)
+Aparams.targetAnglesForce = sort(unique(extractfield(trial_data_force,'angle')));
+
+% Epoch interval and signals to trial average
+Aparams.epoch = {'ihold','iend'};
+fields = {'EMG.raw','EMG.filt','force.filt','force.filtmag'};
+
+% Trial average by angle
+trial_data_avg_calib = trialAngleAvg(trial_data_force, Aparams.epoch, fields);
+% Process EMG, so that rectification is after averaging
+trial_data_avg_calib  = procEMG(trial_data_avg_calib ,Aparams);
+
+% Compute mean rectified EMG and filtered force magnitude for each angle.
+% Check calibration values
+EMGmean = zeros(length(trial_data_avg_calib),length(EMGparams.channelSubset)-1);
+forcemean = zeros(length(trial_data_avg_calib),1);
+for i = 1:length(trial_data_avg_calib)
+    EMGmean(i,:) = mean(trial_data_avg_calib(i).EMG.rect,1);
+    forcemean(i) = trial_data_avg_calib(i).force.filtmag_mean;
+end
+
+%% All blocks for force-control task, blocks corresponding to each muscle control pair for EMG-control
+codeF = {'001'};
+
+% Force-control 
 task =  'ForceCO';
+filenameparams = [date,'_s',subject,'_params_','001','.mat'];
+load([filepath,paramfolder,filenameparams]);
+
+% Trial number to start analysis. Leave 10 initial trials for learning task
+startTrial = 10;
+
+% Parameters for analysis
+Aparams.downsamp = forceparams.scanRate/EMGparams.sampleRateEMG;
+Aparams.channelNameEMG = EMGparams.channelName;
+Aparams.target_angles = taskparams.targetAnglesForce;
+Aparams.avgWindow = 200;
+Aparams.fclF = 5;
+Aparams.fchEMG = 20;
+Aparams.fclEMG = 500;
+Aparams.fs = min(forceparams.scanRate,EMGparams.sampleRateEMG);
+
+% Epoch interval and signals to trial average
+Aparams.epoch = {'ihold','iend'};
+fields = {'EMG.raw','EMG.filt','force.filt'};
+
+% Trial data struct for force-control task, will append trial data for each
+% block (code)
 trial_data_force = [];
 
 for i = 1:length(codeF)
     
     code = codeF{i};
+    
+    filenameforce =  [date,'_s',subject,'_',task,'_Force_',code,'.mat'];
+    filenameEMG = [date,'_s',subject,'_',task,'_EMG_',code,'.mat'];
+    
+    load([filepath,filenameforce]);
+    load([filepath,filenameEMG]);
+    
+    forceEMGData = {forceDataOut_ForceCO,EMGDataOut_ForceCO};
+    
+    Aparams.block = str2double(code);
+    
+    trial_data = trialCO(forceEMGData,Aparams);
+    trial_data = removeFailTrials(trial_data(startTrial:end));
+    
+    trial_data = procEMG(trial_data,Aparams);
+    trial_data_force = [trial_data_force, procForce(trial_data,Aparams)];
+end
+
+Aparams.targetAnglesForce = sort(unique(extractfield(trial_data_force,'angle')));
+
+% Trial average by angle
+trial_data_avg_force = trialAngleAvg(trial_data_force, Aparams.epoch, fields);
+% Process EMG, so that rectification is after averaging
+trial_data_avg_force = procEMG(trial_data_avg_force,Aparams);
+% Trial append by angle
+trial_data_app_force = trialAngleApp(trial_data_force, Aparams.epoch, fields,[]);
+
+% EMG-control
+task = 'EMGCO';
+codeE = {'001'};
+
+% Trial data struct for EMG-control task, will append trial data for each
+% block (code)
+trial_data_EMG = [];
+
+for i = 1:length(codeE)
+    
+    code = codeE{i};
     
     filenameforce =  [date,'_s',subject,'_',task,'_Force_',code,'.mat'];
     filenameEMG = [date,'_s',subject,'_',task,'_EMG_',code,'.mat'];
@@ -36,80 +147,42 @@ for i = 1:length(codeF)
     load([filepath,filenameEMG]);
     load([filepath,paramfolder,filenameparams]);
     
-    forceEMGData = {forceDataOut_ForceCO,EMGDataOut_ForceCO};
+    forceEMGData = {forceDataOut_EMGCO,EMGDataOut_EMGCO};
     
-    Aparams.downsamp = forceparams.scanRate/EMGparams.sampleRateEMG;
-    Aparams.channelNameEMG = EMGparams.channelName;
-    Aparams.target_angles = [0:pi/4:7*pi/4];%taskparams.targetAnglesForce;%
-    Aparams.avgWindow = 200;
-    Aparams.fclF = 5;
-    Aparams.fchEMG = 20;
-    Aparams.fclEMG = 400;
-    Aparams.fs = min(forceparams.scanRate,EMGparams.sampleRateEMG);
+    % [angsort,isort] = sort(EMGparams.channelAngle(EMGparams.channelControl));
+    % taskparams.targetAnglesEMG = [angsort(1) mean(angsort) angsort(2)];
+    % EMGparams.channelControl = EMGparams.channelControl(isort);
+    Aparams.target_angles = taskparams.targetAnglesEMG;
     Aparams.block = str2double(code);
-
+    
     trial_data = trialCO(forceEMGData,Aparams);
-    trial_data = removeFailTrials(trial_data(1:end));
+    trial_data = removeFailTrials(trial_data(startTrial:end));
     
     trial_data = procEMG(trial_data,Aparams);
-    trial_data_force = [trial_data_force, procForce(trial_data,Aparams)];
+    trial_data_EMG = [trial_data_EMG, procForce(trial_data,Aparams)];
 end
-
-Aparams.targetAnglesForce = sort(unique(extractfield(trial_data_force,'angle')));
-
-Aparams.epoch = {'imove','iend'};
-fields = {'EMG.raw','EMG.filt','force.filt'};
-
-trial_data_avg_force = trialAngleAvg(trial_data_force, Aparams.epoch, fields);
-trial_data_avg_force = procEMG(trial_data_avg_force,Aparams);
-
-trial_data_app_force = trialAngleApp(trial_data_force, Aparams.epoch, fields,[]);
-
-% EMGCO
-task = 'EMGCO';
-code = codeE;
-
-filenameforce =  [date,'_s',subject,'_',task,'_Force_',code,'.mat'];
-filenameEMG = [date,'_s',subject,'_',task,'_EMG_',code,'.mat'];
-filenameparams = [date,'_s',subject,'_params_',code,'.mat'];
-
-load([filepath,filenameforce]);
-load([filepath,filenameEMG]);
-load([filepath,paramfolder,filenameparams]);
-
-forceEMGData = {forceDataOut_EMGCO,EMGDataOut_EMGCO};
-
-Aparams.downsamp = forceparams.scanRate/EMGparams.sampleRateEMG;
-Aparams.channelNameEMG = EMGparams.channelName;
-[angsort,isort] = sort(EMGparams.channelAngle(EMGparams.channelControl));
-taskparams.targetAnglesEMG = [angsort(1) mean(angsort) angsort(2)]; 
-EMGparams.channelControl = EMGparams.channelControl(isort);
-Aparams.target_angles = taskparams.targetAnglesEMG;
-Aparams.avgWindow = 200;
-Aparams.fclF = 5;
-Aparams.fchEMG = 20;
-Aparams.fclEMG = 400;
-Aparams.fs = min(forceparams.scanRate,EMGparams.sampleRateEMG);
-Aparams.block = str2double(code);
-
-trial_data = trialCO(forceEMGData,Aparams);
-trial_data = removeFailTrials(trial_data(10:end));
-
-trial_data = procEMG(trial_data,Aparams);
-trial_data_EMG = procForce(trial_data,Aparams);
 
 Aparams.targetAnglesEMG = sort(unique(extractfield(trial_data_EMG,'angle')));
 
+% Trial average by angle
 trial_data_avg_EMG = trialAngleAvg(trial_data_EMG, Aparams.epoch, fields);
+% Process EMG, so that rectification is after averaging
 trial_data_avg_EMG = procEMG(trial_data_avg_EMG,Aparams);
-
+% Trial append by angle
 trial_data_app_EMG = trialAngleApp(trial_data_EMG, Aparams.epoch, fields,[]);
 
-%% Force - only with trial_data_avg
-Flim = 2;
-%% LPF force in time for both tasks, check target angles
-figure;
-set(gcf,'Name','ForceCO; Force in time');
+% Angles to compare between tasks
+for i = 1:length(Aparams.target_angles)
+    Aparams.angComp{i} = Aparams.targetAnglesEMG(i)*[1 1];
+end
+
+%% FIGURES
+% Limits for force and EMG plots
+Flim = 2; EMGlim = 80;
+
+%% Force figures (low-pass filtered)
+%% Force in time for each task (check target angles)
+figure('Name','ForceCO; Force in time');
 for i = 1:length(Aparams.targetAnglesForce)
     if rem(length(Aparams.targetAnglesForce),2) == 0
         subplot(2,length(Aparams.targetAnglesForce)/2,i);
@@ -126,8 +199,7 @@ for i = 1:length(Aparams.targetAnglesForce)
     legend('Fx','Fy')
 end
 
-figure;
-set(gcf,'Name','EMGCO; Force in time');
+figure('Name','EMGCO; Force in time');
 for i = 1:length(Aparams.targetAnglesEMG)
     if rem(length(Aparams.targetAnglesEMG),2) == 0
         subplot(2,length(Aparams.targetAnglesEMG)/2,i);
@@ -144,9 +216,8 @@ for i = 1:length(Aparams.targetAnglesEMG)
     legend('Fx','Fy')
 end
 
-%% LPF force trajectory for both tasks, check target angles
-figure;
-set(gcf,'Name','ForceCO; Force trajectory');
+%% Force trajectory for each tasks (check target angles)
+figure('Name','ForceCO; Force trajectory');
 for i = 1:length(Aparams.targetAnglesForce)
     if rem(length(Aparams.targetAnglesForce),2) == 0
         subplot(2,length(Aparams.targetAnglesForce)/2,i);
@@ -165,8 +236,7 @@ for i = 1:length(Aparams.targetAnglesForce)
     legend([h1,h2],'Start','End');
 end
 
-figure;
-set(gcf,'Name','EMGCO; Force trajectory');
+figure('Name','EMGCO; Force trajectory');
 for i = 1:length(Aparams.targetAnglesEMG)
     if rem(length(Aparams.targetAnglesEMG),2) == 0
         subplot(2,length(Aparams.targetAnglesEMG)/2,i);
@@ -185,10 +255,9 @@ for i = 1:length(Aparams.targetAnglesEMG)
     legend([h1,h2],'Start','End');
 end
 
-%% EMG 
-%% Time analysis
-EMGlim = 80;
-%% Fig per muscle, subplot per target
+%% EMG figures 
+%% TIME analysis (recified and averaged)
+%% Figure per muscle, subplot per target for each task
 for j = 1:length(EMGparams.channelName)-1
     figure('Name',['ForceCO; EMG ',EMGparams.channelName{j}]);
     for i = 1:length(taskparams.targetAnglesForce) 
@@ -225,7 +294,7 @@ for j = 1:length(EMGparams.channelName)-1
     end
 end
 
-%% Fig per target, subplot per muscle
+%% Figure per target, subplot per muscle for each task
 for j = 1:length(Aparams.targetAnglesForce)
     figure('Name',['ForceCO; Target: ',num2str(rad2deg(Aparams.targetAnglesForce(j))), ' deg']);
     for i = 1:length(EMGparams.channelName)-1
@@ -262,7 +331,7 @@ for j = 1:length(Aparams.targetAnglesEMG)
     end
 end
 
-%% Fig per task, subplot per muscle (col) and target (row)
+%% Figure per task, subplot per muscle (col) and target (row)
 h = 0;
 figure('Name','ForceCO');
 for j = 1:length(Aparams.targetAnglesForce)
@@ -310,9 +379,7 @@ for j = 1:length(Aparams.targetAnglesEMG)
     end
 end
 
-%% EMG comparison between tasks. Fig per muscle, subplot per task
-Aparams.angComp = {deg2rad([135 135]),deg2rad([225 225])};
-
+%% Figure per muscle, subplot per task (row) and target (col)
 for i = 1:length(EMGparams.channelName)-1
     figure('Name',EMGparams.channelName{i})
     h = 1;
@@ -340,7 +407,7 @@ for i = 1:length(EMGparams.channelName)-1
     end
 end
 
-%% EMG comparison between tasks. Fig per angle, subplot per muscle for both tasks
+%% Figure per angle from angComp, subplot per task (row) per muscle (col)
 for j = 1:length(Aparams.angComp)
     figure('Name',['Targets: Force-',num2str(rad2deg(Aparams.angComp{j}(1))),'; EMG-',num2str(rad2deg(Aparams.angComp{j}(2))),' (',EMGparams.channelName{EMGparams.channelControl(j)},')'])
     
@@ -368,7 +435,7 @@ for j = 1:length(Aparams.angComp)
     end
 end
 
-%% EMG var comparison between tasks. Fig per angle, subplot per muscle for both tasks
+%% Figure of EMG variance, subplot per task
 figure('Name','EMG var')
 for j = 1:length(Aparams.angComp)
     for i = 1:length(EMGparams.channelName)-1
@@ -388,7 +455,7 @@ for j = 1:length(Aparams.angComp)
     xticklabels([{''},EMGparams.channelName(1:end-1)])
 end
 
-%% EMG SNR comparison between tasks. Fig per angle, subplot per muscle for both tasks
+%% Figure of EMG SNR, subplot per task
 figure('Name','EMG SNR')
 for j = 1:length(Aparams.angComp)
     for i = 1:length(EMGparams.channelName)-1
@@ -408,8 +475,9 @@ for j = 1:length(Aparams.angComp)
     xticklabels([{''},EMGparams.channelName(1:end-1)])
 end
 
-%% Frequency analysis
-Aparams.cohparams.data = 'avg';
+%% FREQUENCY analysis
+%% Coherence
+Aparams.cohparams.data = 'app';
 Aparams.cohparams.tseg = 1;
 Aparams.cohparams.nseg = 10;
 Aparams.cohparams.my_nseg = 10;
@@ -429,33 +497,31 @@ musccont = EMGparams.channelControl;
 nmusccomb = (length(EMGparams.channelName)-1)*(length(EMGparams.channelName)-2)/2; % n*(n-1)/2
 fc = 80;
 
-data_analysis = trial_data_avg_EMG;
 trial_data_coh = trial_data_coh_EMG;
 nangles = Aparams.targetAnglesEMG; 
 
-% Coherence
-for j = 1:nmusccomb
-    figure;
-    set(gcf,'Name','Coherence');
-    for i = 1:length(nangles)
-        if rem(length(nangles),2) == 0
-            subplot(2,length(nangles)/2,i);
-        else
-            subplot(1,length(nangles),i);
-        end
-        plot(trial_data_coh(i).(field).fcoh(:,j),trial_data_coh(i).(field).coh(:,j));
-        hold on;
-        line(xlim,trial_data_coh(i).(field).CL(j)*[1 1]);
-        xlim([trial_data_coh(i).(field).fcoh(2,j) fc])
-        xlabel('Frequency [Hz]'); ylabel('Coh [-]');
-        title(['Musc: ',trial_data_coh(i).(field).muscles{j}{1},',',trial_data_coh(i).(field).muscles{j}{2},'; Target: ',num2str(rad2deg(trial_data_coh(i).angle)),' deg']);
-    end
-end
+% %% Coherence 
+% for j = 1:nmusccomb
+%     figure;
+%     set(gcf,'Name','Coherence');
+%     for i = 1:length(nangles)
+%         if rem(length(nangles),2) == 0
+%             subplot(2,length(nangles)/2,i);
+%         else
+%             subplot(1,length(nangles),i);
+%         end
+%         plot(trial_data_coh(i).(field).fcoh(:,j),trial_data_coh(i).(field).coh(:,j));
+%         hold on;
+%         line(xlim,trial_data_coh(i).(field).CL(j)*[1 1]);
+%         xlim([trial_data_coh(i).(field).fcoh(2,j) fc])
+%         xlabel('Frequency [Hz]'); ylabel('Coh [-]');
+%         title(['Musc: ',trial_data_coh(i).(field).muscles{j}{1},',',trial_data_coh(i).(field).muscles{j}{2},'; Target: ',num2str(rad2deg(trial_data_coh(i).angle)),' deg']);
+%     end
+% end
 
-%% Coherence for both tasks, same fig, only for angcomp
+%% Figure per muscle pair, subplot per task (row) per target for angComp (col)
 for j = 1:nmusccomb
-    figure;
-    set(gcf,'Name','Coherence');
+    figure('Name','Coherence');
     for i = 1:length(Aparams.angComp)
         iangf = find([trial_data_coh_force.angle] == Aparams.angComp{i}(1));
         iangE = find([trial_data_coh_EMG.angle] == Aparams.angComp{i}(2));
@@ -483,10 +549,10 @@ for j = 1:nmusccomb
     end
 end
 
-%% FFT for both tasks, same fig, only for angcomp
+%% FFT
+%% Figure per muscle, subplot per target for angComp (col)
 for j = 1:length(EMGparams.channelName)-1
-    figure;
-    set(gcf,'Name','FFT');
+    figure('Name','FFT');
     for i = 1:length(Aparams.angComp)
         iangf = find([trial_data_avg_force.angle] == Aparams.angComp{i}(1));
         iangE = find([trial_data_avg_EMG.angle] == Aparams.angComp{i}(2));
@@ -509,7 +575,7 @@ for j = 1:length(EMGparams.channelName)-1
     end
 end
 
-%% Single-trial analysis
+%% SINGLE-TRIAL 
 itrial = 8;
 
 %% EMG

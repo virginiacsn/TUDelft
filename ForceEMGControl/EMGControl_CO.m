@@ -1,6 +1,10 @@
-%% DAQ from EMG - CO Task
 % Virginia Casasnovas
 % 11/07/2018
+
+% Function for EMG-control task. Center-out type. Saves EMG and force data
+% in separate txt files.
+% Input: structs with parameters: fileparams, taskparams, EMGparams,
+% forceparams. Input values will overwrite defaults.
 
 function EMGControl_CO(varargin)
 %% Parameter assignment
@@ -13,17 +17,19 @@ filenameEMG =       [];
 filepath =          [];
 
 % Task parameters
-targetEMG =         0.5; 
+numTargetsEMG =     3;
+targetAnglesEMG =   [pi/4:pi/(2*(numTargetsEMG-1)):3*pi/4]; % [rad]
+targetEMG =         0.5;
 targetTol =         0.1;
 targetTolEMG =      0.2;
 cursorTol =         1.5;
-numTargetsEMG =     3;
-targetAnglesEMG =   [pi/4:pi/(2*(numTargetsEMG-1)):3*pi/4]; % [rad]
 
 movemtime =         5; % sec
 holdtime =          1; % sec
 timeout =           1; % sec
 relaxtime =         1; % sec
+
+setFig =            1;
 
 % Force parameters
 scanRate =          1000; % [scans/sec]
@@ -68,33 +74,11 @@ if ~isempty(channelAngle)
     end
 end
 
-%% Initialization
-disp('Running DataAcquisition for CO EMG task.')
-
-library = TMSi.Library('usb');
-[EMGEnabled,sampler,emg_data,channels] = EMGinit(library,channelSubset,channelName,sampleRateEMG);
-
-if EMGEnabled
-    disp('EMG initialized.')
-    
-    if saveEMG || saveforce
-        if exist([filepath,filenameEMG],'file')||exist([filepath,filenameforce],'file')
-            savefile = input(['\n',filenameEMG,' already exsists. Continue saving? (y/n) '],'s');
-            if strcmp(savefile,'y')
-                if saveEMG
-                    fprintf('Saving EMG data in %s.\n',filenameEMG)
-                end
-                if saveforce
-                    fprintf('Saving force data in %s.\n\n',filenameforce)
-                else
-                    fprintf('\n')
-                end
-            else
-                saveEMG = 0;
-                saveforce = 0;
-                fprintf('Not saving data.\n\n')
-            end
-        else
+%% Saving file check
+if saveEMG || saveforce
+    if exist([filepath,filenameEMG],'file')||exist([filepath,filenameforce],'file')
+        savefile = input(['\n',filenameEMG,' already exsists. Continue saving? (y/n) '],'s');
+        if strcmp(savefile,'y')
             if saveEMG
                 fprintf('Saving EMG data in %s.\n',filenameEMG)
             end
@@ -103,10 +87,33 @@ if EMGEnabled
             else
                 fprintf('\n')
             end
+        else
+            saveEMG = 0;
+            saveforce = 0;
+            fprintf('Not saving data.\n\n')
         end
     else
-        fprintf('Not saving data.\n\n')
+        if saveEMG
+            fprintf('Saving EMG data in %s.\n',filenameEMG)
+        end
+        if saveforce
+            fprintf('Saving force data in %s.\n\n',filenameforce)
+        else
+            fprintf('\n')
+        end
     end
+else
+    fprintf('Not saving data.\n\n')
+end
+
+%% Initialization
+disp('Running DataAcquisition for CO EMG task.')
+
+library = TMSi.Library('usb');
+[EMGEnabled,sampler,emg_data,channels] = EMGinit(library,channelSubset,channelName,sampleRateEMG);
+
+if EMGEnabled
+    disp('EMG initialized.')
     
     % Get EMG offset
     input('Press enter when prepared for EMG offset calculation.')
@@ -175,7 +182,7 @@ if EMGEnabled
     input('\nPress enter to start acquisition.')
     
     % Initialize variables
-    global htrl 
+    global htrl
     
     countState = 0;
     
@@ -186,11 +193,15 @@ if EMGEnabled
     % Set figure
     hf = figure('Name','CO EMG Control Task');
     [hf,hp] = Figinit(hf,targetEMG*[1 1]);
-    title('EMG');
-    xlabel(channelName{channelControl(1)}); ylabel(channelName{channelControl(2)});
+    if setFig
+        title('EMG');
+        xlabel(channelName{channelControl(1)}); ylabel(channelName{channelControl(2)});
+    else
+        set(gca,'XTickLabel',[],'YTickLabel',[]);
+        set(gca,'Color','k');
+    end
     xl = xlim; yl = ylim;
     htrl = text(xl(2)+0.3*xl(2),yl(2),'Trial: 0','clipping','off','Fontsize',14);
-    %set(gca,'XTickLabel',[],'YTickLabel',[])
     
     % Start EMG data sampling
     sampler.start()
@@ -206,7 +217,7 @@ if EMGEnabled
         countSuccess = 0;
         cursorHoldOut = 0;
         EMGDataBuffer = zeros(length(channelControl),smoothWin);
-
+        
         state = 'start';
         tempState = 'start';
         emg_save = [];
@@ -224,7 +235,7 @@ if EMGEnabled
         s.startBackground();
         
         input('\Press enter to stop acquisition.');
-    
+        
     end
     
     % Delete handles and stop session
@@ -299,14 +310,14 @@ library.destroy()
         
         filtEMGBuffer = filtfilt(b,a,EMGDataBuffer')';
         filtEMGBuffer = filter(d,c,abs(filtEMGBuffer),[],2);
- 
+        
         avgRectEMGBuffer = (mean((filtEMGBuffer),2)-EMGOffset)./(EMGScale(channelControl)); % Rectify, smooth and scale
         avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;
         emg_save = [emg_save,avgRectEMGBuffer];
-%         [minAng,minMusc] = max(targetAnglesEMG);
-%         if minMusc == 2
-%             avgRectEMGBuffer = flip(avgRectEMGBuffer);
-%         end
+        %         [minAng,minMusc] = max(targetAnglesEMG);
+        %         if minMusc == 2
+        %             avgRectEMGBuffer = flip(avgRectEMGBuffer);
+        %         end
         [EMGDatax,EMGDatay] = EMG2xy(avgRectEMGBuffer,targetAnglesEMG(1));
         
         cursorCir = circle(rCirCursor,EMGDatax,EMGDatay);
@@ -325,18 +336,18 @@ library.destroy()
             countState = 0;
             delete(hsta)
         end
-
+        
         tempState = state;
         
         % Trial
         switch state
-            case 'start'                
+            case 'start'
                 xl = xlim; yl = ylim;
                 delete(htrl)
                 delete(hsuc)
                 htrl = text(xl(2)+0.3*xl(2),yl(2),['Trial: ',num2str(trialNum)],'clipping','off','Fontsize',14);
                 hsuc = text(xl(2)+0.3*xl(2),yl(2)-0.1*yl(2),['Successes: ',num2str(countSuccess)],'clipping','off','Fontsize',14);
-
+                
                 iAngle = randi(numTargetsEMG);
                 targetCir = circle(rCirTarget,targetPosx(iAngle),targetPosy(iAngle));
                 htrg = plot(targetCir(:,1),targetCir(:,2),'r','Linewidth',3);
@@ -386,8 +397,8 @@ library.destroy()
                     trialNum = trialNum + 1;
                 end
         end
-                
-        % Appending trial data            
+        
+        % Appending trial data
         sampleNum = sampleNum+1;
         if saveforce
             forceDataOut_EMGCO(sampleNum,:) = {trialNum,iAngle,state,timeStamp,forceData(:,1),forceData(:,2),forceData(:,3),triggerData};

@@ -1,6 +1,10 @@
-%% DAQ from F/T Sensor and EMG - CO Task
 % Virginia Casasnovas
 % 11/07/2018
+
+% Function for force-control task. Center-out type. Saves EMG and force data
+% in separate txt files.
+% Input: structs with parameters: fileparams, taskparams, EMGparams,
+% forceparams. Input values will overwrite defaults.
 
 function ForceControl_CO(varargin)
 %% Parameter assignment
@@ -13,14 +17,17 @@ filenameEMG =   	[];
 filepath =          [];
 
 % Task parameters
-targetForce =       5; % [N]
-targetTolForce =         0.1;
-cursorTol =         1.5;
 numTargetsForce =   4;
+targetAnglesForce = [pi/4:pi/2:7*pi/4];
+targetForce =       5; % [N]
+targetTolForce =    0.1;
+cursorTol =         1.5;
 movemtime =         5; % sec
 holdtime =          1; % sec
 timeout =           1; % sec
 relaxtime =         1; % sec
+
+setFig =            1;
 
 % Force parameters
 fclF =              5; % [Hz]
@@ -31,7 +38,7 @@ iterUpdatePlot =    10;
 rotAngPlot =        0;
 
 % EMG parameters
-EMGEnabled = 0;
+EMGEnabled =        0;
 plotEMG =           0;
 channelSubset =     [1 18];
 channelName =       {'BB','Saw'};
@@ -44,13 +51,43 @@ if ~isempty(varargin)
     end
 end
 
-rCirTarget =        targetForce*targetTolForce; % [N]
-rCirCursor =        targetForce*targetTolForce/cursorTol; % [N]
+rCirTarget = targetForce*targetTolForce; % [N]
+rCirCursor = targetForce*targetTolForce/cursorTol; % [N]
 
-%targetAnglesForce = [pi/4:3*pi/(2*(numTargetsForce-1)):7*pi/4]; % [rad]
-targetAnglesForce = [0:pi/4:7*pi/4];
 if length(channelSubset)~=length(channelName)
     error('Names for all channels not available.')
+end
+
+%% Saving file check
+if saveEMG || saveforce
+    if exist([filepath,filenameEMG],'file') ||  exist([filepath,filenameforce],'file')
+        savefile = input(['\n',filenameforce,' already exsists. Continue saving? (y/n) '],'s');
+        if strcmp(savefile,'y')
+            if saveEMG
+                fprintf('Saving EMG data in %s.\n',filenameEMG)
+            end
+            if saveforce
+                fprintf('Saving force data in %s.\n\n',filenameforce)
+            else
+                fprintf('\n')
+            end
+        else
+            saveEMG = 0;
+            saveforce = 0;
+            fprintf('Not saving data.\n\n')
+        end
+    else
+        if saveEMG
+            fprintf('Saving EMG data in %s.\n',filenameEMG)
+        end
+        if saveforce
+            fprintf('Saving force data in %s.\n\n',filenameforce)
+        else
+            fprintf('\n')
+        end
+    end
+else
+    fprintf('Not saving data.\n\n')
 end
 
 %% Initialization
@@ -60,37 +97,6 @@ device = daq.getDevices;
 
 if ~isempty(device)
     disp('DAQ device found.')
-    
-    if saveEMG || saveforce
-        if exist([filepath,filenameEMG],'file') ||  exist([filepath,filenameforce],'file')
-            savefile = input(['\n',filenameforce,' already exsists. Continue saving? (y/n) '],'s');
-            if strcmp(savefile,'y')
-                if saveEMG
-                    fprintf('Saving EMG data in %s.\n',filenameEMG)
-                end
-                if saveforce
-                    fprintf('Saving force data in %s.\n\n',filenameforce)
-                else
-                    fprintf('\n')
-                end
-            else
-                saveEMG = 0;
-                saveforce = 0;
-                fprintf('Not saving data.\n\n')
-            end
-        else
-            if saveEMG
-                fprintf('Saving EMG data in %s.\n',filenameEMG)
-            end
-            if saveforce
-                fprintf('Saving force data in %s.\n\n',filenameforce)
-            else
-                fprintf('\n')
-            end
-        end
-    else
-        fprintf('Not saving data.\n\n')
-    end
     
     % Initialize EMG
     if saveEMG
@@ -109,19 +115,19 @@ if ~isempty(device)
         disp('EMG could not be initialized.')
     end
     fprintf('\n')
-
+    
     % Create NI DAQ session
     disp('Creating NI DAQ session.')
     s = daq.createSession('ni');
     addAnalogInputChannel(s,device.ID,0:6,'Voltage');
-    if saveEMG
+    if EMGEnabled
         addAnalogOutputChannel(s,device.ID,'ao0','Voltage');
     end
     
     % Obtain offset by averaging 2 sec of still data
     input('Press enter when prepared for sensor offset calculation.')
     fprintf('Obtaining offset values...\n')
-    if saveEMG
+    if EMGEnabled
         queueOutputData(s,zeros(2*scanRate,1));
     end
     forceOffsetData = s.startForeground();
@@ -131,7 +137,7 @@ if ~isempty(device)
     % Obtain Fz calibration by averaging 2 sec of in position data
     input('\nPress enter when in position.')
     fprintf('Obtaining Fz calibration values...\n')
-    if saveEMG
+    if EMGEnabled
         queueOutputData(s,zeros(2*scanRate,1));
     end
     calforceDataz = FzCalibration(s.startForeground,forceOffset);
@@ -156,15 +162,19 @@ if ~isempty(device)
     tempState = 'start';
     
     % Set target forces
-    %targetAngles(targetAngles == 2*pi) = [];
     targetPosx = targetForce*cos(targetAnglesForce)';
     targetPosy = targetForce*sin(targetAnglesForce)';
     
     % Set figure
     hf = figure('Name','CO Force Control Task');
     [hf,hp] = Figinit(hf,targetForce*[1 1]);
-    title('2D Force');
-    xlabel('F_x [N]'); ylabel('F_y [N]');
+    if setFig
+        title('2D Force');
+        xlabel('F_x [N]'); ylabel('F_y [N]');
+    else
+        set(gca,'XTickLabel',[],'YTickLabel',[]);
+        set(gca,'Color','k');
+    end
     
     % Save file header
     if saveforce
@@ -179,7 +189,7 @@ if ~isempty(device)
     end
     
     % Add event listeners and start acquisition
-    if saveEMG
+    if EMGEnabled
         outputData = [4*ones(1,availSamples),zeros(1,scanRate-availSamples)]';
         queueOutputData(s,outputData);
         hlout = addlistener(s,'DataRequired',@(src,event) src.queueOutputData(outputData));
@@ -191,12 +201,6 @@ if ~isempty(device)
     s.Rate = scanRate; % scans/sec, samples/sec?
     s.NotifyWhenDataAvailableExceeds = availSamples; % Call listener when x samples are available
     s.startBackground();
-    
-%     if trialNum == numTrials
-%         s.stop();
-%     else
-%         input('\Press enter to stop acquisition.')
-%     end
 
     input('\Press enter to stop acquisition.')
     
@@ -204,7 +208,7 @@ if ~isempty(device)
     if saveforce
         save([filepath,filenameforce],'forceDataOut_ForceCO')
     end
-    if saveEMG && EMGEnabled
+    if EMGEnabled
         %EMGDataOut_ForceCO = emg_data.samples;
         save([filepath,filenameEMG],'EMGDataOut_ForceCO')
     end
@@ -225,8 +229,7 @@ if ~isempty(device)
             sampler.disconnect()
         end
         library.destroy()
-    end
-    
+    end    
 else
     error('No DAQ device detected.')
 end
