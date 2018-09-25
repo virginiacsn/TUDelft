@@ -3,7 +3,7 @@ function[trial_data] = trialCO(varargin)
 if nargin > 1
     downsamp = 1;
     fs = 1024;
-    target_angles = [0:2*pi/8:2*pi];
+    targetAngles = [];
     block = 1;
     struct2vars(who,varargin{2});
 end
@@ -92,9 +92,9 @@ for itrial = 1:length(trials)
     ihold = find(ismember(data_outcome,'hold'),1);
     
     if ~isempty(imove)
-        trial_data(itrial).angle = target_angles(data_trial{2,idh_ang(2:end)});
+        trial_data(itrial).angle = targetAngles(data_trial{2,idh_ang(2:end)});
     else
-        trial_data(itrial).angle = target_angles(data_trial{1,idh_ang(2:end)});
+        trial_data(itrial).angle = targetAngles(data_trial{1,idh_ang(2:end)});
     end
     
     trial_data(itrial).dt = 1/fs;

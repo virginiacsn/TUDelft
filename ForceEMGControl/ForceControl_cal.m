@@ -36,7 +36,7 @@ scanRate =          2000; % [scans/sec]
 availSamples =      40; % [samples]
 bufferWin =         200; % [samples]
 iterUpdatePlot =    10;
-rotAngPlot =        0;
+rotAnglePlot =      0;
 
 % EMG parameters
 EMGEnabled =        0;
@@ -290,7 +290,7 @@ end
         forceDataz = mean(forceDataFilt(:,3));
         
         calCirCursor = rCirCursor*(1 + abs(forceDataz/calforceDataz));
-        forceDataRot = Rot([forceDatax,forceDatay], rotAngPlot);
+        forceDataRot = Rot([forceDatax,forceDatay], rotAnglePlot);
         cursorCir = circle(calCirCursor,forceDataRot(1),forceDataRot(2));
         set(hp,'xdata',cursorCir(:,1)','ydata',cursorCir(:,2)');
         

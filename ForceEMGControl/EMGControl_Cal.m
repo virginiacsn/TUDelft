@@ -34,13 +34,13 @@ availSamplesEMG =   500; % [samples]
 
 % EMG parameters
 plotEMG =           0;
-channelSubset =     [1 2];
-channelControl =    [1 2];
-channelName =       {'BB','TL'};
-channelAngle =      [0 pi/2 pi 3*pi/2];
+channelSubset =     [];
+channelControl =    [];
+channelName =       {};
+channelAngle =      [];
 sampleRateEMG =     1024;
 fchEMG =            10; % [Hz]
-fclEMG =            30;
+fclEMG =            60;
 smoothWin =         500;
 iterUpdatePlotEMG = 1;
 EMGScale =          [];
@@ -119,8 +119,8 @@ if EMGEnabled
     [b,a] = butter(2,wnh,'high');
     [d,c] = butter(2,wnl,'low');
     samplesOffsetFilt = filtfilt(b,a,samplesOffset')';
-    samplesOffsetFilt = filter(d,c,abs(samplesOffsetFilt'))';
-    EMGOffset = mean((samplesOffsetFilt),2);
+    samplesOffsetFilt = filter(d,c,abs(samplesOffsetFilt),[],2);
+    EMGOffset = mean(samplesOffsetFilt,2);
     
     fprintf('EMG offset:\n')
     for k = 1:length(channelSubset)-1

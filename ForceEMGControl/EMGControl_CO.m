@@ -37,13 +37,14 @@ availSamplesEMG =   500; % [samples]
 
 % EMG parameters
 plotEMG =           0;
-channelSubset =     [1 2];
-channelControl =    [1 2];
-channelName =       {'BB','TL'};
+channelSubset =     [];
+channelControl =    [];
+channelName =       {};
 channelAngle =      [];
+rotAngle =          0;
 sampleRateEMG =     1024;
 fchEMG =            10; % [Hz]
-fclEMG =            30;
+fclEMG =            60;
 smoothWin =         500;
 iterUpdatePlotEMG = 1;
 EMGScale =          [];
@@ -55,6 +56,7 @@ if ~isempty(varargin)
     end
 end
 
+% Assign values for cursor and target radii
 rCirTarget = targetEMG*targetTolEMG; % [N]
 rCirCursor = targetEMG*targetTol/cursorTol; % [N]
 
@@ -62,15 +64,23 @@ if length(channelSubset)~=length(channelName)
     error('Names for all channels not available.')
 end
 
+% If angles for muscles are available reassign target angles, channel
+% control vector and rotation angle for plotting
 if ~isempty(channelAngle)
-    targetAnglesEMG = channelAngle;
-    if numTargetsEMG == 2
+    if numTargetsEMG == 1
+        [iang,isort] = sort(channelAngle(channelControl));
+        targetAnglesEMG = mean(iang);
+        channelControl = channelControl(isort);
+        rotAngle = channelAngle(channelControl(1));
+    elseif numTargetsEMG == 2
         [targetAnglesEMG,isort] = sort(channelAngle(channelControl));
         channelControl = channelControl(isort);
+        rotAngle = targetAnglesEMG(1);
     elseif numTargetsEMG == 3
         [targetAnglesEMG,isort] = sort([channelAngle(channelControl(1)) mean(channelAngle(channelControl)) channelAngle(channelControl(2))]);
         channelControlTemp = [channelControl(1) 0 channelControl(2)];
         channelControl = channelControlTemp(isort([1 3]));
+        rotAngle = targetAnglesEMG(1);
     end
 end
 
@@ -131,8 +141,8 @@ if EMGEnabled
     [b,a] = butter(2,wnh,'high');
     [d,c] = butter(2,wnl,'low');
     samplesOffsetFilt = filtfilt(b,a,samplesOffset')';
-    samplesOffsetFilt = filter(d,c,samplesOffsetFilt')';
-    EMGOffset = mean(abs(samplesOffsetFilt),2);
+    samplesOffsetFilt = filter(d,c,abs(samplesOffsetFilt),[],2);
+    EMGOffset = mean(samplesOffsetFilt,2);
     
     fprintf('EMG offset:\n')
     for k = 1:length(channelControl)
@@ -318,7 +328,7 @@ library.destroy()
         %         if minMusc == 2
         %             avgRectEMGBuffer = flip(avgRectEMGBuffer);
         %         end
-        [EMGDatax,EMGDatay] = EMG2xy(avgRectEMGBuffer,targetAnglesEMG(1));
+        [EMGDatax,EMGDatay] = EMG2xy(avgRectEMGBuffer,rotAngle);
         
         cursorCir = circle(rCirCursor,EMGDatax,EMGDatay);
         set(hp,'xdata',cursorCir(:,1)','ydata',cursorCir(:,2)');
