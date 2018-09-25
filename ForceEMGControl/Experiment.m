@@ -8,7 +8,7 @@ addpath(genpath('Tools'));
 fileparams = struct(...
     'saveforce',    1,...
     'saveEMG',      1,...
-    'date',         '20180920',...
+    'date',         '20180925',...
     'subject',      '01');
 
 if ~exist(['D:\Student_experiments\Virginia\Data\',fileparams.date],'dir') && (fileparams.saveEMG || fileparams.saveforce)
@@ -24,7 +24,7 @@ if ~exist([fileparams.filepath,'Parameters/'],'dir')
 end
 
 taskparams = struct(...
-    'numTargetsForce',  8,...
+    'numTargetsForce',  7,...
     'numTargetsEMG',    3,...
     'targetForce',      10,... % [N]
     'targetForceCal',   30,... % [N]
@@ -34,15 +34,15 @@ taskparams = struct(...
     'targetTolEMG',     0.2,...
     'cursorTol',        2,...
     'movemtime',        5,... % sec
-    'holdtime',         5,... % sec
+    'holdtime',         6,... % sec
     'timeout',          1,... % sec
     'relaxtime',        2,... % sec
-    'setFig',           1);
+    'setFig',           0);
 
 if taskparams.numTargetsForce == 4
     taskparams.targetAnglesForce = [pi/4:pi/2:7*pi/4];
-elseif taskparams.numTargetsForce == 8
-    taskparams.targetAnglesForce = [0:pi/4:7*pi/4];
+elseif taskparams.numTargetsForce == 7
+    taskparams.targetAnglesForce = [pi/4:pi/4:7*pi/4];
 end
 
 forceparams = struct(...
@@ -133,7 +133,7 @@ end
 taskparams.targetForce = round(mean(forcemean));
 
 %% Force-control task
-fileparams.code = '002';
+fileparams.code = '001';
 fileparams.task = 'ForceCO';
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
