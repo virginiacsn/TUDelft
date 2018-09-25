@@ -33,11 +33,11 @@ taskparams = struct(...
     'targetTolForce',   0.1,...
     'targetTolEMG',     0.2,...
     'cursorTol',        2,...
-    'movemtime',        5,... % sec
-    'holdtime',         5,... % sec
+    'movemtime',        3,... % sec
+    'holdtime',         6,... % sec
     'timeout',          1,... % sec
     'relaxtime',        2,... % sec
-    'setFig',           1);
+    'setFig',           0);
 
 if taskparams.numTargetsForce == 4
     taskparams.targetAnglesForce = [pi/4:pi/2:7*pi/4];
