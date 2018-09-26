@@ -18,15 +18,15 @@ filepath =      [];
 
 % Task parameters
 numTargetsForce =   4;
-targetAnglesForce = [pi/4:3*pi/(2*(numTargetsForce-1)):7*pi/4]; % [rad]
+targetAnglesForceCal = [pi/4:3*pi/(2*(numTargetsForce-1)):7*pi/4]; % [rad]
 targetForceCal =    30; % [N]
 targetTolForce =    0.1;
 cursorTol =         1.5;
 
-movemtimeCal =      2; % sec
-holdtimeCal =       2; % sec
-timeout =           1; % sec
-relaxtime =         1; % sec
+movemtimeCal =      2; % [sec]
+holdtimeCal =       2; % [sec]
+timeout =           1; % [sec]
+relaxtime =         1; % [sec]
 
 setFig =            1;
 
@@ -162,8 +162,8 @@ if ~isempty(device)
     
     % Set target forces
     %targetAngles(targetAngles == 2*pi) = [];
-    targetPosx = targetForceCal*cos(targetAnglesForce)';
-    targetPosy = targetForceCal*sin(targetAnglesForce)';
+    targetPosx = targetForceCal*cos(targetAnglesForceCal)';
+    targetPosy = targetForceCal*sin(targetAnglesForceCal)';
     
     % Set figure
     hf = figure('Name','CO Force Control Task');
@@ -321,13 +321,13 @@ end
                 
                 if reptarg
                     if iAngle == 1
-                        iAngle = length(targetAnglesForce);
+                        iAngle = length(targetAnglesForceCal);
                     else
                         iAngle = iAngle-1;
                     end
                     reptarg = 0;
                 end
-                if iAngle > length(targetAnglesForce)
+                if iAngle > length(targetAnglesForceCal)
                     iAngle = 1;
                 end
                 

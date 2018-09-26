@@ -22,10 +22,11 @@ targetAnglesForce = [pi/4:pi/2:7*pi/4];
 targetForce =       5; % [N]
 targetTolForce =    0.1;
 cursorTol =         1.5;
-movemtime =         5; % sec
-holdtime =          1; % sec
-timeout =           1; % sec
-relaxtime =         1; % sec
+
+movemtime =         5; % [sec]
+holdtimeForce =     1; % [sec]
+timeout =           1; % [sec]
+relaxtime =         1; % [sec]
 
 setFig =            1;
 
@@ -149,7 +150,7 @@ if ~isempty(device)
     % Initialize variables
     global tmove trelax tfail tsuccess tholdstart
     global targetCir iAngle
-    global htrg hsta htrl hsuc
+    global htrg hsta hstaL htrl hsuc
     
     trialNum = 0;
     countState = 0;
@@ -302,9 +303,11 @@ end
             countState = countState+1;
             xl = xlim;
             hsta = text(xl(2)+0.3*xl(2),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',24);
+            hstaL = text(xl(1)-0.5*xl(1),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',24);
         elseif ~strcmp(state,tempState) && countState > 0
             countState = 0;
             delete(hsta)
+            delete(hstaL)
         end
         
         
@@ -343,17 +346,17 @@ end
                     state = 'fail';
                     tfail = tic;
                 else
-                    if ~cursorInTarget(cursorCir,targetCir) && toc(tholdstart) <= holdtime
+                    if ~cursorInTarget(cursorCir,targetCir) && toc(tholdstart) <= holdtimeForce
                         cursorHoldOut = cursorHoldOut+1;
-                    elseif cursorHoldOut >= 3  && toc(tholdstart) <= holdtime
+                    elseif cursorHoldOut >= 3  && toc(tholdstart) <= holdtimeForce
                         cursorHoldOut = 0;
                         state = 'fail';
                         tfail = tic;
-                    elseif cursorHoldOut > 3 && toc(tholdstart) > holdtime
+                    elseif cursorHoldOut > 3 && toc(tholdstart) > holdtimeForce
                         cursorHoldOut = 0;
                         state = 'fail';
                         tfail = tic;
-                    elseif cursorHoldOut <= 3 && toc(tholdstart) > holdtime
+                    elseif cursorHoldOut <= 3 && toc(tholdstart) > holdtimeForce
                         cursorHoldOut = 0;
                         state = 'success';
                         tsuccess = tic;

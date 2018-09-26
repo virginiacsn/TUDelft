@@ -22,7 +22,7 @@ library = TMSi.Library('usb');
 if EMGEnabled
     fprintf('EMG initialized.\n\n')
     
-    MVCScale = zeros(2,length(channelSubset)-1);
+    MVCScale = zeros(length(channelSubset)-1,2);
     
     for j = 1:length(channelSubset)-1
         str = ['Press enter when prepared for ',channelName{channelSubset(j)},' EMG MVC calculation.'];
@@ -49,8 +49,8 @@ if EMGEnabled
         samplesMVCRect = abs(samplesMVCFilt);
         samplesMVCFilt = filter(d,c,abs(samplesMVCFilt));
         
-        MVCScale(1,j) = mean(samplesMVCFilt,2);
-        MVCScale(2,j) = mean(samplesMVCRect,2);
+        MVCScale(j,1) = mean(samplesMVCFilt,2);
+        MVCScale(j,2) = mean(samplesMVCRect,2);
     end
 end
 

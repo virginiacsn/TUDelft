@@ -8,8 +8,8 @@ addpath(genpath('Tools'));
 fileparams = struct(...
     'saveforce',    1,...
     'saveEMG',      1,...
-    'date',         '20180925',...
-    'subject',      '01');
+    'date',         '20180926',...
+    'subject',      '02');
 
 if ~exist(['D:\Student_experiments\Virginia\Data\',fileparams.date],'dir') && (fileparams.saveEMG || fileparams.saveforce)
     mkdir(['D:\Student_experiments\Virginia\Data\',fileparams.date])
@@ -24,20 +24,22 @@ if ~exist([fileparams.filepath,'Parameters/'],'dir')
 end
 
 taskparams = struct(...
-    'numTargetsForce',  7,...
-    'numTargetsEMG',    3,...
-    'targetForce',      10,... % [N]
-    'targetForceCal',   30,... % [N]
-    'targetEMG',        0.2,... % [% EMGScale]
-    'targetEMGCal',     40,...
-    'targetTolForce',   0.1,... % targetForce*targetTol
-    'targetTolEMG',     0.2,... % targetEMG*targetTol
-    'cursorTol',        2,...   % targetTol/cursorTol
-    'movemtime',        3,... % [sec]
-    'holdtime',         6,... % [sec]
-    'timeout',          1,... % [sec]
-    'relaxtime',        2,... % [sec]
-    'setFig',           0); % fig display for test/experiment
+    'numTargetsForce',      7,...
+    'numTargetsEMG',        3,...
+    'targetForce',          10,... % [N]
+    'targetForceCal',       30,... % [N]
+    'targetEMG',            0.2,... % [% EMGScale]
+    'targetEMGCal',         40,...
+    'targetTolForce',       0.1,... % targetForce*targetTol
+    'targetTolEMG',         0.2,... % targetEMG*targetTol
+    'cursorTol',            2,...   % targetTol/cursorTol
+    'targetAnglesForceCal', [pi/4:pi/2:7*pi/4],...
+    'movemtime',            3,... % [sec]
+    'holdtimeForce',        6,... % [sec]
+    'holdtimeEMG',          5,... % [sec]
+    'timeout',              1,... % [sec]
+    'relaxtime',            2,... % [sec]
+    'setFig',               0); % fig display for test/experiment
 
 if taskparams.numTargetsForce == 4
     taskparams.targetAnglesForce = [pi/4:pi/2:7*pi/4]; % [rad]
@@ -56,9 +58,12 @@ forceparams = struct(...
 
 EMGparams = struct(...
     'plotEMG',          0,... % plot EMG 
-    'channelSubset',    [1 2 3 4 17],...
-    'channelName',      {{'BB','TLH','DA','DP','Trigger'}},...
-    'channelAngle',     [5*pi/4,pi/4,3*pi/4,7*pi/4],...%[0 0 5*pi/4 pi/4 pi/4 pi/4 7*pi/4],...
+    'channelSubset',    [1 2 3 4 5 6 7 8 17],...
+    'channelSubsetCal', [1 2 3 4 17],...
+    'channelName',      {{'BB','TLH','DA','DP','ECRB','FCR','Br','TLat','Trigger'}},...
+    'channelNameCal',   {{'BB','TLH','DA','DP','Trigger'}},...
+    'channelAngle',     [5*pi/4,pi/4,3*pi/4,7*pi/4,0,0,0,0],...
+    'channelAngleCal',  [5*pi/4,pi/4,3*pi/4,7*pi/4],...
     'sampleRateEMG',    1024,... % [samples/sec]
     'fchEMG',           30,... % [Hz]
     'fclEMG',           60,... % [Hz]
@@ -84,8 +89,7 @@ fileparams.filenameEMG =    [fileparams.date,'_s',fileparams.subject,'_',filepar
 EMGControl_Cal(fileparams,taskparams,forceparams,EMGparams);
 
 %% Calibration with MVC task  - start MVC test
-EMGScaleMVC_start = MVCtest(EMGparams);
-EMGparams.EMGScaleMVC_start = EMGScaleMVC_start(1,:);
+EMGparams.EMGScaleMVC_start = MVCtest(EMGparams);
 
 %% Pre-analysis for calibration
 load([fileparams.filepath,fileparams.filenameforce]);
@@ -110,6 +114,9 @@ trial_data = trialCO(forceEMGData,PreAparams);
 
 trial_data = removeFailTrials(trial_data);
 
+PreAparams.targetAngles = sort(unique([trial_data.angle]));
+
+
 trial_data = procEMG(trial_data,PreAparams);
 trial_data = procForce(trial_data,PreAparams);
 
@@ -133,51 +140,17 @@ end
 
 taskparams.targetForce = round(mean(forcemean))*0.5;
 
-%% Check force and EMG 
-% Force: subplot per target
-figure('Name','Force in time');
-for i = 1:length(taskparams.targetAnglesForce)
-    if rem(length(taskparams.targetAnglesForce),2) == 0
-        subplot(2,length(taskparams.targetAnglesForce)/2,i);
-    else
-        subplot(1,length(taskparams.targetAnglesForce),i);
-    end
-    for j = 1:2
-        plot(trial_data_avg(i).ts,trial_data_avg(i).force.filt(:,j));
-        hold on;
-    end
-    ylim(taskparams.targetForce*[-5 5]);
-    xlabel('Time [s]'); ylabel('Force [N]');
-    title(['Target: ',num2str(rad2deg(trial_data_avg(i).angle)),' deg']);
-    legend('Fx','Fy')
+if strcmp(fileparams.task,'ForceCO')
+    clear forceEMGData forceDataOut_ForceCO EMGDataOut_ForceCO
+elseif strcmp(fileparams.task,'EMGCO')
+    clear forceEMGData forceDataOut_EMGCO EMGDataOut_EMGCO
 end
 
-% EMG: subplot per muscle (col) and target (row)
-h = 0;
-figure('Name','EMG in time');
-for j = 1:length(taskparams.targetAnglesForce)
-    for i = 1:length(EMGparams.channelName)-1
-        h = h+1;
-        subplot(length(taskparams.targetAnglesForce),length(EMGparams.channelName)-1,h);
-        plot(trial_data_avg(j).ts,trial_data_avg(j).EMG.rect(:,i));
-        hold on;
-        plot(trial_data_avg(j).ts,trial_data_avg(j).EMG.avg(:,i));
-        ylim([0 max(trial_data_avg(j).EMG.rect(:))+50]);
-        xlim([0 trial_data_avg(j).ts(end)]);
-        if j == length(taskparams.targetAnglesForce)
-            xlabel('Time [s]');
-        end
-        if i == 1
-            ylabel([num2str(rad2deg(taskparams.targetAnglesForce(j))) ,' deg']);
-        end
-        if j == 1
-            title(['Musc: ',EMGparams.channelName{i}]);
-        end
-    end
-end
+%% Check force and EMG 
+plotForceEMGtime;
 
 %% Force-control task
-fileparams.code = '001';
+fileparams.code = '002';
 fileparams.task = 'ForceCO';
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
@@ -188,7 +161,7 @@ if strcmp(fileparams.task,'ForceCO')
 end
 
 %% EMG-control task
-fileparams.code = '001';
+fileparams.code = '006';
 fileparams.task = 'EMGCO';
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
@@ -197,12 +170,12 @@ fileparams.filenameEMG =    [fileparams.date,'_s',fileparams.subject,'_',filepar
 EMGparams.fchEMG = 30;
 EMGparams.fclEMG = 60;
 EMGparams.smoothWin = 800;
-EMGparams.EMGScale = EMGparams.EMGScaleMVF;
+EMGparams.EMGScale = EMGparams.EMGScaleMVF; %EMGparams.EMGScaleMVC_start(:,1);
 EMGparams.EMGScaleType = 'MVF';
-EMGparams.channelControl = [2 3];
+EMGparams.channelControl = [1 3];
 
 taskparams.numTargetsEMG = 3;
-taskparams.targetEMG = 1;
+taskparams.targetEMG = 0.6;
 taskparams.targetAnglesEMG = sort([EMGparams.channelAngle(EMGparams.channelControl) mean(EMGparams.channelAngle(EMGparams.channelControl))]);
     
 if strcmp(fileparams.task,'EMGCO') 
@@ -215,3 +188,7 @@ save([fileparams.filepath,'Parameters/',paramsfilename],'taskparams','forceparam
 
 %% End MVC test
 EMGparams.EMGScaleMVC_end = MVCtest(EMGparams);
+
+% Save params for each EMGCO file (save end MVC test in last params code)
+paramsfilename =  [fileparams.date,'_s',fileparams.subject,'_params_',fileparams.code,'.mat'];
+save([fileparams.filepath,'Parameters/',paramsfilename],'taskparams','forceparams','EMGparams');

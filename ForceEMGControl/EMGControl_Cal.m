@@ -21,10 +21,10 @@ targetEMGCal =      100;
 targetTolEMG =      0.2;
 cursorTol =         1.5;
 
-movemtimeCal =      2; % sec
-holdtimeCal =       2; % sec
-timeout =           1; % sec
-relaxtime =         1; % sec
+movemtimeCal =      2; % [sec]
+holdtimeCal =       2; % [sec]
+timeout =           1; % [sec]
+relaxtime =         1; % [sec]
 
 setFig =            1;
 
@@ -34,10 +34,9 @@ availSamplesEMG =   500; % [samples]
 
 % EMG parameters
 plotEMG =           0;
-channelSubset =     [];
-channelControl =    [];
-channelName =       {};
-channelAngle =      [];
+channelSubsetCal =  [];
+channelNameCal =    {};
+channelAngleCal =   [];
 sampleRateEMG =     1024;
 fchEMG =            10; % [Hz]
 fclEMG =            60;
@@ -54,13 +53,13 @@ end
 
 rCirCursor = targetEMGCal*targetTolEMG/cursorTol; % [N]
 
-if length(channelSubset)~=length(channelName)
+if length(channelSubsetCal)~=length(channelNameCal)
     error('Names for all channels not available.')
 end
 
-[targetAnglesEMG,isort] = sort(channelAngle);
-channelSubsetTemp = channelSubset(1:end-1);
-channelSubset = [channelSubsetTemp(isort) channelSubset(end)];
+[targetAnglesEMG,isort] = sort(channelAngleCal);
+channelSubsetTemp = channelSubsetCal(1:end-1);
+channelSubsetCal = [channelSubsetTemp(isort) channelSubsetCal(end)];
 
 %% Saving file check
 if saveEMG || saveforce
@@ -98,40 +97,15 @@ end
 disp('Running DataAcquisition for calibration with EMG task.')
 
 library = TMSi.Library('usb');
-[EMGEnabled,sampler,emg_data,channels] = EMGinit(library,channelSubset,channelName,sampleRateEMG);
+[EMGEnabled,sampler,emg_data,channels] = EMGinit(library,channelSubsetCal,channelNameCal,sampleRateEMG);
 
 if EMGEnabled
     disp('EMG initialized.')
     
-    % Get EMG offset
-    input('Press enter when prepared for EMG offset calculation.')
-    samplesOffset = [];
-    sampler.start()
-    for n = 1:10
-        samples = sampler.sample();
-        pause(0.2)
-        samplesOffset = [samplesOffset, samples(channelSubset(1:end-1),:)];
-    end
-    sampler.stop()
-    
-    wnh = (2/sampleRateEMG)*fchEMG;
-    wnl = (2/sampleRateEMG)*fclEMG;
-    [b,a] = butter(2,wnh,'high');
-    [d,c] = butter(2,wnl,'low');
-    samplesOffsetFilt = filtfilt(b,a,samplesOffset')';
-    samplesOffsetFilt = filter(d,c,abs(samplesOffsetFilt),[],2);
-    EMGOffset = mean(samplesOffsetFilt,2);
-    
-    fprintf('EMG offset:\n')
-    for k = 1:length(channelSubset)-1
-        fprintf('%s: %1.3f\n',channelName{k},EMGOffset(k))
-    end
-    fprintf('\n')
-    
     % Plot EMG
     if plotEMG
         disp('Plotting EMGs to check.')
-        EMGplot(emg_data,sampler,channels,channelSubset); %emg_data appended will be saved? trigger
+        EMGplot(emg_data,sampler,channels,channelSubsetCal); %emg_data appended will be saved? trigger
     end
     
     % Initialize force DAQ
@@ -165,6 +139,30 @@ if EMGEnabled
         device = [];
         disp('Not saving force data.')
     end
+    % Get EMG offset
+    input('\nPress enter when prepared for EMG offset calculation.')
+    samplesOffset = [];
+    sampler.start()
+    for n = 1:10
+        samples = sampler.sample();
+        pause(0.2)
+        samplesOffset = [samplesOffset, samples(channelSubsetCal(1:end-1),:)];
+    end
+    sampler.stop()
+    
+    wnh = (2/sampleRateEMG)*fchEMG;
+    wnl = (2/sampleRateEMG)*fclEMG;
+    [b,a] = butter(2,wnh,'high');
+    [d,c] = butter(2,wnl,'low');
+    samplesOffsetFilt = filtfilt(b,a,samplesOffset')';
+    samplesOffsetFilt = filter(d,c,abs(samplesOffsetFilt),[],2);
+    EMGOffset = mean(samplesOffsetFilt,2);
+    
+    fprintf('EMG offset:\n')
+    for k = 1:length(channelSubsetCal)-1
+        fprintf('%s: %1.3f\n',channelNameCal{k},EMGOffset(k))
+    end
+    fprintf('\n')
     
     %% Data acquisition
     input('\nPress enter to start acquisition.')
@@ -183,7 +181,7 @@ if EMGEnabled
     [hf,hp] = Figinit(hf,[max(targetPosx) max(targetPosy)]./1.2);
     if setFig
         title('EMG');
-        xlabel(channelName{channelControl(1)}); ylabel(channelName{channelControl(2)});
+        %xlabel(channelName{channelControl(1)}); ylabel(channelName{channelControl(2)});
     else
         set(gca,'XTickLabel',[],'YTickLabel',[]);
         set(gca,'Color','k');
@@ -202,7 +200,7 @@ if EMGEnabled
         
         trialNum = 0;
         countBuffer = 0;
-        EMGDataBuffer = zeros(length(channelSubset)-1,smoothWin);
+        EMGDataBuffer = zeros(length(channelSubsetCal)-1,smoothWin);
         state = 'start';
         tempState = 'start';
         iAngle = 1;
@@ -278,10 +276,10 @@ library.destroy()
         
         samples = sampler.sample();
         nSamples = size(samples,2);
-        appendSamples = samples(channelSubset,:);%-repmat(EMGOffset,1,nSamples))./repmat(EMGScale,1,nSamples);
+        appendSamples = samples(channelSubsetCal,:);%-repmat(EMGOffset,1,nSamples))./repmat(EMGScale,1,nSamples);
         
         %emg_data.append(appendSamples)
-        EMGSamples = samples(channelSubset(1:end-1),:);
+        EMGSamples = samples(channelSubsetCal(1:end-1),:);
         
         if nSamples < smoothWin
             bufferTemp = EMGDataBuffer;

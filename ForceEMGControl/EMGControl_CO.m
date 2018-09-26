@@ -24,10 +24,10 @@ targetTol =         0.1;
 targetTolEMG =      0.2;
 cursorTol =         1.5;
 
-movemtime =         5; % sec
-holdtime =          1; % sec
-timeout =           1; % sec
-relaxtime =         1; % sec
+movemtime =         5; % [sec]
+holdtimeEMG =       1; % [sec]
+timeout =           1; % [sec]
+relaxtime =         1; % [sec]
 
 setFig =            1;
 
@@ -125,31 +125,6 @@ library = TMSi.Library('usb');
 if EMGEnabled
     disp('EMG initialized.')
     
-    % Get EMG offset
-    input('Press enter when prepared for EMG offset calculation.')
-    samplesOffset = [];
-    sampler.start()
-    for n = 1:10
-        samples = sampler.sample();
-        pause(0.2)
-        samplesOffset = [samplesOffset, samples(channelControl,:)];
-    end
-    sampler.stop()
-    
-    wnh = (2/sampleRateEMG)*fchEMG;
-    wnl = (2/sampleRateEMG)*fclEMG;
-    [b,a] = butter(2,wnh,'high');
-    [d,c] = butter(2,wnl,'low');
-    samplesOffsetFilt = filtfilt(b,a,samplesOffset')';
-    samplesOffsetFilt = filter(d,c,abs(samplesOffsetFilt),[],2);
-    EMGOffset = mean(samplesOffsetFilt,2);
-    
-    fprintf('EMG offset:\n')
-    for k = 1:length(channelControl)
-        fprintf('%s: %1.3f\n',channelName{channelSubset==channelControl(k)},EMGOffset(k))
-    end
-    fprintf('\n')
-    
     % Plot EMG
     if plotEMG
         disp('Plotting EMGs to check.')
@@ -188,6 +163,31 @@ if EMGEnabled
         disp('Not saving force data.')
     end
     
+    % Get EMG offset
+    input('\nPress enter when prepared for EMG offset calculation.')
+    samplesOffset = [];
+    sampler.start()
+    for n = 1:10
+        samples = sampler.sample();
+        pause(0.2)
+        samplesOffset = [samplesOffset, samples(channelControl,:)];
+    end
+    sampler.stop()
+    
+    wnh = (2/sampleRateEMG)*fchEMG;
+    wnl = (2/sampleRateEMG)*fclEMG;
+    [b,a] = butter(2,wnh,'high');
+    [d,c] = butter(2,wnl,'low');
+    samplesOffsetFilt = filtfilt(b,a,samplesOffset')';
+    samplesOffsetFilt = filter(d,c,abs(samplesOffsetFilt),[],2);
+    EMGOffset = mean(samplesOffsetFilt,2);
+    
+    fprintf('EMG offset:\n')
+    for k = 1:length(channelControl)
+        fprintf('%s: %1.3f\n',channelName{channelSubset==channelControl(k)},EMGOffset(k))
+    end
+    fprintf('\n')
+    
     %% Data acquisition
     input('\nPress enter to start acquisition.')
     
@@ -220,7 +220,7 @@ if EMGEnabled
         % Initialize variables
         global tmove trelax tfail tsuccess tholdstart
         global targetCir iAngle trialNum
-        global htrg hsta hsuc
+        global htrg hsta hstaL hsuc
         
         trialNum = 0;
         countBuffer = 0;
@@ -342,9 +342,11 @@ library.destroy()
             countState = countState+1;
             xl = xlim;
             hsta = text(xl(2)+0.3*xl(2),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',24);
+            hstaL = text(xl(1)-0.5*xl(1),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',24);
         elseif ~strcmp(state,tempState) && countState > 0
             countState = 0;
             delete(hsta)
+            delete(hstaL)
         end
         
         tempState = state;
@@ -373,17 +375,17 @@ library.destroy()
                     tfail = tic;
                 end
             case 'hold'
-                if ~cursorInTarget(cursorCir,targetCir) && toc(tholdstart) <= holdtime
+                if ~cursorInTarget(cursorCir,targetCir) && toc(tholdstart) <= holdtimeEMG
                     cursorHoldOut = cursorHoldOut+1;
-                elseif cursorHoldOut >= 10  && toc(tholdstart) <= holdtime
+                elseif cursorHoldOut >= 20  && toc(tholdstart) <= holdtimeEMG
                     cursorHoldOut = 0;
                     state = 'fail';
                     tfail = tic;
-                elseif cursorHoldOut > 10 && toc(tholdstart) > holdtime
+                elseif cursorHoldOut > 20 && toc(tholdstart) > holdtimeEMG
                     cursorHoldOut = 0;
                     state = 'fail';
                     tfail = tic;
-                elseif cursorHoldOut <= 10 && toc(tholdstart) > holdtime
+                elseif cursorHoldOut <= 20 && toc(tholdstart) > holdtimeEMG
                     cursorHoldOut = 0;
                     state = 'success';
                     tsuccess = tic;
