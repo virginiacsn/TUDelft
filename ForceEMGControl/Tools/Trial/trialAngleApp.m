@@ -15,8 +15,13 @@ for iangle = 1:length(angles)
         app_data = [];
         
         for itrial = 1:length(angle_data)
-            idx1 = angle_data(itrial).(epoch{1});
-            idx2 = angle_data(itrial).(epoch{2});
+            if length(epoch) == 2
+                idx1 = angle_data(itrial).(epoch{1});
+                idx2 = angle_data(itrial).(epoch{2});
+            else  
+                idx1 = angle_data(itrial).(epoch{1})+round(epoch{2}/angle_data(itrial).dt);
+                idx2 = angle_data(itrial).(epoch{3})+round(epoch{4}/angle_data(itrial).dt);
+            end
             
             if isempty(window)
                 win = rectwin(length(idx1:idx2));
@@ -31,7 +36,7 @@ for iangle = 1:length(angles)
         trial_data_app(iangle).fv = (0:size(field_data,1)-1)/trial_data_app(iangle).ts(end);
         trial_data_app(iangle).iapp = app_data;
         trial_data_app(iangle).(field_str{1}).(field_str{2}) = field_data;
-        trial_data_app(iangle).(field_str{1}).([field_str{2},'_fft']) = fft(field_data);
+        %trial_data_app(iangle).(field_str{1}).([field_str{2},'_fft']) = fft(field_data);
     end
 end
 end

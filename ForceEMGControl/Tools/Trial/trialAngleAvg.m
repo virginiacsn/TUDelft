@@ -2,7 +2,11 @@ function[trial_data_avg] = trialAngleAvg(trial_data, epoch, fields)
 
 angles = sort(unique(extractfield(trial_data,'angle')));
 if ~isempty(epoch)
-    nsamp = min(extractfield(trial_data,epoch{2})-extractfield(trial_data,epoch{1}))+1;
+    if length(epoch) == 2
+            nsamp = min([trial_data.(epoch{2})]-[trial_data.(epoch{1})])+1;
+    else
+            nsamp = min([trial_data.(epoch{3})]+round(epoch{4}/trial_data(1).dt)-([trial_data.(epoch{1})]+round(epoch{2}/trial_data(1).dt)))+1;
+    end
 end
 
 for iangle = 1:length(angles)
@@ -20,12 +24,18 @@ for iangle = 1:length(angles)
         end
         field_data_mean = [];
         field_data = [];
-        field_data_fft = [];
+        %field_data_fft = [];
         
         for itrial = 1:length(angle_data)
             if ~isempty(epoch)
-                idx1 = angle_data(itrial).(epoch{1});
-                idx2 = angle_data(itrial).(epoch{2});
+                if length(epoch) == 2
+                    idx1 = angle_data(itrial).(epoch{1});
+                    idx2 = angle_data(itrial).(epoch{2});
+                else
+                    idx1 = angle_data(itrial).(epoch{1})+round(epoch{2}/angle_data(itrial).dt);
+                    idx2 = angle_data(itrial).(epoch{3})+round(epoch{4}/angle_data(itrial).dt);
+                end
+                
                 nsampextra = (idx2-idx1)-nsamp+1;
                 sampv = idx1+round(nsampextra/2):idx2-round(nsampextra/2);
             else
