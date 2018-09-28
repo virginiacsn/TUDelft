@@ -150,7 +150,7 @@ if ~isempty(device)
     % Initialize variables
     global tmove trelax tfail tsuccess tholdstart
     global targetCir iAngle
-    global htrg hsta hstaL htrl hsuc
+    global htrg hsta htrl hsuc
     
     trialNum = 0;
     countState = 0;
@@ -303,11 +303,11 @@ end
             countState = countState+1;
             xl = xlim;
             hsta = text(xl(2)+0.3*xl(2),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',24);
-            hstaL = text(xl(1)-0.5*xl(1),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',24);
+            %hstaL = text(xl(1)-0.5*xl(1),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',24);
         elseif ~strcmp(state,tempState) && countState > 0
             countState = 0;
             delete(hsta)
-            delete(hstaL)
+            %delete(hstaL)
         end
         
         

@@ -27,7 +27,7 @@ for j = 1:length(PreAparams.targetAngles)
         plot(trial_data_avg(j).ts,trial_data_avg(j).EMG.rect(:,i));
         hold on;
         plot(trial_data_avg(j).ts,trial_data_avg(j).EMG.avg(:,i));
-        ylim([0 max(trial_data_avg(j).EMG.rect(:))+50]);
+        ylim([0 50]);
         xlim([0 trial_data_avg(j).ts(end)]);
         if j == length(PreAparams.targetAngles)
             xlabel('Time [s]');
