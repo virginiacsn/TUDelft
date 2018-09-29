@@ -69,7 +69,7 @@ for i = 1:length(trial_data_avg_calib)
 end
 
 %% All blocks for force-control task, blocks corresponding to each muscle control pair for EMG-control
-codeF = {'001','002'};
+codeF = {'001'};
 
 % Force-control 
 task =  'ForceCO';
@@ -90,8 +90,8 @@ Aparams.fclEMG = 500;
 Aparams.fs = min(forceparams.scanRate,EMGparams.sampleRateEMG);
 
 % Epoch interval {epoch start, time start, epoch end, time end} and fields to trial average
-Aparams.epoch = {'ihold',1,'iend',0};
-fields_avg = {'EMG.raw','EMG.filt','force.filt'};
+Aparams.epoch = {'imove',0,'iend',0};
+fields_avg = {'EMG.raw','EMG.filt','EMG.rect','EMG.avg','force.filt'};
 % Fields to trial append
 fields_app = {'EMG.rect'};
 
@@ -115,7 +115,12 @@ for i = 1:length(codeF)
     Aparams.block = str2double(code);
     
     trial_data = trialCO(forceEMGData,Aparams);
-    trial_data = removeFailTrials(trial_data(startTrial:end));
+    
+    if i == 1
+        trial_data = removeFailTrials(trial_data(startTrial:end));
+    else
+        trial_data = removeFailTrials(trial_data(1:end));
+    end
     
     trial_data = procEMG(trial_data,Aparams);
     trial_data_force = [trial_data_force, procForce(trial_data,Aparams)];
@@ -130,9 +135,9 @@ trial_data_avg_force = procEMG(trial_data_avg_force,Aparams);
 % Trial append by angle
 trial_data_app_force = trialAngleApp(trial_data_force, Aparams.epoch, fields_app,[]);
 
-% EMG-control
+%% EMG-control
 task = 'EMGCO';
-codeE = {'001','002','003','004','005','006'};
+codeE = {'003','004'};
 
 % Trial data struct for EMG-control task, will append trial data for each
 % block (code)
@@ -155,12 +160,17 @@ for i = 1:length(codeE)
     % [angsort,isort] = sort(EMGparams.channelAngle(EMGparams.channelControl));
     % taskparams.targetAnglesEMG = [angsort(1) mean(angsort) angsort(2)];
     % EMGparams.channelControl = EMGparams.channelControl(isort);
-    Aparams.controlMusc{i}  = EMGparams.channelNames{EMGparams.channelControl};
+    Aparams.controlMusc{i}  = EMGparams.channelName{EMGparams.channelControl};
     Aparams.targetAngles = taskparams.targetAnglesEMG;
     Aparams.block = str2double(code);
     
     trial_data = trialCO(forceEMGData,Aparams);
-    trial_data = removeFailTrials(trial_data(startTrial:end));
+    
+%     if i == 1
+        trial_data = removeFailTrials(trial_data(startTrial:end));
+%     else
+%         trial_data = removeFailTrials(trial_data(1:end));
+%     end    
     
     trial_data = procEMG(trial_data,Aparams);
     trial_data_EMG = [trial_data_EMG, procForce(trial_data,Aparams)];
@@ -180,8 +190,8 @@ for i = 1:length(Aparams.targetAnglesEMG)
     Aparams.angComp{i} = Aparams.targetAnglesEMG(i)*[1 1];
 end
 
-[Aparams.muscAngles,isort] = sort(EMGparams.channelAngle(EMGparams.channelAngle>0));
-Aparams.channelName = EMGparams.channelName(EMGparams.channelAngle>0);
+[Aparams.muscAngles,isort] = sort(EMGparams.channelAngle(ismember(EMGparams.channelAngle,Aparams.targetAnglesEMG)));
+Aparams.channelName = EMGparams.channelName(ismember(EMGparams.channelAngle,Aparams.targetAnglesEMG));
 Aparams.muscName = Aparams.channelName(isort);
 
 % Muscles corresponding to targets to compare between tasks
@@ -200,7 +210,7 @@ end
 
 %% FIGURES
 % Limits for force and EMG plots
-Flim = 2; EMGlim = 60;
+Flim = 2; EMGlim = 100;
 
 %% Force figures (low-pass filtered)
 %% Force in time for each task (check target angles)
@@ -363,7 +373,7 @@ for j = 1:length(Aparams.targetAnglesForce)
         plot(trial_data_avg_force(j).ts,trial_data_avg_force(j).EMG.rect(:,i));
         hold on;
         plot(trial_data_avg_force(j).ts,trial_data_avg_force(j).EMG.avg(:,i));
-        ylim([0 EMGlim]);%ylim([0 max(trial_data_avg_force(j).EMG.rect(:))+50]);
+        ylim([0 EMGlim]);%ylim([0 max(trial_data_avg_force(j).EMG.rect(:))+10]);%
         xlim([0 trial_data_avg_force(j).ts(end)]);
         if j == length(Aparams.targetAnglesForce)
             xlabel('Time [s]');
@@ -543,7 +553,6 @@ fc = 80;
 %% MATLAB coherence
 % Figure per muscle pair, subplot per task (row) per target for angComp (col)
 plotmusc = find(sum(reshape(contains([trial_data_coh_force(1).rect.muscles{:}],'BB'),[2,nmusccomb])));
-
 
 for j = 1:length(plotmusc)%nmusccomb
     figure('Name','Coherence');

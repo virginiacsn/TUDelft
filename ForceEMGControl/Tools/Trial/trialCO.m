@@ -10,10 +10,18 @@ end
 
 forceDataOut = varargin{1}{1};
 if length(varargin{1}) > 1
-    EMGDataOut = varargin{1}{2};
+    EMGDataOutCell = varargin{1}{2};
     
-    if iscell(EMGDataOut)
-        EMGDataOut = cell2mat(EMGDataOut(2:end))';
+    if iscell(EMGDataOutCell)
+        switch computer
+            case 'MACI64'
+                EMGDataOut = cell2mat(EMGDataOutCell(2:end))';
+            case 'PCWIN'               
+                EMGDataOut1 = cell2mat(EMGDataOutCell(2:round(length(EMGDataOutCell)/2)));
+                EMGDataOut2 = cell2mat(EMGDataOutCell(round(length(EMGDataOutCell)/2)+1:end));
+
+                EMGDataOut = [EMGDataOut1; EMGDataOut2]';
+        end
     end
     
     EMG_data = EMGDataOut(1:end-1,:);

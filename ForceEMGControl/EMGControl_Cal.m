@@ -17,7 +17,7 @@ filenameEMG =       [];
 filepath =          [];
 
 % Task parameters
-targetEMGCal =      100; 
+targetEMGCal =      50; 
 targetTolEMG =      0.2;
 cursorTol =         1.5;
 
@@ -60,6 +60,9 @@ end
 [targetAnglesEMG,isort] = sort(channelAngleCal);
 channelSubsetTemp = channelSubsetCal(1:end-1);
 channelSubsetCal = [channelSubsetTemp(isort) channelSubsetCal(end)];
+channelSubsetTemp = [channelSubsetTemp channelSubsetCal(end)];
+% channelNameTemp = channelNameCal(1:end-1);
+% channelNameCal = [channelNameTemp(isort) channelNameCal(end)];
 
 %% Saving file check
 if saveEMG || saveforce
@@ -97,7 +100,7 @@ end
 disp('Running DataAcquisition for calibration with EMG task.')
 
 library = TMSi.Library('usb');
-[EMGEnabled,sampler,emg_data,channels] = EMGinit(library,channelSubsetCal,channelNameCal,sampleRateEMG);
+[EMGEnabled,sampler,emg_data,channels] = EMGinit(library,channelSubsetTemp,channelNameCal,sampleRateEMG);
 
 if EMGEnabled
     disp('EMG initialized.')
@@ -160,7 +163,7 @@ if EMGEnabled
     
     fprintf('EMG offset:\n')
     for k = 1:length(channelSubsetCal)-1
-        fprintf('%s: %1.3f\n',channelNameCal{k},EMGOffset(k))
+        fprintf('%s: %1.3f\n',channelNameCal{channelSubsetTemp==channelSubsetCal(k)},EMGOffset(k))
     end
     fprintf('\n')
     
@@ -178,7 +181,8 @@ if EMGEnabled
     
     % Set figure
     hf = figure('Name','CO EMG Control Task');
-    [hf,hp] = Figinit(hf,[max(targetPosx) max(targetPosy)]./1.2);
+    %[hf,hp] = Figinit(hf,[max(targetPosx) max(targetPosy)]./1.2);
+    [hf,hp] = Figinit(hf,targetEMGCal*[1 1]);
     if setFig
         title('EMG');
         %xlabel(channelName{channelControl(1)}); ylabel(channelName{channelControl(2)});
@@ -195,7 +199,7 @@ if EMGEnabled
     if ~isempty(device)
         % Initialize variables
         global tmove trelax tfail tsuccess tholdstart
-        global iAngle trialNum
+        global targetCir iAngle trialNum
         global htrg hsta 
         
         trialNum = 0;
@@ -203,6 +207,7 @@ if EMGEnabled
         EMGDataBuffer = zeros(length(channelSubsetCal)-1,smoothWin);
         state = 'start';
         tempState = 'start';
+        cursorHoldOut = 0;
         iAngle = 1;
         reptarg = 0;
         
@@ -276,7 +281,7 @@ library.destroy()
         
         samples = sampler.sample();
         nSamples = size(samples,2);
-        appendSamples = samples(channelSubsetCal,:);%-repmat(EMGOffset,1,nSamples))./repmat(EMGScale,1,nSamples);
+        appendSamples = samples(channelSubsetCalTemp,:);%-repmat(EMGOffset,1,nSamples))./repmat(EMGScale,1,nSamples);
         
         %emg_data.append(appendSamples)
         EMGSamples = samples(channelSubsetCal(1:end-1),:);
@@ -297,7 +302,7 @@ library.destroy()
         filtEMGBuffer = filtfilt(b,a,EMGDataBuffer')';
         filtEMGBuffer = filter(d,c,abs(filtEMGBuffer),[],2);
  
-        avgRectEMGBuffer = (mean((filtEMGBuffer),2)-EMGOffset);%./(EMGScale(channelControl)); % Rectify, smooth and scale
+        avgRectEMGBuffer = (mean((filtEMGBuffer),2)-EMGOffset)./(EMGScale(channelSubsetCal(1:end-1))); % Rectify, smooth and scale
         avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;
         emg_save = [emg_save,avgRectEMGBuffer];
 %         [minAng,minMusc] = max(targetAnglesEMG);
@@ -347,20 +352,49 @@ library.destroy()
                     iAngle = 1;
                 end
                 
-                htrg = plot([0 targetPosx(iAngle)],[0 targetPosy(iAngle)],'r','Linewidth',3);
+                %htrg = plot([0 targetPosx(iAngle)],[0 targetPosy(iAngle)],'r','Linewidth',3);
+                targetCir = circle(rCirTarget,targetPosx(iAngle),targetPosy(iAngle));
+                htrg = plot(targetCir(:,1),targetCir(:,2),'r','Linewidth',3);
                 
                 state = 'movement';
                 tmove = tic;
-            case 'movement'
-                if toc(tmove) > movemtimeCal
+              % When using undefined targets for EMGCO calibration
+%             case 'movement'
+%                 if toc(tmove) > movemtimeCal
+%                     state = 'hold';
+%                     tholdstart = tic;
+%                 end
+%             case 'hold'
+%                 if toc(tholdstart) > holdtimeCal
+%                     state = 'success';
+%                     tsuccess = tic;
+%                 end
+
+      case 'movement'
+                if cursorInTarget(cursorCir,targetCir) && toc(tmove) <= movemtimeCal
                     state = 'hold';
                     tholdstart = tic;
+                elseif ~cursorInTarget(cursorCir,targetCir) && toc(tmove) > movemtimeCal
+                    state = 'fail';
+                    tfail = tic;
                 end
             case 'hold'
-                if toc(tholdstart) > holdtimeCal
+                if ~cursorInTarget(cursorCir,targetCir) && toc(tholdstart) <= holdtimeCal
+                    cursorHoldOut = cursorHoldOut+1;
+                elseif cursorHoldOut >= 20  && toc(tholdstart) <= holdtimeCal
+                    cursorHoldOut = 0;
+                    state = 'fail';
+                    tfail = tic;
+                elseif cursorHoldOut > 20 && toc(tholdstart) > holdtimeCal
+                    cursorHoldOut = 0;
+                    state = 'fail';
+                    tfail = tic;
+                elseif cursorHoldOut <= 20 && toc(tholdstart) > holdtimeCal
+                    cursorHoldOut = 0;
                     state = 'success';
                     tsuccess = tic;
                 end
+                
             case 'success'
                 if toc(tsuccess) > timeout
                     state = 'relax';
