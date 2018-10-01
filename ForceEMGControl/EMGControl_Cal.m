@@ -115,7 +115,9 @@ if EMGEnabled
     % Initialize force DAQ
     if saveforce
         device = daq.getDevices;
-        
+        if length(device) > 1
+            device = device(2);
+        end
         if ~isempty(device)
             % Create NI DAQ session
             disp('Creating NI DAQ session.')
@@ -215,15 +217,16 @@ if EMGEnabled
         emg_save = [];
         
         % Add event listener and start acquisition
-        outputData = [4*ones(1,availSamplesEMG),zeros(1,scanRate-availSamplesEMG)]';
-        queueOutputData(s,outputData);
-        hlout = addlistener(s,'DataRequired',@(src,event) src.queueOutputData(outputData));
-        
         hlin = addlistener(s,'DataAvailable',@(src,event) processForceData(event,forceOffset,EMGOffset,EMGScale,hp));
         %hstop = addlistener(s,'DataAvailable',@(src,event) stopTrialNum(trialNum,numTrials));
         s.IsContinuous = true;
         s.Rate = scanRate; % scans/sec, samples/sec?
         s.NotifyWhenDataAvailableExceeds = availSamplesEMG; % Call listener when x samples are available
+        
+        outputData = [4*ones(1,availSamplesEMG),zeros(1,scanRate-availSamplesEMG)]';
+        queueOutputData(s,outputData);
+        hlout = addlistener(s,'DataRequired',@(src,event) src.queueOutputData(outputData));
+        
         s.startBackground();
         
         input('\Press enter to stop acquisition.');

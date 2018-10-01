@@ -86,8 +86,8 @@ if strcmp(fileparams.task,'ForceCO')
 end
 
 %% Pre-analysis for EMGCO calibration
-% load([fileparams.filepath,fileparams.filenameforce]);
-% load([fileparams.filepath,fileparams.filenameEMG]);
+load([fileparams.filepath,fileparams.filenameforce]);
+load([fileparams.filepath,fileparams.filenameEMG]);
 
 if strcmp(fileparams.task,'ForceCO')
     forceEMGData = {forceDataOut_ForceCO,EMGDataOut_ForceCO};
@@ -106,6 +106,7 @@ trial_data = trialCO(forceEMGData,PreAparams);
 trial_data = removeFailTrials(trial_data(5:end));
 
 PreAparams.targetAngles = sort(unique([trial_data.angle]));
+Aparams.targetAnglesForce = PreAparams.targetAngles;
 
 trial_data = procEMG(trial_data,PreAparams);
 trial_data = procForce(trial_data,PreAparams);
@@ -183,11 +184,12 @@ trial_data = trialCO(forceEMGData,PreAparams);
 trial_data = removeFailTrials(trial_data(10:end));
 
 PreAparams.targetAngles = sort(unique([trial_data.angle]));
+Aparams.targetAnglesEMG = PreAparams.targetAngles;
 
 trial_data = procEMG(trial_data,PreAparams);
 trial_data = procForce(trial_data,PreAparams);
 
-epoch = {'hold',1,'iend',0};
+epoch = {'ihold',1,'iend',0};
 fields = {'EMG.rect','EMG.avg','force.filt'};
 trial_data_avg_EMG = trialAngleAvg(trial_data, epoch, fields);
 

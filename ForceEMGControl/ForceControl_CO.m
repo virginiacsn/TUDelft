@@ -95,6 +95,9 @@ end
 disp('Running DataAcquisition for CO force task with EMG.')
 
 device = daq.getDevices;
+if length(device) > 1
+    device = device(2);
+end
 
 if ~isempty(device)
     disp('DAQ device found.')
@@ -191,17 +194,18 @@ if ~isempty(device)
     end
     
     % Add event listeners and start acquisition
+    hlin = addlistener(s,'DataAvailable',@(src,event) processForceData(event,forceOffset,calforceDataz,hp));
+    %hstop = addlistener(s,'DataAvailable',@(src,event) stopTrialNum(trialNum,numTrials));
+    s.IsContinuous = true;
+    s.Rate = scanRate; % scans/sec, samples/sec?
+    s.NotifyWhenDataAvailableExceeds = availSamples; % Call listener when x samples are available
+    
     if EMGEnabled
         outputData = [4*ones(1,availSamples),zeros(1,scanRate-availSamples)]';
         queueOutputData(s,outputData);
         hlout = addlistener(s,'DataRequired',@(src,event) src.queueOutputData(outputData));
     end
     
-    hlin = addlistener(s,'DataAvailable',@(src,event) processForceData(event,forceOffset,calforceDataz,hp));
-    %hstop = addlistener(s,'DataAvailable',@(src,event) stopTrialNum(trialNum,numTrials));
-    s.IsContinuous = true;
-    s.Rate = scanRate; % scans/sec, samples/sec?
-    s.NotifyWhenDataAvailableExceeds = availSamples; % Call listener when x samples are available
     s.startBackground();
 
     input('\Press enter to stop acquisition.')
@@ -303,7 +307,7 @@ end
         if strcmp(state,tempState) && countState == 0
             countState = countState+1;
             xl = xlim;
-            hsta = text(xl(2)+0.3*xl(2),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',24);
+            hsta = text(xl(2)+0.1*xl(2),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',24);
             %hstaL = text(xl(1)-0.5*xl(1),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',24);
         elseif ~strcmp(state,tempState) && countState > 0
             countState = 0;
@@ -320,8 +324,8 @@ end
                 xl = xlim; yl = ylim;
                 delete(htrl)
                 delete(hsuc)
-                htrl = text(xl(2)+0.3*xl(2),yl(2),['Trial: ',num2str(trialNum)],'clipping','off','Fontsize',16);
-                hsuc = text(xl(2)+0.3*xl(2),yl(2)-0.1*yl(2),['Successes: ',num2str(countSuccess)],'clipping','off','Fontsize',16);
+                htrl = text(xl(2)+0.1*xl(2),yl(2),['Trial: ',num2str(trialNum)],'clipping','off','Fontsize',16);
+                hsuc = text(xl(2)+0.1*xl(2),yl(2)-0.1*yl(2),['Successes: ',num2str(countSuccess)],'clipping','off','Fontsize',16);
                 
                 iAngle = randi(numTargetsForce);
                 targetCir = circle(rCirTarget,targetPosx(iAngle),targetPosy(iAngle));

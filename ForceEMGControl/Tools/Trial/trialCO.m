@@ -16,10 +16,12 @@ if length(varargin{1}) > 1
         switch computer
             case 'MACI64'
                 EMGDataOut = cell2mat(EMGDataOutCell(2:end))';
-            case 'PCWIN'               
+            case 'PCWIN64'
+                EMGDataOut = cell2mat(EMGDataOutCell(2:end))';
+            case 'PCWIN'
                 EMGDataOut1 = cell2mat(EMGDataOutCell(2:round(length(EMGDataOutCell)/2)));
                 EMGDataOut2 = cell2mat(EMGDataOutCell(round(length(EMGDataOutCell)/2)+1:end));
-
+                
                 EMGDataOut = [EMGDataOut1; EMGDataOut2]';
         end
     end
