@@ -1,6 +1,6 @@
 %% Experiment protocol
 close all;
-%clear all;
+clear all;
 
 addpath(genpath('Tools'));
 
@@ -8,7 +8,7 @@ addpath(genpath('Tools'));
 fileparams = struct(...
     'saveforce',    1,...
     'saveEMG',      1,...
-    'date',         '20180928',...
+    'date',         '20181001',...
     'subject',      '01');
 
 if ~exist(['D:\Student_experiments\Virginia\Data\',fileparams.date],'dir') && (fileparams.saveEMG || fileparams.saveforce)
@@ -28,7 +28,7 @@ taskparams = struct(...
     'numTargetsEMG',        3,...
     'targetForce',          10,... % [N]
     'targetForceCal',       30,... % [N]
-    'targetEMG',            0.2,... % [% EMGScale]
+    'targetEMG',            1,... % [% EMGScale]
     'targetEMGCal',         1,...
     'targetTolForce',       0.1,... % targetForce*targetTol
     'targetTolEMG',         0.2,... % targetEMG*targetTol
@@ -58,16 +58,16 @@ forceparams = struct(...
 
 EMGparams = struct(...
     'plotEMG',          0,... % plot EMG 
-    'channelSubset',    [1 2 3 4 5 6 7 8 17],...
-    'channelSubsetCal', [1 2 3 4 17],...
-    'channelName',      {{'BB','TLH','DA','DP','ECRB','FCR','Br','TLat','Trigger'}},...
-    'channelNameCal',   {{'BB','TLH','DA','DP','Trigger'}},...
+    'channelSubset',    [1 2 3 4 5 6 7 8 17],... %,...[1 2 3 4 17] 
+    'channelSubsetCal', [1 3 17],... %[1 2 3 4 17],...
+    'channelName',      {{'BB','TLH','DA','DP','ECRB','FCR','Br','TLat','Trigger'}},...%{{'BB','TLH','DA','DP','Trigger'}},... 
+    'channelNameCal',   {{'BB','DA','Trigger'}},...%{{'BB','TLH','DA','DP','Trigger'}},...
     'channelAngle',     [5*pi/4,pi/4,3*pi/4,7*pi/4,0,0,0,0],...
-    'channelAngleCal',  [5*pi/4,pi/4,3*pi/4,7*pi/4],...
+    'channelAngleCal',  [5*pi/4,3*pi/4],...%[5*pi/4,pi/4,3*pi/4,7*pi/4],...
     'sampleRateEMG',    1024,... % [samples/sec]
     'fchEMG',           30,... % [Hz]
     'fclEMG',           60,... % [Hz]
-    'fnEMG',            50,... % [Hz]
+    'fnEMG',            [],... % [Hz]
     'smoothWin',        800,... % [samples]
     'iterUpdatePlotEMG',1); % [iterations of listener call]
  
@@ -86,8 +86,8 @@ if strcmp(fileparams.task,'ForceCO')
 end
 
 %% Pre-analysis for EMGCO calibration
-load([fileparams.filepath,fileparams.filenameforce]);
-load([fileparams.filepath,fileparams.filenameEMG]);
+% load([fileparams.filepath,fileparams.filenameforce]);
+% load([fileparams.filepath,fileparams.filenameEMG]);
 
 if strcmp(fileparams.task,'ForceCO')
     forceEMGData = {forceDataOut_ForceCO,EMGDataOut_ForceCO};
@@ -95,7 +95,7 @@ if strcmp(fileparams.task,'ForceCO')
     PreAparams.targetAngles = taskparams.targetAnglesForce;
 end
 
-PreAparams.downsample = 2;
+PreAparams.downsamp = 2;
 PreAparams.fclF = forceparams.fclF;
 PreAparams.fchEMG = EMGparams.fchEMG;
 PreAparams.fclEMG = EMGparams.fclEMG;
@@ -103,14 +103,14 @@ PreAparams.fnEMG = EMGparams.fnEMG;
 PreAparams.avgWindow = 200;
 
 trial_data = trialCO(forceEMGData,PreAparams);
-trial_data = removeFailTrials(trial_data(10:end));
+trial_data = removeFailTrials(trial_data(5:end));
 
 PreAparams.targetAngles = sort(unique([trial_data.angle]));
 
 trial_data = procEMG(trial_data,PreAparams);
 trial_data = procForce(trial_data,PreAparams);
 
-epoch = {'hold',1,'iend',0};
+epoch = {'ihold',1,'iend',0};
 fields = {'EMG.rect','force.filtmag'};
 trial_data_avg = trialAngleAvg(trial_data, epoch, fields);
 
@@ -121,14 +121,13 @@ for i = 1:length(trial_data_avg)
     forcemean(i) = trial_data_avg(i).force.filtmag_mean;
 end
 
-EMGparams.EMGScaleForce = mean(EMGmean,1)'; 
-%EMGparams.EMGScaleForce = max(EMGmean,[],1)';
+EMGparams.EMGScaleForce = max(EMGmean,[],1)'; 
+%EMGparams.EMGScaleForce = mean(EMGmean,1)';
 
 fprintf('\nEMG scaling values: \n')
 for k = 1:length(EMGparams.channelSubsetCal)-1
-    fprintf('%s: %1.3f\n',EMGparams.channelName{EMGparams.channelSubsetCal(k)},EMGparams.EMGScaleMVF(k))
+    fprintf('%s: %1.3f\n',EMGparams.channelName{EMGparams.channelSubset == EMGparams.channelSubsetCal(k)},EMGparams.EMGScaleForce(EMGparams.channelSubset == EMGparams.channelSubsetCal(k)))
 end
-fprintf('\n')
 
 fprintf('\nRecorded mean force value: %1.3f\n',round(mean(forcemean)))
 
@@ -141,7 +140,7 @@ PreAparams.fcnEMG = [];
 trial_data = procEMG(trial_data,PreAparams);
 trial_data = procForce(trial_data,PreAparams);
 
-epoch = {'hold',1,'iend',0};
+epoch = {'ihold',1,'iend',0};
 fields = {'EMG.rect','EMG.avg','force.filt'};
 trial_data_avg_force = trialAngleAvg(trial_data, epoch, fields);
 
@@ -155,6 +154,8 @@ end
 %% Calibration with EMG-control task
 fileparams.code = 'calib';
 fileparams.task = 'EMGCO';
+
+EMGparams.EMGScale = EMGparams.EMGScaleForce;
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
 fileparams.filenameEMG =    [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_EMG_',fileparams.code,'.mat'];
@@ -171,7 +172,7 @@ if strcmp(fileparams.task,'EMGCO')
     PreAparams.targetAngles = EMGparams.channelAngleCal;
 end
 
-PreAparams.downsample = 2;
+PreAparams.downsamp = 2;
 PreAparams.fclF = 5;
 PreAparams.fchEMG = 20;
 PreAparams.fclEMG = 500;
