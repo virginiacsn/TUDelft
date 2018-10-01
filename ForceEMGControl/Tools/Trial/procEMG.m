@@ -24,7 +24,10 @@ end
 
 for i = 1:length(trial_data)
     EMGfilt = filtfilt(b,a,trial_data(i).EMG.raw);
-    EMGfilt = filter(f,e,EMGfilt);
+    
+    if ~isempty(fnEMG)
+        EMGfilt = filter(f,e,EMGfilt);
+    end
 
     EMGrect = abs(EMGfilt);
     

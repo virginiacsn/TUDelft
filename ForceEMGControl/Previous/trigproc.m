@@ -26,9 +26,9 @@ plot(f_trigger)
 %%
 
 figure;
-plot(trial_data_EMG(1).trigger.EMG)
+plot(trial_data_force(10).trigger.EMG)
 hold on;
-plot(trial_data_EMG(1).trigger.force)
+plot(trial_data_force(10).trigger.force)
 
 %% Calib testing
 code = '001';

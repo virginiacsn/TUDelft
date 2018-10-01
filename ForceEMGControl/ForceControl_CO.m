@@ -182,6 +182,7 @@ if ~isempty(device)
         sampleNum = 1;
         forceDataOut_ForceCO(sampleNum,:) = {'Trialnum', 'TargetAng', 'State', 'TimeStamp', 'Fx', 'Fy', 'Fz','Trigger'};
         EMGDataOut_ForceCO(sampleNum,:) = {'EMG'};
+        %EMGDataOut_ForceCO = [];
     end
 
     % Start EMG data sampling
@@ -391,6 +392,7 @@ end
         if saveEMG && EMGEnabled
             samples = sampler.sample();
             appendSamples = samples(channelSubset,:);
+            %EMGDataOut_ForceCO = [EMGDataOut_ForceCO; appendSamples'];
             EMGDataOut_ForceCO(sampleNum,:) = {appendSamples'};
         end
     end

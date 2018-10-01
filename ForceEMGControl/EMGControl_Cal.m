@@ -51,6 +51,7 @@ if ~isempty(varargin)
     end
 end
 
+rCirTarget = targetEMGCal*targetTolEMG; % [N]
 rCirCursor = targetEMGCal*targetTolEMG/cursorTol; % [N]
 
 if length(channelSubsetCal)~=length(channelNameCal)
@@ -281,7 +282,7 @@ library.destroy()
         
         samples = sampler.sample();
         nSamples = size(samples,2);
-        appendSamples = samples(channelSubsetCalTemp,:);%-repmat(EMGOffset,1,nSamples))./repmat(EMGScale,1,nSamples);
+        appendSamples = samples(channelSubsetTemp,:);%-repmat(EMGOffset,1,nSamples))./repmat(EMGScale,1,nSamples);
         
         %emg_data.append(appendSamples)
         EMGSamples = samples(channelSubsetCal(1:end-1),:);

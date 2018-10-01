@@ -90,11 +90,10 @@ Aparams.fclEMG = 500;
 Aparams.fs = min(forceparams.scanRate,EMGparams.sampleRateEMG);
 
 % Epoch interval {epoch start, time start, epoch end, time end} and fields to trial average
-Aparams.epoch = {'imove',0,'iend',0};
+Aparams.epoch = {'ihold',1,'iend',0};
 fields_avg = {'EMG.raw','EMG.filt','EMG.rect','EMG.avg','force.filt'};
 % Fields to trial append
 fields_app = {'EMG.rect'};
-
 
 % Trial data struct for force-control task, will append trial data for each
 % block (code)
