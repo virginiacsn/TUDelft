@@ -19,7 +19,7 @@ filepath =          [];
 % Task parameters
 targetEMGCal =      50; 
 targetTolEMG =      0.2;
-cursorTol =         1.5;
+cursorTolEMG =      4;
 
 movemtimeCal =      2; % [sec]
 holdtimeCal =       2; % [sec]
@@ -34,6 +34,7 @@ availSamplesEMG =   500; % [samples]
 
 % EMG parameters
 plotEMG =           0;
+channelSubset =     [];
 channelSubsetCal =  [];
 channelNameCal =    {};
 channelAngleCal =   [];
@@ -52,7 +53,7 @@ if ~isempty(varargin)
 end
 
 rCirTarget = targetEMGCal*targetTolEMG; % [N]
-rCirCursor = targetEMGCal*targetTolEMG/cursorTol; % [N]
+rCirCursor = targetEMGCal*targetTolEMG/cursorTolEMG; % [N]
 
 if length(channelSubsetCal)~=length(channelNameCal)
     error('Names for all channels not available.')
@@ -285,7 +286,7 @@ library.destroy()
         
         samples = sampler.sample();
         nSamples = size(samples,2);
-        appendSamples = samples(channelSubsetTemp,:);%-repmat(EMGOffset,1,nSamples))./repmat(EMGScale,1,nSamples);
+        appendSamples = samples(channelSubset,:);%-repmat(EMGOffset,1,nSamples))./repmat(EMGScale,1,nSamples);
         
         %emg_data.append(appendSamples)
         EMGSamples = samples(channelSubsetCal(1:end-1),:);

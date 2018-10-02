@@ -10,7 +10,7 @@ wn = (2/sampleRateForce)*fclF;
 
 for i = 1:length(trial_data)
     trial_data(i).force.rawmag = sqrt(trial_data(i).force.raw(:,1).^2+trial_data(i).force.raw(:,2).^2);
-    trial_data(i).force.filt = filtfilt(b,a,trial_data(i).force.raw);
+    trial_data(i).force.filt = filter(b,a,trial_data(i).force.raw);
     trial_data(i).force.filtmag = sqrt(trial_data(i).force.filt(:,1).^2+trial_data(i).force.filt(:,2).^2);
 end
 end

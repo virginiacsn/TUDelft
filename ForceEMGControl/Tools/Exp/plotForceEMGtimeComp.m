@@ -60,7 +60,7 @@ end
 h = 0;
 figure('Name','EMGCO');
 for j = 1:length(Aparams.targetAnglesEMG)
-    for i = 1:length(EMGparams.channelNameCal)-1
+    for i = 1:length(EMGparams.channelName)-1
         h = h+1;
         subplot(length(Aparams.targetAnglesEMG),length(EMGparams.channelName)-1,h);
         

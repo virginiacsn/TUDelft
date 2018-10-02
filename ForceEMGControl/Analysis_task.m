@@ -3,11 +3,14 @@
 clear all
 addpath(genpath('Tools'));
 
-date =      '20180926';
+date =      '20180928';
 subject =   '01';
 
 switch computer
     case 'PCWIN'
+        filepath =  ['D:\Student_experiments\Virginia\Data\',date,'\s',subject,'\'];
+        paramfolder = 'Parameters\';
+    case 'PCWIN64'
         filepath =  ['D:\Student_experiments\Virginia\Data\',date,'\s',subject,'\'];
         paramfolder = 'Parameters\';
     case 'MACI64'
@@ -17,56 +20,56 @@ end
 
 %% DATA LOADING AND PREPROC
 %% Calibration
-calibtype = 'ForceCO';
-
-filenameforce =  [date,'_s',subject,'_',calibtype,'_Force_calib.mat'];
-filenameEMG = [date,'_s',subject,'_',calibtype,'_EMG_calib.mat'];
-filenameparams = [date,'_s',subject,'_params_','001','.mat'];
-
-load([filepath,filenameforce]);
-load([filepath,filenameEMG]);
-load([filepath,paramfolder,filenameparams]);
-
-forceEMGData = {forceDataOut_ForceCO,EMGDataOut_ForceCO};
-
-% Parameters for analysis
-Aparams.downsamp = forceparams.scanRate/EMGparams.sampleRateEMG;
-Aparams.channelNameEMG = EMGparams.channelName;
-Aparams.targetAngles = taskparams.targetAnglesForce;%[0:pi/4:7*pi/4];%
-Aparams.avgWindow = 200;
-Aparams.fclF = 5;
-Aparams.fchEMG = 20;
-Aparams.fclEMG = 400;
-Aparams.fs = min(forceparams.scanRate,EMGparams.sampleRateEMG);
-
-% Create trial data struct and remove failed or incomplete trials
-trial_data = trialCO(forceEMGData,Aparams);
-trial_data = removeFailTrials(trial_data(1:end));
-
-% Process EMG and force data and add in struct
-trial_data = procEMG(trial_data,Aparams);
-trial_data_force = procForce(trial_data,Aparams);
-
-% Actual target angles (should be the same as taskparams.targetAnglesForce)
-Aparams.targetAnglesForce = sort(unique(extractfield(trial_data_force,'angle')));
-
-% Epoch interval and signals to trial average
-Aparams.epoch = {'ihold','iend'};
-fields_avg = {'EMG.raw','EMG.filt','force.filt','force.filtmag'};
-
-% Trial average by angle
-trial_data_avg_calib = trialAngleAvg(trial_data_force, Aparams.epoch, fields_avg);
-% Process EMG, so that rectification is after averaging
-trial_data_avg_calib  = procEMG(trial_data_avg_calib ,Aparams);
-
-% Compute mean rectified EMG and filtered force magnitude for each angle.
-% Check calibration values
-EMGmean = zeros(length(trial_data_avg_calib),length(EMGparams.channelSubset)-1);
-forcemean = zeros(length(trial_data_avg_calib),1);
-for i = 1:length(trial_data_avg_calib)
-    EMGmean(i,:) = mean(trial_data_avg_calib(i).EMG.rect,1);
-    forcemean(i) = trial_data_avg_calib(i).force.filtmag_mean;
-end
+% calibtype = 'ForceCO';
+% 
+% filenameforce =  [date,'_s',subject,'_',calibtype,'_Force_calib.mat'];
+% filenameEMG = [date,'_s',subject,'_',calibtype,'_EMG_calib.mat'];
+% filenameparams = [date,'_s',subject,'_params_','001','.mat'];
+% 
+% load([filepath,filenameforce]);
+% load([filepath,filenameEMG]);
+% load([filepath,paramfolder,filenameparams]);
+% 
+% forceEMGData = {forceDataOut_ForceCO,EMGDataOut_ForceCO};
+% 
+% % Parameters for analysis
+% Aparams.downsamp = forceparams.scanRate/EMGparams.sampleRateEMG;
+% Aparams.channelNameEMG = EMGparams.channelName;
+% Aparams.targetAngles = taskparams.targetAnglesForce;%[0:pi/4:7*pi/4];%
+% Aparams.avgWindow = 200;
+% Aparams.fclF = 5;
+% Aparams.fchEMG = 20;
+% Aparams.fclEMG = 400;
+% Aparams.fs = min(forceparams.scanRate,EMGparams.sampleRateEMG);
+% 
+% % Create trial data struct and remove failed or incomplete trials
+% trial_data = trialCO(forceEMGData,Aparams);
+% trial_data = removeFailTrials(trial_data(1:end));
+% 
+% % Process EMG and force data and add in struct
+% trial_data = procEMG(trial_data,Aparams);
+% trial_data_force = procForce(trial_data,Aparams);
+% 
+% % Actual target angles (should be the same as taskparams.targetAnglesForce)
+% Aparams.targetAnglesForce = sort(unique(extractfield(trial_data_force,'angle')));
+% 
+% % Epoch interval and signals to trial average
+% Aparams.epoch = {'ihold','iend'};
+% fields_avg = {'EMG.raw','EMG.filt','force.filt','force.filtmag'};
+% 
+% % Trial average by angle
+% trial_data_avg_calib = trialAngleAvg(trial_data_force, Aparams.epoch, fields_avg);
+% % Process EMG, so that rectification is after averaging
+% trial_data_avg_calib  = procEMG(trial_data_avg_calib ,Aparams);
+% 
+% % Compute mean rectified EMG and filtered force magnitude for each angle.
+% % Check calibration values
+% EMGmean = zeros(length(trial_data_avg_calib),length(EMGparams.channelSubset)-1);
+% forcemean = zeros(length(trial_data_avg_calib),1);
+% for i = 1:length(trial_data_avg_calib)
+%     EMGmean(i,:) = mean(trial_data_avg_calib(i).EMG.rect,1);
+%     forcemean(i) = trial_data_avg_calib(i).force.filtmag_mean;
+% end
 
 %% All blocks for force-control task, blocks corresponding to each muscle control pair for EMG-control
 codeF = {'001'};
@@ -136,7 +139,7 @@ trial_data_app_force = trialAngleApp(trial_data_force, Aparams.epoch, fields_app
 
 %% EMG-control
 task = 'EMGCO';
-codeE = {'003','004'};
+codeE = {'001'};
 
 % Trial data struct for EMG-control task, will append trial data for each
 % block (code)

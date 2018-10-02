@@ -33,7 +33,6 @@ for i = 1:length(trial_data)
     
     if ~isempty(fclEMG)
         EMGfilt = filter(d,c,EMGfilt);
-
     else
         EMGfilt = EMGrect;
     end

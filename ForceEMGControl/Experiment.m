@@ -8,7 +8,7 @@ addpath(genpath('Tools'));
 fileparams = struct(...
     'saveforce',    1,...
     'saveEMG',      1,...
-    'date',         '20181001',...
+    'date',         '20181002',...
     'subject',      '01');
 
 if ~exist(['D:\Student_experiments\Virginia\Data\',fileparams.date],'dir') && (fileparams.saveEMG || fileparams.saveforce)
@@ -59,11 +59,11 @@ forceparams = struct(...
 EMGparams = struct(...
     'plotEMG',          0,... % plot EMG 
     'channelSubset',    [1 2 3 4 5 6 7 8 17],... %,...[1 2 3 4 17] 
-    'channelSubsetCal', [1 3 17],... %[1 2 3 4 17],...
+    'channelSubsetCal', [1 2 3 4 17],... %[1 2 3 4 17],...
     'channelName',      {{'BB','TLH','DA','DP','ECRB','FCR','Br','TLat','Trigger'}},...%{{'BB','TLH','DA','DP','Trigger'}},... 
-    'channelNameCal',   {{'BB','DA','Trigger'}},...%{{'BB','TLH','DA','DP','Trigger'}},...
+    'channelNameCal',   {{'BB','TLH','DA','DP','Trigger'}},...%{{'BB','TLH','DA','DP','Trigger'}},...
     'channelAngle',     [5*pi/4,pi/4,3*pi/4,7*pi/4,0,0,0,0],...
-    'channelAngleCal',  [5*pi/4,3*pi/4],...%[5*pi/4,pi/4,3*pi/4,7*pi/4],...
+    'channelAngleCal',  [5*pi/4,pi/4,3*pi/4,7*pi/4],...%[5*pi/4,pi/4,3*pi/4,7*pi/4],...
     'sampleRateEMG',    1024,... % [samples/sec]
     'fchEMG',           30,... % [Hz]
     'fclEMG',           60,... % [Hz]
@@ -170,7 +170,7 @@ load([fileparams.filepath,fileparams.filenameEMG]);
 if strcmp(fileparams.task,'EMGCO')
     forceEMGData = {forceDataOut_EMGCO,EMGDataOut_EMGCO};
  
-    PreAparams.targetAngles = EMGparams.channelAngleCal;
+    PreAparams.targetAngles = sort(EMGparams.channelAngleCal);
 end
 
 PreAparams.downsamp = 2;
@@ -181,7 +181,7 @@ PreAparams.fcnEMG = [];
 PreAparams.avgWindow = 200;
 
 trial_data = trialCO(forceEMGData,PreAparams);
-trial_data = removeFailTrials(trial_data(10:end));
+trial_data = removeFailTrials(trial_data(5:end));
 
 PreAparams.targetAngles = sort(unique([trial_data.angle]));
 Aparams.targetAnglesEMG = PreAparams.targetAngles;
@@ -206,7 +206,7 @@ plotForceEMGtimeComp;
 
 %% CONTINUE? [Y/N]
 %% Force-control task 
-fileparams.code = '002';
+fileparams.code = '003';
 fileparams.task = 'ForceCO';
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
@@ -217,7 +217,7 @@ if strcmp(fileparams.task,'ForceCO')
 end
 
 %% EMG-control task
-fileparams.code = '001';
+fileparams.code = '006';
 fileparams.task = 'EMGCO';
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
@@ -225,11 +225,11 @@ fileparams.filenameEMG =    [fileparams.date,'_s',fileparams.subject,'_',filepar
 
 EMGparams.fchEMG = 30;
 EMGparams.fclEMG = 60;
-EMGparams.fnEMG = 50;
+EMGparams.fnEMG = [];
 EMGparams.smoothWin = 800;
 EMGparams.EMGScale = EMGparams.EMGScaleForce; %EMGparams.EMGScaleMVC_start(:,1);
 EMGparams.EMGScaleType = 'Force';
-EMGparams.channelControl = [1 4];
+EMGparams.channelControl = [1 3];
 
 taskparams.numTargetsEMG = 3;
 taskparams.targetEMG = 1;

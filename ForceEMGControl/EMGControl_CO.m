@@ -20,9 +20,8 @@ filepath =          [];
 numTargetsEMG =     3;
 targetAnglesEMG =   [pi/4:pi/(2*(numTargetsEMG-1)):3*pi/4]; % [rad]
 targetEMG =         0.5;
-targetTol =         0.1;
 targetTolEMG =      0.2;
-cursorTol =         1.5;
+cursorTolEMG =      4;
 
 movemtime =         5; % [sec]
 holdtimeEMG =       1; % [sec]
@@ -59,7 +58,7 @@ end
 
 % Assign values for cursor and target radii
 rCirTarget = targetEMG*targetTolEMG; % [N]
-rCirCursor = targetEMG*targetTol/cursorTol; % [N]
+rCirCursor = targetEMG*targetTolEMG/cursorTolEMG; % [N]
 
 if length(channelSubset)~=length(channelName)
     error('Names for all channels not available.')
