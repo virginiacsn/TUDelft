@@ -64,6 +64,15 @@ for i = 1:length(trial_data)
                 coh_temp(trial_data_coh(i).(EMG_fields{j}).coh(:,h) >= trial_data_coh(i).(EMG_fields{j}).CL(h)) = 1;
 
                 trial_data_coh(i).(EMG_fields{j}).sig_coh(:,h) = [mean(coh_temp(alp_freq)) mean(coh_temp(beta_freq)) mean(coh_temp(gam_freq)) std(coh_temp(alp_freq))/sqrt(length(alp_freq)) std(coh_temp(beta_freq))/sqrt(length(beta_freq)) std(coh_temp(gam_freq))/sqrt(length(gam_freq))];
+                
+                alp_freq = find(trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h)>=alp_band(1) & trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h)<=alp_band(2));
+                beta_freq = find(trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h)>=beta_band(1) & trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h)<=beta_band(2));
+                gam_freq = find(trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h)>=gam_band(1) & trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h)<=gam_band(2));
+
+                coh_temp = zeros(size(trial_data_coh(i).(EMG_fields{j}).my_coh(:,h)));
+                coh_temp(trial_data_coh(i).(EMG_fields{j}).my_coh(:,h) >= trial_data_coh(i).(EMG_fields{j}).my_CL(h)) = 1;
+
+                trial_data_coh(i).(EMG_fields{j}).my_sig_coh(:,h) = [mean(coh_temp(alp_freq)) mean(coh_temp(beta_freq)) mean(coh_temp(gam_freq)) std(coh_temp(alp_freq))/sqrt(length(alp_freq)) std(coh_temp(beta_freq))/sqrt(length(beta_freq)) std(coh_temp(gam_freq))/sqrt(length(gam_freq))];
 
                 %[~,fcoh250] = min(abs(trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2)-250));
                 %[~,fcoh500] = min(abs(trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2)-500));
