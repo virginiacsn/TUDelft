@@ -71,8 +71,9 @@ EMGparams = struct(...
     'smoothWin',        800,... % [samples]
     'iterUpdatePlotEMG',1); % [iterations of listener call]
  
-%% Calibration with MVC task  - start MVC test
-EMGparams.EMGScaleMVC_start = MVCtest(EMGparams);
+%% EMG offset test
+EMGparams.EMGOffset = EMGOffsettest(EMGparams);
+%EMGparams.EMGScaleMVC_start = MVCtest(EMGparams);
 
 %% Force-control task
 fileparams.code = '001';
