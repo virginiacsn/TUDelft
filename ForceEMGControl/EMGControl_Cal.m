@@ -147,27 +147,32 @@ if EMGEnabled
         disp('Not saving force data.')
     end
     % Get EMG offset
-    input('\nPress enter when prepared for EMG offset calculation.')
-    samplesOffset = [];
-    sampler.start()
-    for n = 1:10
-        samples = sampler.sample();
-        pause(0.2)
-        samplesOffset = [samplesOffset, samples(channelSubsetCal(1:end-1),:)];
-    end
-    sampler.stop()
-    
-    wnh = (2/sampleRateEMG)*fchEMG;
-    wnl = (2/sampleRateEMG)*fclEMG;
-    [b,a] = butter(2,wnh,'high');
-    [d,c] = butter(2,wnl,'low');
-    samplesOffsetFilt = filtfilt(b,a,samplesOffset')';
-    samplesOffsetFilt = filter(d,c,abs(samplesOffsetFilt),[],2);
-    EMGOffset = mean(samplesOffsetFilt,2);
-    
-    fprintf('EMG offset:\n')
-    for k = 1:length(channelSubsetCal)-1
-        fprintf('%s: %1.3f\n',channelNameCal{channelSubsetTemp==channelSubsetCal(k)},EMGOffset(k))
+    contin = 1;
+    while contin
+        input('\nPress enter when prepared for EMG offset calculation.')
+        samplesOffset = [];
+        sampler.start()
+        for n = 1:10
+            samples = sampler.sample();
+            pause(0.2)
+            samplesOffset = [samplesOffset, samples(channelSubsetCal(1:end-1),:)];
+        end
+        sampler.stop()
+        
+        wnh = (2/sampleRateEMG)*fchEMG;
+        wnl = (2/sampleRateEMG)*fclEMG;
+        [b,a] = butter(2,wnh,'high');
+        [d,c] = butter(2,wnl,'low');
+        samplesOffsetFilt = filtfilt(b,a,samplesOffset')';
+        samplesOffsetFilt = filter(d,c,abs(samplesOffsetFilt),[],2);
+        EMGOffset = mean(samplesOffsetFilt,2);
+        
+        fprintf('EMG offset:\n')
+        for k = 1:length(channelSubsetCal)-1
+            fprintf('%s: %1.3f\n',channelNameCal{channelSubsetTemp==channelSubsetCal(k)},EMGOffset(k))
+        end
+        fprintf('\n')
+        contin = input('Repeat EMG offset calculation? [1/0] ');
     end
     fprintf('\n')
     
@@ -307,7 +312,7 @@ library.destroy()
         filtEMGBuffer = filtfilt(b,a,EMGDataBuffer')';
         filtEMGBuffer = filter(d,c,abs(filtEMGBuffer),[],2);
  
-        avgRectEMGBuffer = (mean((filtEMGBuffer),2)-EMGOffset)./(EMGScale(channelSubsetCal(1:end-1))); % Rectify, smooth and scale
+        avgRectEMGBuffer = (mean((filtEMGBuffer),2)-EMGOffset)./(EMGScale(channelSubsetCal(1:end-1))-EMGOffset); % Rectify, smooth and scale
         avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;
         emg_save = [emg_save,avgRectEMGBuffer];
         

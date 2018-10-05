@@ -26,7 +26,7 @@ end
 taskparams = struct(...
     'numTargetsForce',      7,...
     'numTargetsEMG',        3,...
-    'targetForce',          8,... % [N]
+    'targetForce',          5,... % [N]
     'targetForceCal',       30,... % [N]
     'targetEMG',            1,... % [% EMGScale]
     'targetEMGCal',         1,...
@@ -89,7 +89,7 @@ end
 %% Pre-analysis for EMGCO calibration
 codeF = {'001','002'};
 
-trial_data = [];
+trial_data_all = [];
 
 for i = 1:length(codeF)
     
@@ -120,12 +120,12 @@ for i = 1:length(codeF)
     Aparams.targetAnglesForce = PreAparams.targetAngles;
     
     trial_data = procEMG(trial_data,PreAparams);
-    trial_data = [trial_data, procForce(trial_data,PreAparams)];
+    trial_data_all = [trial_data_all, procForce(trial_data,PreAparams)];
 end
 
 epoch = {'ihold',1,'iend',0};
 fields = {'EMG.rect','force.filtmag'};
-trial_data_avg = trialAngleAvg(trial_data, epoch, fields);
+trial_data_avg = trialAngleAvg(trial_data_all, epoch, fields);
 
 EMGmean = zeros(length(trial_data_avg),length(EMGparams.channelSubset)-1);
 forcemean = zeros(length(trial_data_avg),1);
@@ -150,8 +150,8 @@ PreAparams.fchEMG = 20;
 PreAparams.fclEMG = 500;
 PreAparams.fcnEMG = [];
 
-trial_data = procEMG(trial_data,PreAparams);
-trial_data = procForce(trial_data,PreAparams);
+trial_data = procEMG(trial_data_all,PreAparams);
+trial_data = procForce(trial_data_all,PreAparams);
 
 epoch = {'ihold',1,'iend',0};
 fields = {'EMG.rect','EMG.avg','force.filt'};
@@ -205,7 +205,7 @@ end
 
 %% Check force and EMG for EMG-control calibration task
 % Limits for force and EMG plots
-Flim = 2; EMGlim = 100;
+Flim = 2; EMGlim = 80;
 
 plotForceEMGtimeComp;
 
@@ -222,7 +222,7 @@ if strcmp(fileparams.task,'ForceCO')
 end
 
 %% EMG-control task
-fileparams.code = '001';
+fileparams.code = '007';
 fileparams.task = 'EMGCO';
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];

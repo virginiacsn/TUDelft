@@ -3,8 +3,8 @@
 clear all
 addpath(genpath('Tools'));
 
-date =      '20181002';
-subject =   '01';
+date =      '20181005';
+subject =   '04';
 
 switch computer
     case 'PCWIN'
@@ -220,6 +220,7 @@ for i = 1:length(Aparams.targetAnglesEMG)
 end
 
 [Aparams.muscAngles,isort] = sort(EMGparams.channelAngle(ismember(EMGparams.channelAngle,Aparams.targetAnglesEMG)));
+
 Aparams.channelName = EMGparams.channelName(ismember(EMGparams.channelAngle,Aparams.targetAnglesEMG));
 Aparams.muscName = Aparams.channelName(isort);
 
@@ -512,7 +513,7 @@ for i = 1:length(EMGparams.channelName)-1
         xlim([0 trial_data_avg_EMG(iangE).ts(end)]);
         ylim([0 EMG_lim(j,i)]);
         xlabel('Time [s]'); ylabel('EMG [-]');
-        title(['EMGCO; Target: ',num2str(rad2deg(Aparams.angComp{j}(2))),' deg (',Aparams.muscComp{j},')']);
+        title(['EMGCO; Target: ',num2str(rad2deg(Aparams.angComp{j}(2))),' deg']);% (,Aparams.muscComp{j},')']);
         
         h = h+2;
     end
