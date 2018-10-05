@@ -321,22 +321,18 @@ library.destroy()
         [b,a] = butter(2,wnh,'high');
         [d,c] = butter(2,wnl,'low');
 
-    
         filtEMGBuffer = filtfilt(b,a,EMGDataBuffer')';
-        if ~isempty(fnEMG)
-            wnn = (2/sampleRateEMG)*fnEMG;
-            [f,e] = iirnotch(wnn,wnn/35);
-            filtEMGBuffer = filter(f,e,abs(filtEMGBuffer),[],2);
-        end
+%         if ~isempty(fnEMG)
+%             wnn = (2/sampleRateEMG)*fnEMG;
+%             [f,e] = iirnotch(wnn,wnn/35);
+%             filtEMGBuffer = filter(f,e,abs(filtEMGBuffer),[],2);
+%         end
         filtEMGBuffer = filter(d,c,abs(filtEMGBuffer),[],2);
         
         avgRectEMGBuffer = (mean((filtEMGBuffer),2)-EMGOffset)./(EMGScale(channelControl)); % Rectify, smooth and scale
         avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;
         emg_save = [emg_save,avgRectEMGBuffer];
-        %         [minAng,minMusc] = max(targetAnglesEMG);
-        %         if minMusc == 2
-        %             avgRectEMGBuffer = flip(avgRectEMGBuffer);
-        %         end
+
         [EMGDatax,EMGDatay] = EMG2xy(avgRectEMGBuffer,rotAngle);
         
         cursorCir = circle(rCirCursor,EMGDatax,EMGDatay);

@@ -22,7 +22,7 @@ targetTolEMG =      0.2;
 cursorTolEMG =      4;
 
 movemtimeCal =      2; % [sec]
-holdtimeCal =       2; % [sec]
+holdtimeCal =       4; % [sec]
 timeout =           1; % [sec]
 relaxtime =         1; % [sec]
 
@@ -310,10 +310,6 @@ library.destroy()
         avgRectEMGBuffer = (mean((filtEMGBuffer),2)-EMGOffset)./(EMGScale(channelSubsetCal(1:end-1))); % Rectify, smooth and scale
         avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;
         emg_save = [emg_save,avgRectEMGBuffer];
-%         [minAng,minMusc] = max(targetAnglesEMG);
-%         if minMusc == 2
-%             avgRectEMGBuffer = flip(avgRectEMGBuffer);
-%         end
         
         [EMGDatax,EMGDatay] = EMG2xy([avgRectEMGBuffer(iAngle); 0],targetAnglesEMG(iAngle));
         

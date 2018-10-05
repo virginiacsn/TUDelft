@@ -23,24 +23,24 @@ if ~isempty(fnEMG)
 end
 
 for i = 1:length(trial_data)
-    EMGfilt = filtfilt(b,a,trial_data(i).EMG.raw);
+    EMGfiltH = filtfilt(b,a,trial_data(i).EMG.raw);
     
     if ~isempty(fnEMG)
-        EMGfilt = filtfilt(f,e,EMGfilt);
+        EMGfiltH = filtfilt(f,e,EMGfiltH);
     end
 
-    EMGrect = abs(EMGfilt);
+    EMGrect = abs(EMGfiltH);
     
     if ~isempty(fclEMG)
-        EMGfilt = filtfilt(d,c,EMGfilt);
+        EMGfiltL = filter(d,c,EMGrect);
     else
-        EMGfilt = EMGrect;
+        EMGfiltL = EMGrect;
     end
     
-    EMGavg = movingAvg(EMGrect,avgWindow);
+    EMGavg = movingAvg(EMGfiltL,avgWindow);
     
-    trial_data(i).EMG.filt = EMGfilt;
-    trial_data(i).EMG.rect = EMGrect;
+    trial_data(i).EMG.filt = EMGfiltH;
+    trial_data(i).EMG.rect = EMGfiltL;
     trial_data(i).EMG.avg = EMGavg;
 end
 end

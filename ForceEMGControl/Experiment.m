@@ -8,8 +8,8 @@ addpath(genpath('Tools'));
 fileparams = struct(...
     'saveforce',    1,...
     'saveEMG',      1,...
-    'date',         '20181003',...
-    'subject',      '01');
+    'date',         '20181005',...
+    'subject',      '04');
 
 if ~exist(['D:\Student_experiments\Virginia\Data\',fileparams.date],'dir') && (fileparams.saveEMG || fileparams.saveforce)
     mkdir(['D:\Student_experiments\Virginia\Data\',fileparams.date])
@@ -26,7 +26,7 @@ end
 taskparams = struct(...
     'numTargetsForce',      7,...
     'numTargetsEMG',        3,...
-    'targetForce',          10,... % [N]
+    'targetForce',          8,... % [N]
     'targetForceCal',       30,... % [N]
     'targetEMG',            1,... % [% EMGScale]
     'targetEMGCal',         1,...
@@ -74,7 +74,7 @@ EMGparams = struct(...
 %% EMG offset test
 EMGparams.EMGOffset = EMGOffsettest(EMGparams);
 %EMGparams.EMGScaleMVC_start = MVCtest(EMGparams);
-off = EMGOffsettest(EMGparams);
+
 %% Force-control task
 fileparams.code = '002';
 fileparams.task = 'ForceCO';
@@ -87,30 +87,41 @@ if strcmp(fileparams.task,'ForceCO')
 end
 
 %% Pre-analysis for EMGCO calibration
-load([fileparams.filepath,fileparams.filenameforce]);
-load([fileparams.filepath,fileparams.filenameEMG]);
+codeF = {'001','002'};
 
-if strcmp(fileparams.task,'ForceCO')
-    forceEMGData = {forceDataOut_ForceCO,EMGDataOut_ForceCO};
- 
-    PreAparams.targetAngles = taskparams.targetAnglesForce;
+trial_data = [];
+
+for i = 1:length(codeF)
+    
+    fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',codeF{i},'.mat'];
+    fileparams.filenameEMG =    [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_EMG_',codeF{i},'.mat'];
+    
+    load([fileparams.filepath,fileparams.filenameforce]);
+    load([fileparams.filepath,fileparams.filenameEMG]);
+    
+    if strcmp(fileparams.task,'ForceCO')
+        forceEMGData = {forceDataOut_ForceCO,EMGDataOut_ForceCO};
+        
+        PreAparams.targetAngles = taskparams.targetAnglesForce;
+    end
+    
+    PreAparams.fs = min(forceparams.scanRate,EMGparams.sampleRateEMG);
+    PreAparams.downsamp = 2;
+    PreAparams.fclF = forceparams.fclF;
+    PreAparams.fchEMG = EMGparams.fchEMG;
+    PreAparams.fclEMG = EMGparams.fclEMG;
+    PreAparams.fnEMG = EMGparams.fnEMG;
+    PreAparams.avgWindow = 200;
+    
+    trial_data = trialCO(forceEMGData,PreAparams);
+    trial_data = removeFailTrials(trial_data(5:end));
+    
+    PreAparams.targetAngles = sort(unique([trial_data.angle]));
+    Aparams.targetAnglesForce = PreAparams.targetAngles;
+    
+    trial_data = procEMG(trial_data,PreAparams);
+    trial_data = [trial_data, procForce(trial_data,PreAparams)];
 end
-
-PreAparams.downsamp = 2;
-PreAparams.fclF = forceparams.fclF;
-PreAparams.fchEMG = EMGparams.fchEMG;
-PreAparams.fclEMG = EMGparams.fclEMG;
-PreAparams.fnEMG = EMGparams.fnEMG;
-PreAparams.avgWindow = 200;
-
-trial_data = trialCO(forceEMGData,PreAparams);
-trial_data = removeFailTrials(trial_data(5:end));
-
-PreAparams.targetAngles = sort(unique([trial_data.angle]));
-Aparams.targetAnglesForce = PreAparams.targetAngles;
-
-trial_data = procEMG(trial_data,PreAparams);
-trial_data = procForce(trial_data,PreAparams);
 
 epoch = {'ihold',1,'iend',0};
 fields = {'EMG.rect','force.filtmag'};
@@ -174,13 +185,6 @@ if strcmp(fileparams.task,'EMGCO')
     PreAparams.targetAngles = sort(EMGparams.channelAngleCal);
 end
 
-PreAparams.downsamp = 2;
-PreAparams.fclF = 5;
-PreAparams.fchEMG = 20;
-PreAparams.fclEMG = 500;
-PreAparams.fcnEMG = [];
-PreAparams.avgWindow = 200;
-
 trial_data = trialCO(forceEMGData,PreAparams);
 trial_data = removeFailTrials(trial_data(5:end));
 
@@ -218,7 +222,7 @@ if strcmp(fileparams.task,'ForceCO')
 end
 
 %% EMG-control task
-fileparams.code = '003';
+fileparams.code = '001';
 fileparams.task = 'EMGCO';
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
