@@ -147,6 +147,36 @@ if ~isempty(device)
     calforceDataz = FzCalibration(s.startForeground,forceOffset);
     disp('Fz calibration obtained.')
     
+    % Obtain EMG offset
+    repeat = 'y';
+    while strcmp(repeat,'y')
+        input('\nPress enter when prepared for EMG offset calculation.')
+        samplesOffset = [];
+        sampler.start()
+        for n = 1:10
+            samples = sampler.sample();
+            pause(0.2)
+            samplesOffset = [samplesOffset, samples(channelSubset(1:end-1),:)];
+        end
+        sampler.stop()
+        
+        wnh = (2/sampleRateEMG)*fchEMG;
+        wnl = (2/sampleRateEMG)*fclEMG;
+        [b,a] = butter(2,wnh,'high');
+        [d,c] = butter(2,wnl,'low');
+        samplesOffsetFilt = filtfilt(b,a,samplesOffset')';
+        samplesOffsetFilt = filter(d,c,abs(samplesOffsetFilt),[],2);
+        EMGOffset = mean(samplesOffsetFilt,2);
+                
+        fprintf('EMG offset:\n')
+        for k = 1:length(channelSubset)-1
+            fprintf('%s: %1.3f\n',channelName{k},EMGOffset(k))
+        end
+        fprintf('\n')
+        repeat = input('Repeat EMG offset calculation? [y/n] ','s');
+    end
+    fprintf('\n')
+    
     %% Data acquisition
     input('\nPress enter to start acquisition.')
     
@@ -185,7 +215,6 @@ if ~isempty(device)
         sampleNum = 1;
         forceDataOut_ForceCO(sampleNum,:) = {'Trialnum', 'TargetAng', 'State', 'TimeStamp', 'Fx', 'Fy', 'Fz','Trigger'};
         EMGDataOut_ForceCO(sampleNum,:) = {'EMG'};
-        %EMGDataOut_ForceCO = [];
     end
 
     % Start EMG data sampling
@@ -215,10 +244,10 @@ if ~isempty(device)
         save([filepath,filenameforce],'forceDataOut_ForceCO')
     end
     if EMGEnabled
-        %EMGDataOut_ForceCO = emg_data.samples;
-        save([filepath,filenameEMG],'EMGDataOut_ForceCO')
+        EMGOffset = EMGOffset';
+        save([filepath,filenameEMG],'EMGDataOut_ForceCO','EMGOffset')
     end
-     
+    
     % Close session and delete handles
     s.stop()
     delete(hlin)
@@ -313,8 +342,7 @@ end
             countState = 0;
             delete(hsta)
             %delete(hstaL)
-        end
-        
+        end       
         
         % Trial
         tempState = state;

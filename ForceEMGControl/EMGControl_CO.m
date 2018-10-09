@@ -165,16 +165,16 @@ if EMGEnabled
         disp('Not saving force data.')
     end
     
-    % Get EMG offset
-    contin = 1;
-    while contin
+    % Obtain EMG offset
+    repeat = 'y';
+    while strcmp(repeat,'y')
         input('\nPress enter when prepared for EMG offset calculation.')
         samplesOffset = [];
         sampler.start()
         for n = 1:10
             samples = sampler.sample();
             pause(0.2)
-            samplesOffset = [samplesOffset, samples(channelControl,:)];
+            samplesOffset = [samplesOffset, samples(channelSubset(1:end-1),:)];
         end
         sampler.stop()
         
@@ -186,12 +186,14 @@ if EMGEnabled
         samplesOffsetFilt = filter(d,c,abs(samplesOffsetFilt),[],2);
         EMGOffset = mean(samplesOffsetFilt,2);
         
+        EMGOffsetControl = EMGOffset(channelControl);
+        
         fprintf('EMG offset:\n')
         for k = 1:length(channelControl)
-            fprintf('%s: %1.3f\n',channelName{channelSubset==channelControl(k)},EMGOffset(k))
+            fprintf('%s: %1.3f\n',channelName{channelSubset==channelControl(k)},EMGOffsetControl(k))
         end
         fprintf('\n')
-        contin = input('Repeat EMG offset calculation? [1/0] ');
+        repeat = input('Repeat EMG offset calculation? [y/n] ','s');
     end
     fprintf('\n')
 
@@ -288,7 +290,7 @@ end
 library.destroy()
 
 %% Function handles
-    function processForceData(event,forceOffset,EMGOffset,EMGScale,hp)
+    function processForceData(event,forceOffset,EMGOffsetControl,EMGScale,hp)
         calibMat = [-0.56571    -0.01516    1.69417     -31.81016   -0.35339    33.73195;...
             -0.67022    37.27575    1.14848     -18.75980   0.34816     -19.33789;...
             19.06483    0.45530     18.57588    0.72627     19.51260    0.65624;...
@@ -334,7 +336,7 @@ library.destroy()
 %         end
         filtEMGBuffer = filter(d,c,abs(filtEMGBuffer),[],2);
         
-        avgRectEMGBuffer = (mean((filtEMGBuffer),2)-EMGOffset)./(EMGScale(channelControl)-EMGOffset); % Rectify, smooth and scale
+        avgRectEMGBuffer = (mean((filtEMGBuffer),2)-EMGOffsetControl)./(EMGScale(channelControl)-EMGOffsetControl); % Rectify, smooth and scale
         avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;
         emg_save = [emg_save,avgRectEMGBuffer];
 

@@ -42,5 +42,10 @@ for i = 1:length(trial_data)
     trial_data(i).EMG.filt = EMGfiltH;
     trial_data(i).EMG.rect = EMGfiltL;
     trial_data(i).EMG.avg = EMGavg;
+    
+    if isfield(trial_data(i).EMG,'offset') && (length(trial_data(i).EMG.offset) == size(trial_data(i).EMG.filt,2))
+        trial_data(i).EMG.rectOffset = EMGfiltL./repmat(trial_data(i).EMG.offset,[size(trial_data(i).EMG.filt,1) 1]);
+        trial_data(i).EMG.avgOffset = movingAvg(trial_data(i).EMG.rectOffset,avgWindow);
+    end
 end
 end

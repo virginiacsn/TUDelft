@@ -5,6 +5,7 @@ if nargin > 1
     fs = 1024;
     targetAngles = [];
     block = 1;
+    EMGOffset = [];
     struct2vars(who,varargin{2});
 end
 
@@ -144,7 +145,8 @@ for itrial = 1:length(trials)
         trial_data(itrial).trigger.force = cell2mat(data_trigger(istart:iend,:));
     elseif isempty(iend) && ~isempty(istart)
         trial_data(itrial).iend = length(data_ts);
-        trial_data(itrial).tend = data_ts(end);
+        tsend = data_ts{end};
+        trial_data(itrial).tend = tsend(end);
         
         %trial_data(itrial).ts = cell2mat(data_ts(istart:end));
         trial_data(itrial).force.raw = cell2mat(data_force(istart:end,:));
@@ -183,6 +185,8 @@ for itrial = 1:length(trials)
     
     samp_trial = length(trial_data(itrial).trigger.force);
     samp_trial_tot = ceil(length(cell2mat(data_ts))/downsamp);
+    
+    trial_data(itrial).EMG.offset = EMGOffset';
     
     if size(EMG_data,2) < cum_samp_trial+samp_trial
         trial_data(itrial).outcome = trial_outcomes{3};

@@ -36,6 +36,7 @@ availSamplesEMG =   500; % [samples]
 plotEMG =           0;
 channelSubset =     [];
 channelSubsetCal =  [];
+channelName =       {};
 channelNameCal =    {};
 channelAngleCal =   [];
 sampleRateEMG =     1024;
@@ -54,6 +55,10 @@ end
 
 rCirTarget = targetEMGCal*targetTolEMG; % [N]
 rCirCursor = targetEMGCal*targetTolEMG/cursorTolEMG; % [N]
+
+if length(channelSubset)~=length(channelName)
+    error('Names for all channels not available.')
+end
 
 if length(channelSubsetCal)~=length(channelNameCal)
     error('Names for all channels not available.')
@@ -102,7 +107,7 @@ end
 disp('Running DataAcquisition for calibration with EMG task.')
 
 library = TMSi.Library('usb');
-[EMGEnabled,sampler,emg_data,channels] = EMGinit(library,channelSubsetTemp,channelNameCal,sampleRateEMG);
+[EMGEnabled,sampler,emg_data,channels] = EMGinit(library,channelSubset,channelName,sampleRateEMG);
 
 if EMGEnabled
     disp('EMG initialized.')
@@ -146,16 +151,17 @@ if EMGEnabled
         device = [];
         disp('Not saving force data.')
     end
-    % Get EMG offset
-    contin = 1;
-    while contin
+    
+    % Obtain EMG offset
+    repeat = 'y';
+    while strcmp(repeat,'y')
         input('\nPress enter when prepared for EMG offset calculation.')
         samplesOffset = [];
         sampler.start()
         for n = 1:10
             samples = sampler.sample();
             pause(0.2)
-            samplesOffset = [samplesOffset, samples(channelSubsetCal(1:end-1),:)];
+            samplesOffset = [samplesOffset, samples(channelSubset(1:end-1),:)];
         end
         sampler.stop()
         
@@ -167,12 +173,14 @@ if EMGEnabled
         samplesOffsetFilt = filter(d,c,abs(samplesOffsetFilt),[],2);
         EMGOffset = mean(samplesOffsetFilt,2);
         
+        EMGOffsetCal = EMGOffset(channelSubsetCal(1:end-1));
+        
         fprintf('EMG offset:\n')
         for k = 1:length(channelSubsetCal)-1
-            fprintf('%s: %1.3f\n',channelNameCal{channelSubsetTemp==channelSubsetCal(k)},EMGOffset(k))
+            fprintf('%s: %1.3f\n',channelNameCal{channelSubsetTemp==channelSubsetCal(k)},EMGOffsetCal(k))
         end
         fprintf('\n')
-        contin = input('Repeat EMG offset calculation? [1/0] ');
+        repeat = input('Repeat EMG offset calculation? [y/n] ','s');
     end
     fprintf('\n')
     
@@ -223,7 +231,7 @@ if EMGEnabled
         emg_save = [];
         
         % Add event listener and start acquisition
-        hlin = addlistener(s,'DataAvailable',@(src,event) processForceData(event,forceOffset,EMGOffset,EMGScale,hp));
+        hlin = addlistener(s,'DataAvailable',@(src,event) processForceData(event,forceOffset,EMGOffsetCal,EMGScale,hp));
         %hstop = addlistener(s,'DataAvailable',@(src,event) stopTrialNum(trialNum,numTrials));
         s.IsContinuous = true;
         s.Rate = scanRate; % scans/sec, samples/sec?
@@ -257,10 +265,9 @@ if EMGEnabled
         if saveforce
             save([filepath,filenameforce],'forceDataOut_EMGCO')
         end
-        %EMGDataOut_EMGCO = emg_data.samples;
-        save('emg_proc','emg_save')
     end
     if saveEMG
+        EMGOffset = EMGOffset';
         save([filepath,filenameEMG],'EMGDataOut_EMGCO','EMGOffset','EMGScale')
     end
     
@@ -271,7 +278,7 @@ end
 library.destroy()
 
 %% Function handles
-    function processForceData(event,forceOffset,EMGOffset,EMGScale,hp)
+    function processForceData(event,forceOffset,EMGOffsetCal,EMGScale,hp)
         calibMat = [-0.56571    -0.01516    1.69417     -31.81016   -0.35339    33.73195;...
             -0.67022    37.27575    1.14848     -18.75980   0.34816     -19.33789;...
             19.06483    0.45530     18.57588    0.72627     19.51260    0.65624;...
@@ -312,7 +319,7 @@ library.destroy()
         filtEMGBuffer = filtfilt(b,a,EMGDataBuffer')';
         filtEMGBuffer = filter(d,c,abs(filtEMGBuffer),[],2);
  
-        avgRectEMGBuffer = (mean((filtEMGBuffer),2)-EMGOffset)./(EMGScale(channelSubsetCal(1:end-1))-EMGOffset); % Rectify, smooth and scale
+        avgRectEMGBuffer = (mean((filtEMGBuffer),2)-EMGOffsetCal)./(EMGScale(channelSubsetCal(1:end-1))-EMGOffsetCal); % Rectify, smooth and scale
         avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;
         emg_save = [emg_save,avgRectEMGBuffer];
         

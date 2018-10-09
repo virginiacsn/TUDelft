@@ -8,8 +8,8 @@ addpath(genpath('Tools'));
 fileparams = struct(...
     'saveforce',    1,...
     'saveEMG',      1,...
-    'date',         '20181005',...
-    'subject',      '04');
+    'date',         '20181009',...
+    'subject',      '05');
 
 if ~exist(['D:\Student_experiments\Virginia\Data\',fileparams.date],'dir') && (fileparams.saveEMG || fileparams.saveforce)
     mkdir(['D:\Student_experiments\Virginia\Data\',fileparams.date])
@@ -76,7 +76,7 @@ EMGparams.EMGOffset = EMGOffsettest(EMGparams);
 %EMGparams.EMGScaleMVC_start = MVCtest(EMGparams);
 
 %% Force-control task
-fileparams.code = '002';
+fileparams.code = '001';
 fileparams.task = 'ForceCO';
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
@@ -112,7 +112,8 @@ for i = 1:length(codeF)
     PreAparams.fclEMG = EMGparams.fclEMG;
     PreAparams.fnEMG = EMGparams.fnEMG;
     PreAparams.avgWindow = 200;
-    
+    PreAparams.EMGOffset = EMGOffset;
+
     trial_data = trialCO(forceEMGData,PreAparams);
     trial_data = removeFailTrials(trial_data(5:end));
     
@@ -136,6 +137,12 @@ end
 
 EMGparams.EMGScaleForce = max(EMGmean,[],1)'; 
 %EMGparams.EMGScaleForce = mean(EMGmean,1)';
+
+fprintf('\nEMG offset values: \n')
+for k = 1:length(EMGparams.channelSubsetCal)-1
+    fprintf('%s: %1.3f\n',EMGparams.channelName{EMGparams.channelSubset == EMGparams.channelSubsetCal(k)},PreAparams.EMGOffset(EMGparams.channelSubset == EMGparams.channelSubsetCal(k)))
+end
+
 
 fprintf('\nEMG scaling values: \n')
 for k = 1:length(EMGparams.channelSubsetCal)-1
