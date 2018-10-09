@@ -182,7 +182,6 @@ if EMGEnabled
         fprintf('\n')
         repeat = input('Repeat EMG offset calculation? [y/n] ','s');
     end
-    fprintf('\n')
     
     %% Data acquisition
     input('\nPress enter to start acquisition.')
@@ -321,7 +320,7 @@ library.destroy()
  
         avgRectEMGBuffer = (mean((filtEMGBuffer),2)-EMGOffsetCal)./(EMGScale(channelSubsetCal(1:end-1))-EMGOffsetCal); % Rectify, smooth and scale
         avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;
-        emg_save = [emg_save,avgRectEMGBuffer];
+        %emg_save = [emg_save,avgRectEMGBuffer];
         
         [EMGDatax,EMGDatay] = EMG2xy([avgRectEMGBuffer(iAngle); 0],targetAnglesEMG(iAngle));
         

@@ -76,7 +76,7 @@ EMGparams.EMGOffset = EMGOffsettest(EMGparams);
 %EMGparams.EMGScaleMVC_start = MVCtest(EMGparams);
 
 %% Force-control task
-fileparams.code = '001';
+fileparams.code = '003';
 fileparams.task = 'ForceCO';
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
@@ -122,6 +122,13 @@ for i = 1:length(codeF)
     
     trial_data = procEMG(trial_data,PreAparams);
     trial_data_all = [trial_data_all, procForce(trial_data,PreAparams)];
+    
+    % Check EMG offset values for each file
+    fprintf(['\nEMG offset values (code ',codeF{i},'): \n'])
+    for k = 1:length(EMGparams.channelSubsetCal)-1
+        fprintf('%s: %1.3f\n',EMGparams.channelName{EMGparams.channelSubset == EMGparams.channelSubsetCal(k)},PreAparams.EMGOffset(EMGparams.channelSubset == EMGparams.channelSubsetCal(k)))
+    end
+    fprintf('\n');
 end
 
 epoch = {'ihold',1,'iend',0};
@@ -137,12 +144,6 @@ end
 
 EMGparams.EMGScaleForce = max(EMGmean,[],1)'; 
 %EMGparams.EMGScaleForce = mean(EMGmean,1)';
-
-fprintf('\nEMG offset values: \n')
-for k = 1:length(EMGparams.channelSubsetCal)-1
-    fprintf('%s: %1.3f\n',EMGparams.channelName{EMGparams.channelSubset == EMGparams.channelSubsetCal(k)},PreAparams.EMGOffset(EMGparams.channelSubset == EMGparams.channelSubsetCal(k)))
-end
-
 
 fprintf('\nEMG scaling values: \n')
 for k = 1:length(EMGparams.channelSubsetCal)-1
@@ -193,7 +194,7 @@ if strcmp(fileparams.task,'EMGCO')
 end
 
 trial_data = trialCO(forceEMGData,PreAparams);
-trial_data = removeFailTrials(trial_data(5:end));
+trial_data = removeFailTrials(trial_data(10:end));
 
 PreAparams.targetAngles = sort(unique([trial_data.angle]));
 Aparams.targetAnglesEMG = PreAparams.targetAngles;
@@ -212,7 +213,7 @@ end
 
 %% Check force and EMG for EMG-control calibration task
 % Limits for force and EMG plots
-Flim = 2; EMGlim = 80;
+Flim = 2; EMGlim = 50;
 
 plotForceEMGtimeComp;
 
@@ -241,7 +242,7 @@ EMGparams.fnEMG = [];
 EMGparams.smoothWin = 800;
 EMGparams.EMGScale = EMGparams.EMGScaleForce; %EMGparams.EMGScaleMVC_start(:,1);
 EMGparams.EMGScaleType = 'Force';
-EMGparams.channelControl = [1 3];
+EMGparams.channelControl = [1 5];
 
 taskparams.numTargetsEMG = 3;
 taskparams.targetEMG = 1;

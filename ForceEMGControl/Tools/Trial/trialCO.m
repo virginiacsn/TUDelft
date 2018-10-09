@@ -186,7 +186,7 @@ for itrial = 1:length(trials)
     samp_trial = length(trial_data(itrial).trigger.force);
     samp_trial_tot = ceil(length(cell2mat(data_ts))/downsamp);
     
-    trial_data(itrial).EMG.offset = EMGOffset';
+    trial_data(itrial).EMG.offset = EMGOffset;
     
     if size(EMG_data,2) < cum_samp_trial+samp_trial
         trial_data(itrial).outcome = trial_outcomes{3};

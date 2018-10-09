@@ -195,7 +195,6 @@ if EMGEnabled
         fprintf('\n')
         repeat = input('Repeat EMG offset calculation? [y/n] ','s');
     end
-    fprintf('\n')
 
     %% Data acquisition
     input('\nPress enter to start acquisition.')
@@ -242,7 +241,7 @@ if EMGEnabled
         emg_save = [];
         
         % Add event listener and start acquisition
-        hlin = addlistener(s,'DataAvailable',@(src,event) processForceData(event,forceOffset,EMGOffset,EMGScale,hp));
+        hlin = addlistener(s,'DataAvailable',@(src,event) processForceData(event,forceOffset,EMGOffsetControl,EMGScale,hp));
         %hstop = addlistener(s,'DataAvailable',@(src,event) stopTrialNum(trialNum,numTrials));
         s.IsContinuous = true;
         s.Rate = scanRate; % scans/sec, samples/sec?
@@ -336,7 +335,7 @@ library.destroy()
 %         end
         filtEMGBuffer = filter(d,c,abs(filtEMGBuffer),[],2);
         
-        avgRectEMGBuffer = (mean((filtEMGBuffer),2)-EMGOffsetControl)./(EMGScale(channelControl)-EMGOffsetControl); % Rectify, smooth and scale
+        avgRectEMGBuffer = (mean(filtEMGBuffer,2)-EMGOffsetControl)./(EMGScale(channelControl)-EMGOffsetControl); % Rectify, smooth and scale
         avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;
         emg_save = [emg_save,avgRectEMGBuffer];
 
@@ -353,7 +352,7 @@ library.destroy()
         if strcmp(state,tempState) && countState == 0
             countState = countState+1;
             xl = xlim;
-            hsta = text(xl(2)+0.3*xl(2),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',24);
+            hsta = text(xl(2)+0.2*xl(2),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',24);
             %hstaL = text(xl(1)-0.5*xl(1),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',24);
         elseif ~strcmp(state,tempState) && countState > 0
             countState = 0;
@@ -416,7 +415,7 @@ library.destroy()
                     delete(htrg)
                 end
             case 'relax'
-                if cursorInTarget(cursorCir,circle(2*rCirCursor,0,0)) && toc(trelax) > relaxtime
+                if cursorInTarget(cursorCir,circle(4*rCirCursor,0,0)) && toc(trelax) > relaxtime
                     state = 'start';
                     trialNum = trialNum + 1;
                 end

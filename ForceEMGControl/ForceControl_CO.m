@@ -44,6 +44,8 @@ plotEMG =           0;
 channelSubset =     [1 18];
 channelName =       {'BB','Saw'};
 sampleRateEMG =     1024;
+fchEMG =            10; % [Hz]
+fclEMG =            60;
 
 % Overwrite parameters from input structs
 if ~isempty(varargin)

@@ -1,17 +1,17 @@
 %% SINGLE-TRIAL
 %% Single trial from trial_data
-itrial = 5;
-
+itrial = 19;
+trial_data = trial_data_all;
 figure('Name',['Target: ', num2str(rad2deg(trial_data(itrial).angle)), ' deg']);
 for i = 1:length(EMGparams.channelName)-1
-    subplot(1,length(Aparams.channelNameEMG)-1,i);
+    subplot(1,length(EMGparams.channelName)-1,i);
     plot(trial_data(itrial).ts,trial_data(itrial).EMG.rect(:,i));
     hold on;
     plot(trial_data(itrial).ts,trial_data(itrial).EMG.avg(:,i),'r');
     xlim([0 trial_data(itrial).ts(end)]);
-    ylim([0 max(trial_data(itrial).EMG.rect(:,i))]);
+    %ylim([0 max(trial_data(itrial).EMG.rect(:,i))]);
     xlabel('Time [s]'); ylabel('EMG [-]');
-    title(['Musc: ',Aparams.channelNameEMG{i}]);
+    %title(['Musc: ',Aparams.channelNameEMG{i}]);
 end
 
 %% Compare tasks
