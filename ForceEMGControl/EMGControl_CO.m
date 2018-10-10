@@ -352,7 +352,7 @@ library.destroy()
         if strcmp(state,tempState) && countState == 0
             countState = countState+1;
             xl = xlim;
-            hsta = text(xl(2)+0.2*xl(2),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',24);
+            hsta = text(xl(2)+0.1*xl(2),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',24);
             %hstaL = text(xl(1)-0.5*xl(1),0,[upper(state(1)),state(2:end)],'clipping','off','Fontsize',24);
         elseif ~strcmp(state,tempState) && countState > 0
             countState = 0;
@@ -368,8 +368,8 @@ library.destroy()
                 xl = xlim; yl = ylim;
                 delete(htrl)
                 delete(hsuc)
-                htrl = text(xl(2)+0.3*xl(2),yl(2),['Trial: ',num2str(trialNum)],'clipping','off','Fontsize',14);
-                hsuc = text(xl(2)+0.3*xl(2),yl(2)-0.1*yl(2),['Successes: ',num2str(countSuccess)],'clipping','off','Fontsize',14);
+                htrl = text(xl(2)+0.1*xl(2),yl(2),['Trial: ',num2str(trialNum)],'clipping','off','Fontsize',14);
+                hsuc = text(xl(2)+0.1*xl(2),yl(2)-0.1*yl(2),['Successes: ',num2str(countSuccess)],'clipping','off','Fontsize',14);
                 
                 iAngle = randi(numTargetsEMG);
                 targetCir = circle(rCirTarget,targetPosx(iAngle),targetPosy(iAngle));

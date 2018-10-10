@@ -3,8 +3,8 @@
 clear all
 addpath(genpath('Tools'));
 
-date =      '20181005';
-subject =   '04';
+date =      '20181010';
+subject =   '06';
 
 switch computer
     case 'PCWIN'
@@ -84,7 +84,7 @@ end
 fprintf('\nRecorded mean force value: %1.3f\n\n',round(mean(forcemean)))
 
 %% All blocks for force-control task, blocks corresponding to each muscle control pair for EMG-control
-codeF = {'001','002','003'};
+codeF = {'001'};
 
 % Force-control
 task =  'ForceCO';
@@ -92,7 +92,7 @@ filenameparams = [date,'_s',subject,'_params_','001','.mat'];
 load([filepath,paramfolder,filenameparams]);
 
 % Trial number to start analysis. Leave 10 initial trials for learning task
-startTrial = 10;
+startTrial = 1;
 
 % Parameters for analysis
 Aparams.fs = min(forceparams.scanRate,EMGparams.sampleRateEMG);
@@ -173,10 +173,10 @@ fprintf('\nRecorded mean force value: %1.3f\n',round(mean(forcemean)))
 
 %% EMG-control
 task = 'EMGCO';
-codeE = {'001','002','003','004','005','006'};
+codeE = {'001'};
 
 % Trial number to start analysis. Leave 10 initial trials for learning task
-startTrial = 10;
+startTrial = 1;
 
 % Trial data struct for EMG-control task, will append trial data for each
 % block (code)
@@ -198,7 +198,7 @@ for i = 1:length(codeE)
 
     Aparams.block = str2double(code);
     Aparams.targetAngles = taskparams.targetAnglesEMG;
-    Aparams.EMGOffset = EMGOffset;
+    Aparams.EMGOffset = EMGOffset';
     
     trial_data = trialCO(forceEMGData,Aparams);
     
@@ -501,7 +501,11 @@ for i = 1:length(EMGparams.channelName)-1
         hold on
         plot(trial_data_avg_force(iangf).ts,trial_data_avg_force(iangf).EMG.avg(:,i),'r')
         xlim([0 trial_data_avg_force(iangf).ts(end)]);
-        ylim([0 EMG_lim(j,i)]);
+        if EMG_lim(j,i)>0
+            ylim([0 EMG_lim(j,i)]);
+        else
+            ylim([0 EMGlim])
+        end
         xlabel('Time [s]'); ylabel('EMG [-]');
         title(['ForceCO; Target: ',num2str(rad2deg(Aparams.angComp{j}(1))),' deg']);
         
@@ -511,7 +515,11 @@ for i = 1:length(EMGparams.channelName)-1
         hold on
         plot(trial_data_avg_EMG(iangE).ts,trial_data_avg_EMG(iangE).EMG.avg(:,i),'r')
         xlim([0 trial_data_avg_EMG(iangE).ts(end)]);
-        ylim([0 EMG_lim(j,i)]);
+        if EMG_lim(j,i)>0
+            ylim([0 EMG_lim(j,i)]);
+        else
+            ylim([0 EMGlim])
+        end
         xlabel('Time [s]'); ylabel('EMG [-]');
         title(['EMGCO; Target: ',num2str(rad2deg(Aparams.angComp{j}(2))),' deg (',Aparams.muscComp{j},')']);
         

@@ -8,8 +8,8 @@ addpath(genpath('Tools'));
 fileparams = struct(...
     'saveforce',    1,...
     'saveEMG',      1,...
-    'date',         '20181009',...
-    'subject',      '05');
+    'date',         '20181010',...
+    'subject',      '06');
 
 if ~exist(['D:\Student_experiments\Virginia\Data\',fileparams.date],'dir') && (fileparams.saveEMG || fileparams.saveforce)
     mkdir(['D:\Student_experiments\Virginia\Data\',fileparams.date])
@@ -26,7 +26,7 @@ end
 taskparams = struct(...
     'numTargetsForce',      7,...
     'numTargetsEMG',        3,...
-    'targetForce',          5,... % [N]
+    'targetForce',          8,... % [N]
     'targetForceCal',       30,... % [N]
     'targetEMG',            1,... % [% EMGScale]
     'targetEMGCal',         1,...
@@ -59,11 +59,11 @@ forceparams = struct(...
 EMGparams = struct(...
     'plotEMG',          0,... % plot EMG 
     'channelSubset',    [1 2 3 4 5 6 7 8 17],... %,...[1 2 3 4 17] 
-    'channelSubsetCal', [1 2 3 4 17],... %[1 2 3 4 17],...
-    'channelName',      {{'BB','TLH','DA','DP','ECRB','FCR','Br','TLat','Trigger'}},...%{{'BB','TLH','DA','DP','Trigger'}},... 
-    'channelNameCal',   {{'BB','TLH','DA','DP','Trigger'}},...%{{'BB','TLH','DA','DP','Trigger'}},...
-    'channelAngle',     [5*pi/4,pi/4,3*pi/4,7*pi/4,0,0,0,0],...
-    'channelAngleCal',  [5*pi/4,pi/4,3*pi/4,7*pi/4],...%[5*pi/4,pi/4,3*pi/4,7*pi/4],...
+    'channelSubsetCal', [1 2 4 5 17],... %[1 2 3 4 17],...
+    'channelName',      {{'BB','TLH','ECRB','DP','DA','FCR','Br','TLat','Trigger'}},...%{{'BB','TLH','DA','DP','Trigger'}},... 
+    'channelNameCal',   {{'BB','TLH','DP','DA','Trigger'}},...%{{'BB','TLH','DA','DP','Trigger'}},...
+    'channelAngle',     [5*pi/4,pi/4,0,7*pi/4,3*pi/4,0,0,0],...
+    'channelAngleCal',  [5*pi/4,pi/4,7*pi/4,3*pi/4],...%[5*pi/4,pi/4,3*pi/4,7*pi/4],...
     'sampleRateEMG',    1024,... % [samples/sec]
     'fchEMG',           30,... % [Hz]
     'fclEMG',           60,... % [Hz]
@@ -87,7 +87,7 @@ if strcmp(fileparams.task,'ForceCO')
 end
 
 %% Pre-analysis for EMGCO calibration
-codeF = {'001','002'};
+codeF = {'001','002','003'};
 
 trial_data_all = [];
 
@@ -115,7 +115,7 @@ for i = 1:length(codeF)
     PreAparams.EMGOffset = EMGOffset;
 
     trial_data = trialCO(forceEMGData,PreAparams);
-    trial_data = removeFailTrials(trial_data(5:end));
+    trial_data = removeFailTrials(trial_data(10:end));
     
     PreAparams.targetAngles = sort(unique([trial_data.angle]));
     Aparams.targetAnglesForce = PreAparams.targetAngles;
@@ -194,7 +194,7 @@ if strcmp(fileparams.task,'EMGCO')
 end
 
 trial_data = trialCO(forceEMGData,PreAparams);
-trial_data = removeFailTrials(trial_data(10:end));
+trial_data = removeFailTrials(trial_data(5:end));
 
 PreAparams.targetAngles = sort(unique([trial_data.angle]));
 Aparams.targetAnglesEMG = PreAparams.targetAngles;
@@ -203,8 +203,25 @@ trial_data = procEMG(trial_data,PreAparams);
 trial_data = procForce(trial_data,PreAparams);
 
 epoch = {'ihold',1,'iend',0};
-fields = {'EMG.rect','EMG.avg','force.filt'};
+fields = {'EMG.rect','EMG.avg','force.filt','force.filtmag'};
 trial_data_avg_EMG = trialAngleAvg(trial_data, epoch, fields);
+
+EMGmean = zeros(length(trial_data_avg),length(EMGparams.channelSubset)-1);
+forcemean = zeros(length(trial_data_avg_EMG),1);
+for i = 1:length(trial_data_avg_EMG)
+    EMGmean(i,:) = mean(trial_data_avg_EMG(i).EMG.rect,1);
+    forcemean(i) = trial_data_avg_EMG(i).force.filtmag_mean;
+end
+
+EMGparams.EMGScaleEMGCalib = max(EMGmean,[],1)'; 
+%EMGparams.EMGScaleForce = mean(EMGmean,1)';
+
+fprintf('\nEMG scaling values: \n')
+for k = 1:length(EMGparams.channelSubsetCal)-1
+    fprintf('%s: %1.3f\n',EMGparams.channelName{EMGparams.channelSubset == EMGparams.channelSubsetCal(k)},EMGparams.EMGScaleEMGCalib(EMGparams.channelSubset == EMGparams.channelSubsetCal(k)))
+end
+
+fprintf('\nRecorded mean force value: %1.3f\n',round(mean(forcemean)))
 
 % Deleting variables
 if strcmp(fileparams.task,'EMGCO')
@@ -219,7 +236,7 @@ plotForceEMGtimeComp;
 
 %% CONTINUE? [Y/N]
 %% Force-control task 
-fileparams.code = '003';
+fileparams.code = '004';
 fileparams.task = 'ForceCO';
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
@@ -242,7 +259,7 @@ EMGparams.fnEMG = [];
 EMGparams.smoothWin = 800;
 EMGparams.EMGScale = EMGparams.EMGScaleForce; %EMGparams.EMGScaleMVC_start(:,1);
 EMGparams.EMGScaleType = 'Force';
-EMGparams.channelControl = [1 5];
+EMGparams.channelControl = [1 4];
 
 taskparams.numTargetsEMG = 3;
 taskparams.targetEMG = 1;
