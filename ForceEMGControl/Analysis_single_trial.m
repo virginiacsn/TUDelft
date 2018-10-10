@@ -1,7 +1,7 @@
 %% SINGLE-TRIAL
 %% Single trial from trial_data
-itrial = 19;
-trial_data = trial_data_all;
+itrial = 20;
+trial_data = trial_data;
 figure('Name',['Target: ', num2str(rad2deg(trial_data(itrial).angle)), ' deg']);
 for i = 1:length(EMGparams.channelName)-1
     subplot(1,length(EMGparams.channelName)-1,i);

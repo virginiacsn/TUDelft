@@ -1,6 +1,7 @@
 function[trial_data_avg] = trialAngleAvg(trial_data, epoch, fields)
 
 angles = sort(unique(extractfield(trial_data,'angle')));
+
 if ~isempty(epoch)
     if length(epoch) == 2
             nsamp = min([trial_data.(epoch{2})]-[trial_data.(epoch{1})])+1;
@@ -13,7 +14,6 @@ for iangle = 1:length(angles)
     angle_data = trial_data(find(extractfield(trial_data,'angle') == angles(iangle)));
     trial_data_avg(iangle).angle = angles(iangle);
     trial_data_avg(iangle).ntrials = length(angle_data);
-    %trial_data_avg(iangle).ts = 
     
     for ifield = 1:length(fields)
         if any(strfind(fields{ifield},'.'))

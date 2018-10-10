@@ -3,8 +3,8 @@
 clear all
 addpath(genpath('Tools'));
 
-date =      '20181005';
-subject =   '04';
+date =      '20181009';
+subject =   '05';
 
 switch computer
     case 'PCWIN'
@@ -105,7 +105,7 @@ Aparams.fclEMG = 500;
 Aparams.avgWindow = 200;
 
 % Epoch interval {epoch start, time start, epoch end, time end} and fields to trial average
-Aparams.epoch = {'ihold',1,'iend',0};
+Aparams.epoch = {'istart',0,'iend',0};
 fields_avg = {'EMG.raw','EMG.filt','EMG.rect','EMG.avg','force.filt','force.filtmag'};
 % Fields to trial append
 fields_app = {'EMG.rect'};
@@ -141,6 +141,7 @@ for i = 1:length(codeF)
     for k = 1:length(EMGparams.channelSubsetCal)-1
         fprintf('%s: %1.3f\n',EMGparams.channelName{EMGparams.channelSubset == EMGparams.channelSubsetCal(k)},Aparams.EMGOffset(EMGparams.channelSubset == EMGparams.channelSubsetCal(k)))
     end
+    fprintf('\n');
 end
 
 Aparams.targetAnglesForce = sort(unique(extractfield(trial_data_force,'angle')));
@@ -163,7 +164,7 @@ end
 % Obtain EMG scaling through max EMG for force-control
 EMGScaleForce = max(EMGmean,[],1);
 
-fprintf('\nEMG mean values: \n')
+fprintf('EMG mean values: \n')
 for k = 1:length(EMGparams.channelSubsetCal)-1
     fprintf('%s: %1.3f\n',EMGparams.channelName{EMGparams.channelSubset == EMGparams.channelSubsetCal(k)},EMGScaleForce(EMGparams.channelSubset == EMGparams.channelSubsetCal(k)))
 end
@@ -198,7 +199,7 @@ for i = 1:length(codeE)
 
     Aparams.block = str2double(code);
     Aparams.targetAngles = taskparams.targetAnglesEMG;
-    Aparams.EMGOffset = EMGOffset;
+    Aparams.EMGOffset = EMGOffset';
     
     trial_data = trialCO(forceEMGData,Aparams);
     
@@ -208,10 +209,11 @@ for i = 1:length(codeE)
     trial_data_EMG = [trial_data_EMG, procForce(trial_data,Aparams)];
     
     % Check EMG offset values for each file
-    fprintf(['\nEMG offset values (code ',code,'): \n'])
+    fprintf(['\nEMG offset values (code ',code,'): \n']);
     for k = 1:length(EMGparams.channelSubsetCal)-1
         fprintf('%s: %1.3f\n',EMGparams.channelName{EMGparams.channelSubset == EMGparams.channelSubsetCal(k)},Aparams.EMGOffset(EMGparams.channelSubset == EMGparams.channelSubsetCal(k)))
     end
+    fprintf('\n');
 end
 
 Aparams.targetAnglesEMG = sort(unique(extractfield(trial_data_EMG,'angle')));
@@ -367,7 +369,7 @@ title('EMGCO');
 %% EMG figures
 %% TIME analysis (recified and averaged)
 %% Figure per muscle, subplot per target for each task
-for j = 1:length(EMGparams.channelName)-1
+for j = 1:1%length(EMGparams.channelName)-1
     figure('Name',['ForceCO; EMG ',EMGparams.channelName{j}]);
     for i = 1:length(Aparams.targetAnglesForce)
         if rem(length(Aparams.targetAnglesForce) ,2) == 0
@@ -385,7 +387,7 @@ for j = 1:length(EMGparams.channelName)-1
     end
 end
 
-for j = 1:length(EMGparams.channelName)-1
+for j = 1:1%length(EMGparams.channelName)-1
     figure('Name',['EMGCO; EMG ',EMGparams.channelName{j}]);
     for i = 1:length(Aparams.targetAnglesEMG)
         if rem(length(Aparams.targetAnglesEMG),2) == 0
@@ -688,16 +690,16 @@ for j = 1:length(plotmusc)
         legend('ForceCO','EMGCO');
     end
 end
-%%
-for i = 1:6
-    for kk = 1:4
-        subplot(2,3,i)
-        h(kk)=bar(kk,mpt(kk,i),'facecolor',cols{kk},'barwidth',0.9); hold on;
-        errorbar(kk,mpt(kk,i),spt(kk,i),'k.')
-        title(strcat(header{i+4},' (\mu,\sigma)'));ylabel('Score');xlim([0 5]);
-        set(gca, 'XTick', 1:4, 'XTickLabel', Labels);
-    end
-end
+
+% for i = 1:6
+%     for kk = 1:4
+%         subplot(2,3,i)
+%         h(kk)=bar(kk,mpt(kk,i),'facecolor',cols{kk},'barwidth',0.9); hold on;
+%         errorbar(kk,mpt(kk,i),spt(kk,i),'k.')
+%         title(strcat(header{i+4},' (\mu,\sigma)'));ylabel('Score');xlim([0 5]);
+%         set(gca, 'XTick', 1:4, 'XTickLabel', Labels);
+%     end
+% end
 
 %% My coherence
 % Figure per muscle pair (all), subplot per task (row) per target for angComp (col)
