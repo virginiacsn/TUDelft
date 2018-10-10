@@ -1,24 +1,31 @@
-function[trial_data_app] = trialAngleApp(trial_data, epoch, fields, window)
+function[trial_data_app] = trialAngleApp(trial_data, epoch, fields, window, mintrials)
 
 angles = sort(unique(extractfield(trial_data,'angle')));
 
 for iangle = 1:length(angles)
-    angle_data = trial_data(find(extractfield(trial_data,'angle') == angles(iangle)));
+    angle_data = trial_data(([trial_data.angle] == angles(iangle)));
     trial_data_app(iangle).angle = angles(iangle);
-    trial_data_app(iangle).ntrials = length(angle_data);
+    
+    if ~isempty(mintrials) && (length(angle_data) >= mintrials)
+        ntrials = mintrials;   
+    else
+        ntrials = length(angle_data);
+    end
+    
+    trial_data_app(iangle).ntrials = ntrials;
     
     for ifield = 1:length(fields)
         field_str = strsplit(fields{ifield},'.');
-        field_col = size(angle_data(1).(field_str{1}).(field_str{2}),2);
-
+        %field_col = size(angle_data(1).(field_str{1}).(field_str{2}),2);
+        
         field_data = [];
         app_data = [];
         
-        for itrial = 1:length(angle_data)
+        for itrial = 1:ntrials
             if length(epoch) == 2
                 idx1 = angle_data(itrial).(epoch{1});
                 idx2 = angle_data(itrial).(epoch{2});
-            else  
+            else
                 idx1 = angle_data(itrial).(epoch{1})+round(epoch{2}/angle_data(itrial).dt);
                 idx2 = angle_data(itrial).(epoch{3})+round(epoch{4}/angle_data(itrial).dt);
             end

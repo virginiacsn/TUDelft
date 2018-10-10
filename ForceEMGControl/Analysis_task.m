@@ -3,8 +3,8 @@
 clear all
 addpath(genpath('Tools'));
 
-date =      '20181009';
-subject =   '05';
+date =      '20181010';
+subject =   '06';
 
 switch computer
     case 'PCWIN'
@@ -84,7 +84,7 @@ end
 fprintf('\nRecorded mean force value: %1.3f\n\n',round(mean(forcemean)))
 
 %% All blocks for force-control task, blocks corresponding to each muscle control pair for EMG-control
-codeF = {'001','002','003'};
+codeF = {'001','002','003','004'};
 
 % Force-control
 task =  'ForceCO';
@@ -105,7 +105,7 @@ Aparams.fclEMG = 500;
 Aparams.avgWindow = 200;
 
 % Epoch interval {epoch start, time start, epoch end, time end} and fields to trial average
-Aparams.epoch = {'istart',0,'iend',0};
+Aparams.epoch = {'ihold',1,'iend',0};
 fields_avg = {'EMG.raw','EMG.filt','EMG.rect','EMG.avg','force.filt','force.filtmag'};
 % Fields to trial append
 fields_app = {'EMG.rect'};
@@ -149,8 +149,12 @@ Aparams.targetAnglesForce = sort(unique(extractfield(trial_data_force,'angle')))
 % Trial average by angle
 trial_data_avg_force = trialAngleAvg(trial_data_force, Aparams.epoch, fields_avg);
 
+% Select number of trials to append by finding minimum number of trials per
+% target
+mintrialsForce = min([trial_data_avg_force.ntrials]);
+
 % Trial append by angle
-trial_data_app_force = trialAngleApp(trial_data_force, Aparams.epoch, fields_app,[]);
+trial_data_app_force = trialAngleApp(trial_data_force, Aparams.epoch, fields_app,[],20);
 
 % Compute mean rectified EMG and filtered force magnitude for each angle.
 % Check calibration values
@@ -221,14 +225,19 @@ Aparams.targetAnglesEMG = sort(unique(extractfield(trial_data_EMG,'angle')));
 % Trial average by angle
 trial_data_avg_EMG = trialAngleAvg(trial_data_EMG, Aparams.epoch, fields_avg);
 
+% Select number of trials to append by finding minimum number of trials per
+% target
+mintrialsEMG = min([trial_data_avg_EMG.ntrials]);
+
 % Trial append by angle
-trial_data_app_EMG = trialAngleApp(trial_data_EMG, Aparams.epoch, fields_app,[]);
+trial_data_app_EMG = trialAngleApp(trial_data_EMG, Aparams.epoch, fields_app,[],25);
 
 % Angles and corresponding muscle names to compare between tasks
 [muscAngle,ichan] = sort(EMGparams.channelAngle(EMGparams.channelAngle>0));
 muscAngles = sort([muscAngle,mean([muscAngle(1:end-1);muscAngle(2:end)])]);
 
-channelName = EMGparams.channelName(ichan);
+chanAngles = EMGparams.channelSubset(EMGparams.channelAngle>0);
+channelName = EMGparams.channelName(chanAngles(ichan));
 channelNames = {};
 k = 1;
 for i = 1:length(channelName)
@@ -503,7 +512,11 @@ for i = 1:length(EMGparams.channelName)-1
         hold on
         plot(trial_data_avg_force(iangf).ts,trial_data_avg_force(iangf).EMG.avg(:,i),'r')
         xlim([0 trial_data_avg_force(iangf).ts(end)]);
-        ylim([0 EMG_lim(j,i)]);
+        if EMG_lim(j,i)>0
+            ylim([0 EMG_lim(j,i)]);
+        else
+            ylim([0 EMGlim])
+        end
         xlabel('Time [s]'); ylabel('EMG [-]');
         title(['ForceCO; Target: ',num2str(rad2deg(Aparams.angComp{j}(1))),' deg']);
         
@@ -513,7 +526,11 @@ for i = 1:length(EMGparams.channelName)-1
         hold on
         plot(trial_data_avg_EMG(iangE).ts,trial_data_avg_EMG(iangE).EMG.avg(:,i),'r')
         xlim([0 trial_data_avg_EMG(iangE).ts(end)]);
-        ylim([0 EMG_lim(j,i)]);
+        if EMG_lim(j,i)>0
+            ylim([0 EMG_lim(j,i)]);
+        else
+            ylim([0 EMGlim])
+        end
         xlabel('Time [s]'); ylabel('EMG [-]');
         title(['EMGCO; Target: ',num2str(rad2deg(Aparams.angComp{j}(2))),' deg (',Aparams.muscComp{j},')']);
         
@@ -713,7 +730,7 @@ for j = 1:nmusccomb
         if rem(length(Aparams.angComp),2) == 0
             subplot(length(Aparams.angComp)/2,2,i);
         else
-            subplot(1,length(Aparams.angComp),i);
+            subplot(length(Aparams.angComp),1,i);
         end
         h1 = plot(trial_data_coh_force(iangf).(field).my_fcoh(:,j),trial_data_coh_force(iangf).(field).my_coh(:,j));
         hold on;
@@ -721,7 +738,7 @@ for j = 1:nmusccomb
         
         h2 = plot(trial_data_coh_EMG(iangE).(field).my_fcoh(:,j),trial_data_coh_EMG(iangE).(field).my_coh(:,j),'r');
         hold on;
-        line(xlim,trial_data_coh_EMG(iangE).(field).my_CL(j)*[1 1],'Color','k','LineStyle','--');
+        line(xlim,trial_data_coh_EMG(iangE).(field).my_CL(j)*[1 1],'Color','k','LineStyle','.-');
         
         xlim([trial_data_coh_force(iangf).(field).my_fcoh(2,j) fc]);
         ylim([0 1]);
