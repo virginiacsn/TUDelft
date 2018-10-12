@@ -6,8 +6,6 @@ EMG_fields = varargin{3};
 
 window = [];
 tseg = 1;
-nseg = 10;
-my_nseg = 20;
 fs = 1024;
 alp = 0.05;
 
@@ -27,8 +25,8 @@ for i = 1:length(trial_data)
     else
         %win = window(round(length(trial_data(i).ts)/nseg));
         %my_win = window(round(length(trial_data(i).ts)/my_nseg));
+        win = window(round(tseg/trial_data(i).ts(2)));        
         my_win = window(round(tseg/trial_data(i).ts(2)));
-        win = window(round(tseg/trial_data(i).ts(2)));
     end
     overlap = round(length(win)/2);
     my_overlap = round(length(my_win)/2);
@@ -50,30 +48,51 @@ for i = 1:length(trial_data)
                 trial_data_coh(i).(EMG_fields{j}).CL(h) = 1-alp^(1/(L-1)); 
                 
                 if isfield(trial_data,'iapp')
-                    [trial_data_coh(i).(EMG_fields{j}).my_coh(:,h),trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h),my_nsegtot] = coherence(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),fs,window,win,my_overlap,iapp);
+                    [trial_data_coh(i).(EMG_fields{j}).my_coh(:,h),trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h),my_nsegtot] = coherence(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),fs,my_win,my_overlap,iapp);
                 else
-                    [trial_data_coh(i).(EMG_fields{j}).my_coh(:,h),trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h),my_nsegtot] = coherence(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),fs,my_win,win,my_overlap,win);
+                    [trial_data_coh(i).(EMG_fields{j}).my_coh(:,h),trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h),my_nsegtot] = coherence(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),fs,my_win,my_overlap,[]);
                 end
                 trial_data_coh(i).(EMG_fields{j}).my_CL(h) = 1-alp^(1/(my_nsegtot-1));
                 
+                
+                % Significant coherence in frequency bands - MATLAB
+                % coherence
                 alp_freq = find(trial_data_coh(i).(EMG_fields{j}).fcoh(:,h)>=alp_band(1) & trial_data_coh(i).(EMG_fields{j}).fcoh(:,h)<=alp_band(2));
                 beta_freq = find(trial_data_coh(i).(EMG_fields{j}).fcoh(:,h)>=beta_band(1) & trial_data_coh(i).(EMG_fields{j}).fcoh(:,h)<=beta_band(2));
                 gam_freq = find(trial_data_coh(i).(EMG_fields{j}).fcoh(:,h)>=gam_band(1) & trial_data_coh(i).(EMG_fields{j}).fcoh(:,h)<=gam_band(2));
 
                 coh_temp = zeros(size(trial_data_coh(i).(EMG_fields{j}).coh(:,h)));
                 coh_temp(trial_data_coh(i).(EMG_fields{j}).coh(:,h) >= trial_data_coh(i).(EMG_fields{j}).CL(h)) = 1;
-
-                trial_data_coh(i).(EMG_fields{j}).sig_coh(:,h) = [mean(coh_temp(alp_freq)) mean(coh_temp(beta_freq)) mean(coh_temp(gam_freq)) std(coh_temp(alp_freq))/sqrt(length(alp_freq)) std(coh_temp(beta_freq))/sqrt(length(beta_freq)) std(coh_temp(gam_freq))/sqrt(length(gam_freq))];
                 
+                alp_sig = coh_temp(alp_freq);
+                beta_sig = coh_temp(beta_freq);
+                gam_sig = coh_temp(gam_freq);
+                
+                trial_data_coh(i).(EMG_fields{j}).mean_sig_coh(:,h) = [mean(alp_sig) mean(beta_sig) mean(gam_sig)];
+                trial_data_coh(i).(EMG_fields{j}).SEM_sig_coh(:,h) = [std(alp_sig)/sqrt(length(alp_freq)) std(beta_sig)/sqrt(length(beta_freq)) std(gam_sig)/sqrt(length(gam_freq))];
+                
+                % Significant coherence in frequency bands - my coherence
                 alp_freq = find(trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h)>=alp_band(1) & trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h)<=alp_band(2));
                 beta_freq = find(trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h)>=beta_band(1) & trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h)<=beta_band(2));
                 gam_freq = find(trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h)>=gam_band(1) & trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h)<=gam_band(2));
 
                 coh_temp = zeros(size(trial_data_coh(i).(EMG_fields{j}).my_coh(:,h)));
-                coh_temp(trial_data_coh(i).(EMG_fields{j}).my_coh(:,h) >= trial_data_coh(i).(EMG_fields{j}).my_CL(h)) = 1;
+                
+                idx_sig = trial_data_coh(i).(EMG_fields{j}).my_coh(:,h) >= trial_data_coh(i).(EMG_fields{j}).my_CL(h);
+                coh_temp(idx_sig) = 1;
 
-                trial_data_coh(i).(EMG_fields{j}).my_sig_coh(:,h) = [mean(coh_temp(alp_freq)) mean(coh_temp(beta_freq)) mean(coh_temp(gam_freq)) std(coh_temp(alp_freq))/sqrt(length(alp_freq)) std(coh_temp(beta_freq))/sqrt(length(beta_freq)) std(coh_temp(gam_freq))/sqrt(length(gam_freq))];
+                alp_sig = coh_temp(alp_freq);
+                beta_sig = coh_temp(beta_freq);
+                gam_sig = coh_temp(gam_freq);
+                
+                tot_sig = sum(idx_sig);
+                
+                trial_data_coh(i).(EMG_fields{j}).my_mean_sig_coh(:,h) = [mean(alp_sig), mean(beta_sig), mean(gam_sig)];
+                trial_data_coh(i).(EMG_fields{j}).my_SEM_sig_coh(:,h) = [std(alp_sig)/sqrt(length(alp_freq)), std(beta_sig)/sqrt(length(beta_freq)), std(gam_sig)/sqrt(length(gam_freq))];
 
+                trial_data_coh(i).(EMG_fields{j}).my_perc_sig_coh(:,h) = 100*[sum(alp_sig)/tot_sig, sum(beta_sig)/tot_sig, sum(gam_sig)/tot_sig];
+                trial_data_coh(i).(EMG_fields{j}).my_perc_CI_sig_coh(:,h) = 100*1.96*[sqrt(sum(alp_sig)/tot_sig*(1-sum(alp_sig)/tot_sig)/tot_sig), sqrt(sum(beta_sig)/tot_sig*(1-sum(beta_sig)/tot_sig)/tot_sig), sqrt(sum(gam_sig)/tot_sig*(1-sum(gam_sig)/tot_sig)/tot_sig)];
+                
                 %[~,fcoh250] = min(abs(trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2)-250));
                 %[~,fcoh500] = min(abs(trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2)-500));
                 %trial_data_coh(i).(EMG_fields{j}).z(:,k+l-2) = (atanh(sqrt(trial_data_coh(i).(EMG_fields{j}).coh(:,k+l-2))/sqrt(1/(2*L)))-mean(trial_data_coh(i).(EMG_fields{j}).coh(fcoh250:fcoh500,k+l-2)));

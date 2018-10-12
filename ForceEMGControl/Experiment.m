@@ -143,6 +143,8 @@ for i = 1:length(trial_data_avg)
 end
 
 EMGparams.EMGScaleForce = max(EMGmean,[],1)'; 
+EMGparams.EMGTolForce = min(EMGmean,[],1)'./EMGparams.EMGScaleForce;
+EMGparams.EMGmeanForce = EMGmean;
 %EMGparams.EMGScaleForce = mean(EMGmean,1)';
 
 fprintf('\nEMG scaling values: \n')

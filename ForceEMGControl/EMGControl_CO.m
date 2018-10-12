@@ -18,7 +18,7 @@ filepath =          [];
 
 % Task parameters
 numTargetsEMG =     3;
-targetAnglesEMG =   [pi/4:pi/(2*(numTargetsEMG-1)):3*pi/4]; % [rad]
+targetAnglesForce = [];
 targetEMG =         0.5;
 targetTolEMG =      0.2;
 cursorTolEMG =      4;
@@ -48,6 +48,8 @@ fnEMG =             [];
 smoothWin =         500;
 iterUpdatePlotEMG = 1;
 EMGScale =          [];
+EMGTolForce =       [];
+EMGmeanForce =      [];
 
 % Overwrite parameters from input structs
 if ~isempty(varargin)
@@ -58,6 +60,7 @@ end
 
 % Assign values for cursor and target radii
 rCirTarget = targetEMG*targetTolEMG; % [N]
+rElipTarget = targetEMG.*EMGTolForce;
 rCirCursor = targetEMG*targetTolEMG/cursorTolEMG; % [N]
 
 if length(channelSubset)~=length(channelName)
@@ -83,6 +86,8 @@ if ~isempty(channelAngle)
         rotAngle = targetAnglesEMG(1);
     end
 end
+
+EMGScaleJoint = EMGmeanForce(ismember(targetAnglesForce,targetAnglesEMG(2)),channelControl);
 
 %% Saving file check
 if saveEMG || saveforce
@@ -335,9 +340,13 @@ library.destroy()
 %         end
         filtEMGBuffer = filter(d,c,abs(filtEMGBuffer),[],2);
         
-        avgRectEMGBuffer = (mean(filtEMGBuffer,2)-EMGOffsetControl)./(EMGScale(channelControl)-EMGOffsetControl); % Rectify, smooth and scale
+        if iAngle == 2
+            avgRectEMGBuffer = (mean(filtEMGBuffer,2)-EMGOffsetControl)./(EMGScale(channelControl)-EMGOffsetControl); % Rectify, smooth and scale
+        else
+            avgRectEMGBuffer = (mean(filtEMGBuffer,2)-EMGOffsetControl)./(EMGScaleJoint-EMGOffsetControl); % Rectify, smooth and scale
+        end
         avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;
-        emg_save = [emg_save,avgRectEMGBuffer];
+        %emg_save = [emg_save,avgRectEMGBuffer];
 
         [EMGDatax,EMGDatay] = EMG2xy(avgRectEMGBuffer,rotAngle);
         
@@ -372,7 +381,14 @@ library.destroy()
                 hsuc = text(xl(2)+0.1*xl(2),yl(2)-0.1*yl(2),['Successes: ',num2str(countSuccess)],'clipping','off','Fontsize',14);
                 
                 iAngle = randi(numTargetsEMG);
-                targetCir = circle(rCirTarget,targetPosx(iAngle),targetPosy(iAngle));
+                if (iAngle == 2) || (rElipTarget(channelControl(iAngle)) < rCirTarget)
+                    targetCir = circle(rCirTarget,targetPosx(iAngle),targetPosy(iAngle));
+                elseif iAngle == 1
+                    targetCir = ellipse(rCirTarget,rElipTarget(channelControl(iAngle)),targetPosx(iAngle),targetPosy(iAngle));
+                elseif iAngle == 3
+                    targetCir = ellipse(rElipTarget(channelControl(iAngle)),rCirTarget,targetPosx(iAngle),targetPosy(iAngle));
+                end
+
                 htrg = plot(targetCir(:,1),targetCir(:,2),'r','Linewidth',3);
                 
                 state = 'movement';

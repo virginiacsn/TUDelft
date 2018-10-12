@@ -20,11 +20,13 @@ end
 
 y = zeros(size(xtemp));
 for i = 1:size(y,1)
-    if nytemp ~= size(xtemp,2)
-        y(i,1:nytemp) = interp(ytemp(i,1:end-1),window);
-        y(i,nytemp:end) = mean([y(i,nytemp-10:nytemp),ytemp(i,end)]);
-    else
-        y(i,:) = interp(ytemp(i,:),window);
+    if length(ytemp(i,:)) > 9
+        if nytemp ~= size(xtemp,2)
+            y(i,1:nytemp) = interp(ytemp(i,1:end-1),window);
+            y(i,nytemp:end) = mean([y(i,nytemp-10:nytemp),ytemp(i,end)]);
+        else
+            y(i,:) = interp(ytemp(i,:),window);
+        end
     end
 end
 
