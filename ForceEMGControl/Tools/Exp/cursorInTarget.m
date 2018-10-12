@@ -5,7 +5,6 @@ rtarget = sqrt((targetCir(1,1)-targetCir(round(length(targetCir)/2),1))^2+(targe
 ccursor = [cursorCir(1,1)-rcursor,cursorCir(1,2)];
 ctarget = [targetCir(1,1)-rtarget,targetCir(1,2)];
 
-
 d = sqrt((ccursor(1)-ctarget(1))^2+(ccursor(2)-ctarget(2))^2);
 
 if d < rcursor+rtarget

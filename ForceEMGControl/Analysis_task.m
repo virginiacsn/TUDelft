@@ -100,8 +100,8 @@ Aparams.downsamp = forceparams.scanRate/EMGparams.sampleRateEMG;
 Aparams.channelNameEMG = EMGparams.channelName;
 Aparams.targetAngles = taskparams.targetAnglesForce;
 Aparams.fclF = 5;
-Aparams.fchEMG = 20;
-Aparams.fclEMG = 500;
+Aparams.fchEMG = 30;
+Aparams.fclEMG = 60;
 Aparams.avgWindow = 200;
 
 % Epoch interval {epoch start, time start, epoch end, time end} and fields to trial average

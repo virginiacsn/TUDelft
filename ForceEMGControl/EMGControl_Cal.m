@@ -180,7 +180,7 @@ if EMGEnabled
             fprintf('%s: %1.3f\n',channelNameCal{channelSubsetTemp==channelSubsetCal(k)},EMGOffsetCal(k))
         end
         fprintf('\n')
-        repeat = input('Repeat EMG offset calculation? [y/n] ','s');
+        repeat = input('Repeat EMG offset calculation? (y/n) ','s');
     end
     
     %% Data acquisition

@@ -175,7 +175,7 @@ if ~isempty(device)
             fprintf('%s: %1.3f\n',channelName{k},EMGOffset(k))
         end
         fprintf('\n')
-        repeat = input('Repeat EMG offset calculation? [y/n] ','s');
+        repeat = input('Repeat EMG offset calculation? (y/n) ','s');
     end
     fprintf('\n')
     

@@ -198,7 +198,7 @@ if EMGEnabled
             fprintf('%s: %1.3f\n',channelName{channelSubset==channelControl(k)},EMGOffsetControl(k))
         end
         fprintf('\n')
-        repeat = input('Repeat EMG offset calculation? [y/n] ','s');
+        repeat = input('Repeat EMG offset calculation? (y/n) ','s');
     end
 
     %% Data acquisition
@@ -381,14 +381,15 @@ library.destroy()
                 hsuc = text(xl(2)+0.1*xl(2),yl(2)-0.1*yl(2),['Successes: ',num2str(countSuccess)],'clipping','off','Fontsize',14);
                 
                 iAngle = randi(numTargetsEMG);
-                if (iAngle == 2) || (rElipTarget(channelControl(iAngle)) < rCirTarget)
-                    targetCir = circle(rCirTarget,targetPosx(iAngle),targetPosy(iAngle));
-                elseif iAngle == 1
-                    targetCir = ellipse(rCirTarget,rElipTarget(channelControl(iAngle)),targetPosx(iAngle),targetPosy(iAngle));
-                elseif iAngle == 3
-                    targetCir = ellipse(rElipTarget(channelControl(iAngle)),rCirTarget,targetPosx(iAngle),targetPosy(iAngle));
+                
+                if (iAngle == 1) && (rElipTarget(channelControl(2)) > rCirTarget)
+                    targetCir = ellipse(rElipTarget(channelControl(2)),rCirTarget,targetPosx(iAngle),targetPosy(iAngle),rotAngle);
+                elseif (iAngle == 3) && (rElipTarget(channelControl(1)) > rCirTarget)
+                    targetCir = ellipse(rCirTarget,rElipTarget(channelControl(1)),targetPosx(iAngle),targetPosy(iAngle),rotAngle);
+                else
+                    targetCir = circle(rCirTarget,targetPosx(iAngle),targetPosy(iAngle));        
                 end
-
+                
                 htrg = plot(targetCir(:,1),targetCir(:,2),'r','Linewidth',3);
                 
                 state = 'movement';

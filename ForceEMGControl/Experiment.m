@@ -8,8 +8,8 @@ addpath(genpath('Tools'));
 fileparams = struct(...
     'saveforce',    1,...
     'saveEMG',      1,...
-    'date',         '20181010',...
-    'subject',      '06');
+    'date',         '20181012',...
+    'subject',      '01');
 
 if ~exist(['D:\Student_experiments\Virginia\Data\',fileparams.date],'dir') && (fileparams.saveEMG || fileparams.saveforce)
     mkdir(['D:\Student_experiments\Virginia\Data\',fileparams.date])
@@ -143,7 +143,7 @@ for i = 1:length(trial_data_avg)
 end
 
 EMGparams.EMGScaleForce = max(EMGmean,[],1)'; 
-EMGparams.EMGTolForce = min(EMGmean,[],1)'./EMGparams.EMGScaleForce;
+EMGparams.EMGTolForce = round(min(EMGmean,[],1)'./EMGparams.EMGScaleForce,1);
 EMGparams.EMGmeanForce = EMGmean;
 %EMGparams.EMGScaleForce = mean(EMGmean,1)';
 
