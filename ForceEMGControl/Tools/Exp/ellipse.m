@@ -3,7 +3,7 @@ th = 0:pi/50:2*pi;
 xe = rx*cos(th);
 ye = ry*sin(th);
 if ~isempty(ang)
-    ellip = Rot([xe' ye'],ang);
+    ellip = Rot([xe; ye],ang)';
 else
     ellip = [xe' ye'];
 end

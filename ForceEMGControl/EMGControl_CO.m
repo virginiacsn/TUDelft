@@ -284,7 +284,7 @@ if EMGEnabled
         save('emg_proc','emg_save')
     end
     if saveEMG
-        save([filepath,filenameEMG],'EMGDataOut_EMGCO','EMGOffset','EMGScale')
+        save([filepath,filenameEMG],'EMGDataOut_EMGCO','EMGOffset','EMGScale','EMGScaleJoint')
     end
     
 else
@@ -331,23 +331,23 @@ library.destroy()
         wnl = (2/sampleRateEMG)*fclEMG;
         [b,a] = butter(2,wnh,'high');
         [d,c] = butter(2,wnl,'low');
-
+        
         filtEMGBuffer = filtfilt(b,a,EMGDataBuffer')';
-%         if ~isempty(fnEMG)
-%             wnn = (2/sampleRateEMG)*fnEMG;
-%             [f,e] = iirnotch(wnn,wnn/35);
-%             filtEMGBuffer = filter(f,e,abs(filtEMGBuffer),[],2);
-%         end
+        %         if ~isempty(fnEMG)
+        %             wnn = (2/sampleRateEMG)*fnEMG;
+        %             [f,e] = iirnotch(wnn,wnn/35);
+        %             filtEMGBuffer = filter(f,e,abs(filtEMGBuffer),[],2);
+        %         end
         filtEMGBuffer = filter(d,c,abs(filtEMGBuffer),[],2);
         
         if iAngle == 2
-            avgRectEMGBuffer = (mean(filtEMGBuffer,2)-EMGOffsetControl)./(EMGScale(channelControl)-EMGOffsetControl); % Rectify, smooth and scale
-        else
             avgRectEMGBuffer = (mean(filtEMGBuffer,2)-EMGOffsetControl)./(EMGScaleJoint-EMGOffsetControl); % Rectify, smooth and scale
+        else
+            avgRectEMGBuffer = (mean(filtEMGBuffer,2)-EMGOffsetControl)./(EMGScale(channelControl)-EMGOffsetControl); % Rectify, smooth and scale
         end
         avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;
         %emg_save = [emg_save,avgRectEMGBuffer];
-
+        
         [EMGDatax,EMGDatay] = EMG2xy(avgRectEMGBuffer,rotAngle);
         
         cursorCir = circle(rCirCursor,EMGDatax,EMGDatay);
@@ -383,9 +383,9 @@ library.destroy()
                 iAngle = randi(numTargetsEMG);
                 
                 if (iAngle == 1) && (rElipTarget(channelControl(2)) > rCirTarget)
-                    targetCir = ellipse(rElipTarget(channelControl(2)),rCirTarget,targetPosx(iAngle),targetPosy(iAngle),rotAngle);
+                    targetCir = ellipse(rElipTarget(channelControl(2)),rCirTarget,targetPosx(iAngle),targetPosy(iAngle),-rotAngle);
                 elseif (iAngle == 3) && (rElipTarget(channelControl(1)) > rCirTarget)
-                    targetCir = ellipse(rCirTarget,rElipTarget(channelControl(1)),targetPosx(iAngle),targetPosy(iAngle),rotAngle);
+                    targetCir = ellipse(rCirTarget,rElipTarget(channelControl(1)),targetPosx(iAngle),targetPosy(iAngle),-rotAngle);
                 else
                     targetCir = circle(rCirTarget,targetPosx(iAngle),targetPosy(iAngle));        
                 end

@@ -8,8 +8,8 @@ addpath(genpath('Tools'));
 fileparams = struct(...
     'saveforce',    1,...
     'saveEMG',      1,...
-    'date',         '20181012',...
-    'subject',      '01');
+    'date',         '20181015',...
+    'subject',      '02');
 
 if ~exist(['D:\Student_experiments\Virginia\Data\',fileparams.date],'dir') && (fileparams.saveEMG || fileparams.saveforce)
     mkdir(['D:\Student_experiments\Virginia\Data\',fileparams.date])
@@ -54,15 +54,15 @@ forceparams = struct(...
     'availSamplesEMG',  200,... % [samples]
     'bufferWin',        500,... % [samples]
     'iterUpdatePlot',   2,...   % [iterations of listener call]
-    'rotAnglePlot',     -pi/4); % [rad]
+    'rotAnglePlot',     pi/4); % [rad]
 
 EMGparams = struct(...
     'plotEMG',          0,... % plot EMG 
-    'channelSubset',    [1 2 3 4 5 6 7 8 17],... %,...[1 2 3 4 17] 
+    'channelSubset',    [1 2 3 4 5 6 7 17],... %,...[1 2 3 4 17] 
     'channelSubsetCal', [1 2 4 5 17],... %[1 2 3 4 17],...
-    'channelName',      {{'BB','TLH','ECRB','DP','DA','FCR','Br','TLat','Trigger'}},...%{{'BB','TLH','DA','DP','Trigger'}},... 
+    'channelName',      {{'BB','TLH','ECRB','DP','DA','FCR','TLat','Trigger'}},...%{{'BB','TLH','DA','DP','Trigger'}},... 
     'channelNameCal',   {{'BB','TLH','DP','DA','Trigger'}},...%{{'BB','TLH','DA','DP','Trigger'}},...
-    'channelAngle',     [5*pi/4,pi/4,0,7*pi/4,3*pi/4,0,0,0],...
+    'channelAngle',     [5*pi/4,pi/4,0,7*pi/4,3*pi/4,0,0],...
     'channelAngleCal',  [5*pi/4,pi/4,7*pi/4,3*pi/4],...%[5*pi/4,pi/4,3*pi/4,7*pi/4],...
     'sampleRateEMG',    1024,... % [samples/sec]
     'fchEMG',           30,... % [Hz]
@@ -87,7 +87,7 @@ if strcmp(fileparams.task,'ForceCO')
 end
 
 %% Pre-analysis for EMGCO calibration
-codeF = {'001','002','003'};
+codeF = {'001','002','004'};
 
 trial_data_all = [];
 
@@ -249,7 +249,7 @@ if strcmp(fileparams.task,'ForceCO')
 end
 
 %% EMG-control task
-fileparams.code = '007';
+fileparams.code = '002';
 fileparams.task = 'EMGCO';
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
