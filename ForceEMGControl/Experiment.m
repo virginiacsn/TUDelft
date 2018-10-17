@@ -8,8 +8,8 @@ addpath(genpath('Tools'));
 fileparams = struct(...
     'saveforce',    1,...
     'saveEMG',      1,...
-    'date',         '20181015',...
-    'subject',      '02');
+    'date',         '20181017',...
+    'subject',      '07');
 
 if ~exist(['D:\Student_experiments\Virginia\Data\',fileparams.date],'dir') && (fileparams.saveEMG || fileparams.saveforce)
     mkdir(['D:\Student_experiments\Virginia\Data\',fileparams.date])
@@ -76,7 +76,7 @@ EMGparams.EMGOffset = EMGOffsettest(EMGparams);
 %EMGparams.EMGScaleMVC_start = MVCtest(EMGparams);
 
 %% Force-control task
-fileparams.code = '003';
+fileparams.code = '004';
 fileparams.task = 'ForceCO';
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
@@ -87,7 +87,7 @@ if strcmp(fileparams.task,'ForceCO')
 end
 
 %% Pre-analysis for EMGCO calibration
-codeF = {'001','002','004'};
+codeF = {'001','002','003'};
 
 trial_data_all = [];
 
@@ -232,7 +232,7 @@ end
 
 %% Check force and EMG for EMG-control calibration task
 % Limits for force and EMG plots
-Flim = 2; EMGlim = 50;
+Flim = 3; EMGlim = 60;
 
 plotForceEMGtimeComp;
 
@@ -249,7 +249,7 @@ if strcmp(fileparams.task,'ForceCO')
 end
 
 %% EMG-control task
-fileparams.code = '002';
+fileparams.code = '006';
 fileparams.task = 'EMGCO';
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
@@ -261,7 +261,7 @@ EMGparams.fnEMG = [];
 EMGparams.smoothWin = 800;
 EMGparams.EMGScale = EMGparams.EMGScaleForce; %EMGparams.EMGScaleMVC_start(:,1);
 EMGparams.EMGScaleType = 'Force';
-EMGparams.channelControl = [1 4];
+EMGparams.channelControl = [1 5];
 
 taskparams.numTargetsEMG = 3;
 taskparams.targetEMG = 1;

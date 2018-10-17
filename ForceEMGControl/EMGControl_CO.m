@@ -341,13 +341,12 @@ library.destroy()
         %         end
         filtEMGBuffer = filter(d,c,abs(filtEMGBuffer),[],2);
         
-        if iAngle == 2
-            avgRectEMGBuffer = (mean(filtEMGBuffer,2)-EMGOffsetControl)./(EMGScaleJoint-EMGOffsetControl); % Rectify, smooth and scale
-        else
-            avgRectEMGBuffer = (mean(filtEMGBuffer,2)-EMGOffsetControl)./(EMGScale(channelControl)-EMGOffsetControl); % Rectify, smooth and scale
-        end
+        %         if iAngle == 2
+        %             avgRectEMGBuffer = (mean(filtEMGBuffer,2)-EMGOffsetControl)./(EMGScaleJoint-EMGOffsetControl); % Rectify, smooth and scale
+        %         else
+        avgRectEMGBuffer = (mean(filtEMGBuffer,2)-EMGOffsetControl)./(EMGScale(channelControl)-EMGOffsetControl); % Rectify, smooth and scale
+        %         end
         avgRectEMGBuffer(isnan(avgRectEMGBuffer)) = 0;
-        %emg_save = [emg_save,avgRectEMGBuffer];
         
         [EMGDatax,EMGDatay] = EMG2xy(avgRectEMGBuffer,rotAngle);
         
