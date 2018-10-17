@@ -31,7 +31,11 @@ if isempty(iapp)
     
 elseif ~isempty(iapp)
     
-    N = min(diff(find(iapp)));
+    if length(find(iapp))>1
+        N = min(diff(find(iapp)));
+    else
+        N = length(x);
+    end
     idxapp = find(iapp);
     napp = sum(iapp);
     sampseg = length(win);%floor(N/nseg);

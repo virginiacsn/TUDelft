@@ -411,7 +411,7 @@ end
                     delete(htrg)
                 end
             case 'relax'
-                if cursorInTarget(cursorCir,circle(1.5*calCirCursor,0,0)) && toc(trelax) > relaxtime && calCirCursor <= 2*rCirCursor
+                if cursorInTarget(cursorCir,circle(2*calCirCursor,0,0)) && toc(trelax) > relaxtime && calCirCursor <= 2*rCirCursor
                     state = 'start';
                     trialNum = trialNum+1;
                 end

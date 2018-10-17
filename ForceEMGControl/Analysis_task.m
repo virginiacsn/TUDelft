@@ -38,8 +38,8 @@ Aparams.downsamp = forceparams.scanRate/EMGparams.sampleRateEMG;
 Aparams.channelNameEMG = EMGparams.channelName;
 Aparams.targetAngles = sort(EMGparams.channelAngleCal);%[0:pi/4:7*pi/4];%
 Aparams.fclF = forceparams.fclF;
-Aparams.fchEMG = EMGparams.fchEMG;
-Aparams.fclEMG = EMGparams.fclEMG;
+Aparams.fchEMG = 20;
+Aparams.fclEMG = 500;
 Aparams.avgWindow = 200;
 Aparams.EMGOffset = EMGOffset;
 
@@ -70,6 +70,7 @@ for i = 1:length(trial_data_avg_calib)
     forcemean(i) = trial_data_avg_calib(i).force.filtmag_mean;
 end
 EMGScaleCalib = max(EMGmean,[],1);
+EMGmeanCalib = EMGmean;
 
 fprintf('\nEMG offset values: \n')
 for k = 1:length(EMGparams.channelSubsetCal)-1
@@ -100,15 +101,16 @@ Aparams.downsamp = forceparams.scanRate/EMGparams.sampleRateEMG;
 Aparams.channelNameEMG = EMGparams.channelName;
 Aparams.targetAngles = taskparams.targetAnglesForce;
 Aparams.fclF = 5;
-Aparams.fchEMG = 30;
-Aparams.fclEMG = 60;
+Aparams.fchEMG = 20;
+Aparams.fclEMG = 500;
+Aparams.fnEMG = 50;
 Aparams.avgWindow = 200;
 
 % Epoch interval {epoch start, time start, epoch end, time end} and fields to trial average
 Aparams.epoch = {'ihold',1,'iend',0};
 fields_avg = {'EMG.raw','EMG.filt','EMG.rect','EMG.avg','force.filt','force.filtmag'};
 % Fields to trial append
-fields_app = {'EMG.rect'};
+fields_app = {'EMG.raw','EMG.filt','EMG.rect'};
 
 % Trial data struct for force-control task, will append trial data for each
 % block (code)
@@ -127,7 +129,9 @@ for i = 1:length(codeF)
     forceEMGData = {forceDataOut_ForceCO,EMGDataOut_ForceCO};
     
     Aparams.block = str2double(code);
-    Aparams.EMGOffset = EMGOffset;
+    if exist('EMGOffset','var')
+        Aparams.EMGOffset = EMGOffset;
+    end
     
     trial_data = trialCO(forceEMGData,Aparams);
     
@@ -137,11 +141,13 @@ for i = 1:length(codeF)
     trial_data_force = [trial_data_force, procForce(trial_data,Aparams)];
     
     % Check EMG offset values for each file
-    fprintf(['\nEMG offset values (code ',code,'): \n'])
-    for k = 1:length(EMGparams.channelSubsetCal)-1
-        fprintf('%s: %1.3f\n',EMGparams.channelName{EMGparams.channelSubset == EMGparams.channelSubsetCal(k)},Aparams.EMGOffset(EMGparams.channelSubset == EMGparams.channelSubsetCal(k)))
+    if exist('EMGOffset','var')
+        fprintf(['\nEMG offset values (code ',code,'): \n'])
+        for k = 1:length(EMGparams.channelSubsetCal)-1
+            fprintf('%s: %1.3f\n',EMGparams.channelName{EMGparams.channelSubset == EMGparams.channelSubsetCal(k)},Aparams.EMGOffset(EMGparams.channelSubset == EMGparams.channelSubsetCal(k)))
+        end
+        fprintf('\n');
     end
-    fprintf('\n');
 end
 
 Aparams.targetAnglesForce = sort(unique(extractfield(trial_data_force,'angle')));
@@ -168,6 +174,7 @@ end
 % Obtain EMG scaling through max EMG for force-control
 EMGScaleForce = max(EMGmean,[],1)';
 EMGTolForce = min(EMGmean,[],1)'./EMGScaleForce;
+EMGmeanForce = EMGmean;
 
 fprintf('EMG mean values: \n')
 for k = 1:length(EMGparams.channelSubsetCal)-1
@@ -204,7 +211,13 @@ for i = 1:length(codeE)
 
     Aparams.block = str2double(code);
     Aparams.targetAngles = taskparams.targetAnglesEMG;
-    Aparams.EMGOffset = EMGOffset';
+    if exist('EMGOffset','var')
+        if size(EMGOffset,1) < size(EMGOffset,2)
+            Aparams.EMGOffset = EMGOffset;
+        else
+            Aparams.EMGOffset = EMGOffset';
+        end
+    end
     
     trial_data = trialCO(forceEMGData,Aparams);
     
@@ -213,13 +226,15 @@ for i = 1:length(codeE)
     trial_data = procEMG(trial_data,Aparams);
     trial_data_EMG = [trial_data_EMG, procForce(trial_data,Aparams)];
     
-    % Check EMG offset values for each file
-    if length(Aparams.EMGOffset) == length(EMGparams.channelSubset)-1
-        fprintf(['\nEMG offset values (code ',code,'): \n']);
-        for k = 1:length(EMGparams.channelSubsetCal)-1
-            fprintf('%s: %1.3f\n',EMGparams.channelName{EMGparams.channelSubset == EMGparams.channelSubsetCal(k)},Aparams.EMGOffset(EMGparams.channelSubset == EMGparams.channelSubsetCal(k)))
+    if exist('EMGOffset','var')
+        % Check EMG offset values for each file
+        if length(Aparams.EMGOffset) == length(EMGparams.channelSubset)-1
+            fprintf(['\nEMG offset values (code ',code,'): \n']);
+            for k = 1:length(EMGparams.channelSubsetCal)-1
+                fprintf('%s: %1.3f\n',EMGparams.channelName{EMGparams.channelSubset == EMGparams.channelSubsetCal(k)},Aparams.EMGOffset(EMGparams.channelSubset == EMGparams.channelSubsetCal(k)))
+            end
+            fprintf('\n');
         end
-        fprintf('\n');
     end
 end
 
@@ -244,12 +259,17 @@ for i = 1:length(trial_data_avg_EMG)
     forcemean(i) = trial_data_avg_EMG(i).force.filtmag_mean;
 end
 
+EMGmeanEMG = EMGmean;
+
 % Angles and corresponding muscle names to compare between tasks
 [muscAngle,ichan] = sort(EMGparams.channelAngle(EMGparams.channelAngle>0));
 muscAngles = sort([muscAngle,mean([muscAngle(1:end-1);muscAngle(2:end)])]);
 
 chanCal = EMGparams.channelSubset(EMGparams.channelAngle>0);
 channelName = EMGparams.channelName(chanCal(ichan));
+Aparams.chanControl = chanCal(ichan);
+Aparams.chanControlName = channelName;
+
 channelNames = {};
 k = 1;
 for i = 1:length(channelName)
@@ -390,7 +410,7 @@ title('EMGCO');
 %% EMG figures
 %% TIME analysis (recified and averaged)
 %% Figure per muscle, subplot per target for each task
-for j = 1:1%length(EMGparams.channelName)-1
+for j = 1:length(EMGparams.channelName)-1
     figure('Name',['ForceCO; EMG ',EMGparams.channelName{j}]);
     for i = 1:length(Aparams.targetAnglesForce)
         if rem(length(Aparams.targetAnglesForce) ,2) == 0
@@ -463,7 +483,7 @@ for j = 1:length(Aparams.targetAnglesEMG)
     end
 end
 
-%% Figure per task, subplot per muscle (col) and target (row)
+%% ALL. Figure per task, subplot per muscle (col) and target (row)
 h = 0;
 figure('Name','ForceCO');
 for j = 1:length(Aparams.targetAnglesForce)
@@ -473,7 +493,7 @@ for j = 1:length(Aparams.targetAnglesForce)
         plot(trial_data_avg_force(j).ts,trial_data_avg_force(j).EMG.rect(:,i));
         hold on;
         plot(trial_data_avg_force(j).ts,trial_data_avg_force(j).EMG.avg(:,i));
-        ylim([0 EMGlim]); %ylim([0 max(trial_data_avg_force(j).EMG.rect(:))+10]);%
+        ylim([0 max(EMG_lim(:,i))]);%ylim([0 EMGlim])%ylim([0 max(trial_data_avg_force(j).EMG.rect(:))+10]);%
         xlim([0 trial_data_avg_force(j).ts(end)]);
         if j == length(Aparams.targetAnglesForce)
             xlabel('Time [s]');
@@ -497,7 +517,7 @@ for j = 1:length(Aparams.targetAnglesEMG)
         plot(trial_data_avg_EMG(j).ts,trial_data_avg_EMG(j).EMG.rect(:,i));
         hold on;
         plot(trial_data_avg_EMG(j).ts,trial_data_avg_EMG(j).EMG.avg(:,i));
-        ylim([0 EMGlim]);%ylim([0 max(trial_data_avg_EMG(j).EMG.rect(:))+50]);
+        ylim([0 max(EMG_lim(:,i))]);%ylim([0 EMGlim]);%ylim([0 max(trial_data_avg_EMG(j).EMG.rect(:))+50]);
         xlim([0 trial_data_avg_EMG(j).ts(end)]);
         if j == length(Aparams.targetAnglesEMG)
             xlabel('Time [s]');
@@ -511,7 +531,7 @@ for j = 1:length(Aparams.targetAnglesEMG)
     end
 end
 
-%% Figure per task, subplot per muscle of cal (col) and target (row)
+%% CHANCALIB. Figure per task, subplot per muscle of cal (col) and target (row)
 h = 0;
 figure('Name','ForceCO');
 for j = 1:length(Aparams.targetAnglesForce)
@@ -663,7 +683,9 @@ for j = 1:length(Aparams.angComp)
         title(['Targets: Force-',num2str(rad2deg(Aparams.angComp{j}(1))),'; EMG-',num2str(rad2deg(Aparams.angComp{j}(2))),' (',Aparams.muscComp{j},')']);
         legend('ForceCO','EMGCO')
     end
-    xticklabels([{''},EMGparams.channelName{chanCal}])
+    xticks([0:length(chanCal)]);
+    xticklabels([{''},EMGparams.channelName{chanCal}]);
+    
 end
 
 %% Figure of EMG variance, subplot per target
@@ -713,27 +735,43 @@ Aparams.cohparams.tseg = 1;
 Aparams.cohparams.nseg = 10;
 Aparams.cohparams.my_nseg = 10;
 Aparams.cohparams.window = @(N) hanning(N);
-field = 'rect';
-fc = 80;
+fields_coh = {'raw','filt','rect'};
+fc = 200;
 
 if strcmp(Aparams.cohparams.data,'avg')
-    trial_data_coh_force = cohStruct(trial_data_avg_force,EMGparams.channelName,{field},Aparams.cohparams);
-    trial_data_coh_EMG = cohStruct(trial_data_avg_EMG,EMGparams.channelName,{field},Aparams.cohparams);
+    trial_data_coh_force = cohStruct(trial_data_avg_force,EMGparams.channelName,fields_coh,Aparams.cohparams);
+    trial_data_coh_EMG = cohStruct(trial_data_avg_EMG,EMGparams.channelName,fields_coh,Aparams.cohparams);
 else
-    trial_data_coh_force = cohStruct(trial_data_app_force,EMGparams.channelName,{field},Aparams.cohparams);
-    trial_data_coh_EMG = cohStruct(trial_data_app_EMG,EMGparams.channelName,{field},Aparams.cohparams);
+    trial_data_coh_force = cohStruct(trial_data_app_force,EMGparams.channelName,fields_coh,Aparams.cohparams);
+    trial_data_coh_EMG = cohStruct(trial_data_app_EMG,EMGparams.channelName,fields_coh,Aparams.cohparams);
 end
 
 nmusc = length(EMGparams.channelName)-1;
 musccont = EMGparams.channelControl;
 nmusccomb = (length(EMGparams.channelName)-1)*(length(EMGparams.channelName)-2)/2; % n*(n-1)/2
-plotmusc = find(sum(reshape(contains([trial_data_coh_force(1).rect.muscles{:}],'TLH'),[2,nmusccomb])));
+
+%% Field and channels to plot
+field = 'rect';
+
+plotBB = sum(reshape(contains([trial_data_coh_force(1).(field).muscles{:}],'BB'),[2,nmusccomb]));
+plotTLH = sum(reshape(contains([trial_data_coh_force(1).(field).muscles{:}],'TLH'),[2,nmusccomb]));
+plotDA = sum(reshape(contains([trial_data_coh_force(1).(field).muscles{:}],'DA'),[2,nmusccomb]));
+plotDP = sum(reshape(contains([trial_data_coh_force(1).(field).muscles{:}],'DP'),[2,nmusccomb]));
+
+plotmusc = find((plotBB&plotDA)|(plotDP&plotBB)|(plotDA&plotTLH)|(plotDA&plotDP)|(plotBB&plotTLH)|(plotTLH&plotDP));
+
+coh_lim = [];
+for i = 1:length(Aparams.angComp)
+    for j = 1:nmusccomb
+        coh_lim(i,j) = max(max(trial_data_coh_force(Aparams.targetAnglesForce == Aparams.angComp{i}(1)).(field).my_coh(3:end-3,j)),max(trial_data_coh_EMG(Aparams.targetAnglesEMG == Aparams.angComp{i}(2)).(field).my_coh(3:end-3,j)));
+    end
+end
 
 %% My coherence
 % Figure per muscle pair in plotmusc, subplot per task (row) per target for angComp (col)
 for j = 1:length(plotmusc)
-    figure('Name',['My Coherence: Musc: ',trial_data_coh_force(iangf).(field).muscles{plotmusc(j)}{1},...
-        ',',trial_data_coh_force(iangf).(field).muscles{plotmusc(j)}{2}]);
+    figure('Name',['My Coherence: Musc: ',trial_data_coh_force(1).(field).muscles{plotmusc(j)}{1},...
+        ',',trial_data_coh_force(1).(field).muscles{plotmusc(j)}{2}]);
     set(gcf,'units','normalized','outerposition',[0 0 1 1]);
     for i = 1:length(Aparams.angComp)
         iangf = find([trial_data_coh_force.angle] == Aparams.angComp{i}(1));
@@ -752,8 +790,7 @@ for j = 1:length(plotmusc)
         hold on;
         line(xlim,trial_data_coh_EMG(iangE).(field).my_CL(plotmusc(j))*[1 1],'Color','k','LineStyle','-.');
         
-        xlim([trial_data_coh_force(iangf).(field).my_fcoh(2,plotmusc(j)) fc]);
-        ylim([0 0.8]);
+        xlim([2 fc]); ylim([0 coh_lim(i,plotmusc(j))]);
         xlabel('Frequency [Hz]'); ylabel('Coh [-]');
         title(['Target: ',num2str(rad2deg(Aparams.angComp{i}(1))),' deg (',Aparams.muscComp{i},')']);
         legend([h1,h2],'ForceCO','EMGCO')
@@ -851,9 +888,9 @@ for j = 1:nmusccomb
         h2 = plot(trial_data_coh_EMG(iangE).(field).my_fcoh(:,j),trial_data_coh_EMG(iangE).(field).my_coh(:,j),'r');
         hold on;
         line(xlim,trial_data_coh_EMG(iangE).(field).my_CL(j)*[1 1],'Color','k','LineStyle','-.');
-        
+                
         xlim([trial_data_coh_force(iangf).(field).my_fcoh(2,j) fc]);
-        ylim([0 1]);
+        %ylim([0 1]);
         xlabel('Frequency [Hz]'); ylabel('Coh [-]');
         title(['Musc: ',trial_data_coh_force(iangf).(field).muscles{j}{1},...
             ',',trial_data_coh_force(iangf).(field).muscles{j}{2},...
@@ -910,11 +947,11 @@ for j = 1:nmusccomb
         h1 = plot(trial_data_coh_force(iangf).(field).fcoh(:,j),trial_data_coh_force(iangf).(field).coh(:,j));
         hold on;
         line(xlim,trial_data_coh_force(iangf).(field).CL(j)*[1 1],'Color','k','LineStyle','--');
-
+        
         h2 = plot(trial_data_coh_EMG(iangE).(field).fcoh(:,j),trial_data_coh_EMG(iangE).(field).coh(:,j),'r');
         hold on;
         line(xlim,trial_data_coh_EMG(iangE).(field).CL(j)*[1 1],'Color','k','LineStyle','--');
-
+        
         xlim([trial_data_coh_force(iangf).(field).fcoh(2,j) fc])
         xlabel('Frequency [Hz]'); ylabel('Coh [-]');
         title(['Musc: ',trial_data_coh_force(iangf).(field).muscles{j}{1},...
@@ -922,6 +959,132 @@ for j = 1:nmusccomb
             '; Target: ',num2str(rad2deg(Aparams.angComp{i}(1))),'-',...
             num2str(rad2deg(Aparams.angComp{i}(2))),' (',Aparams.muscComp{i},') deg']);
         legend([h1,h2],'ForceCO','EMGCO')
+    end
+end
+
+%% FFT
+%% Figure per muscle, subplot per task (row) and target (col)
+for i = 1:length(EMGparams.channelName)-1
+    figure('Name',EMGparams.channelName{i});
+    set(gcf,'units','normalized','outerposition',[0 0 1 1]);
+    
+    h = 1;
+    for j = 1:length(Aparams.angComp)
+        subplot(length(Aparams.angComp),2,h)
+        iangf = find([trial_data_avg_force.angle] == Aparams.angComp{j}(1));
+        plot(trial_data_avg_force(iangf).fv,abs(fft(trial_data_avg_force(iangf).EMG.raw(:,i)))/length(trial_data_avg_force(iangf).fv));
+        hold on;
+        plot(trial_data_avg_force(iangf).fv,abs(fft(trial_data_avg_force(iangf).EMG.filt(:,i)))/length(trial_data_avg_force(iangf).fv));
+        plot(trial_data_avg_force(iangf).fv,abs(fft(trial_data_avg_force(iangf).EMG.rect(:,i)))/length(trial_data_avg_force(iangf).fv));
+        xlim([1 fc]);  ylim([0 0.6]);
+        xlabel('Frequency [Hz]'); ylabel('a.u. [-]');
+        legend('Raw','Filt','Rect')
+        title(['ForceCO; Target: ',num2str(rad2deg(Aparams.angComp{j}(1))),' deg']);
+        
+        subplot(length(Aparams.angComp),2,h+1)
+        iangE = find([trial_data_avg_EMG.angle] == Aparams.angComp{j}(2));
+        plot(trial_data_avg_EMG(iangE).fv,abs(fft(trial_data_avg_EMG(iangE).EMG.raw(:,i)))/length(trial_data_avg_EMG(iangE).fv));
+        hold on;
+        plot(trial_data_avg_EMG(iangE).fv,abs(fft(trial_data_avg_EMG(iangE).EMG.filt(:,i)))/length(trial_data_avg_EMG(iangE).fv));
+        plot(trial_data_avg_EMG(iangE).fv,abs(fft(trial_data_avg_EMG(iangE).EMG.rect(:,i)))/length(trial_data_avg_EMG(iangE).fv));
+        xlim([1 fc]); ylim([0 0.6]);
+        xlabel('Frequency [Hz]'); ylabel('a.u. [-]');
+        legend('Raw','Filt','Rect')
+        title(['EMGCO; Target: ',num2str(rad2deg(Aparams.angComp{j}(2))),' deg (',Aparams.muscComp{j},')']);
+        
+        h = h+2;
+    end
+end
+
+%% Figure per muscle and task, subplot per target (col)
+h = 0;
+figure('Name','ForceCO');
+set(gcf,'units','normalized','outerposition',[0 0 1 1]);
+for j = 1:length(Aparams.targetAnglesForce)
+    for i = 1:length(Aparams.chanControl)
+        h = h+1;
+        iangf = j;
+        subplot(length(Aparams.targetAnglesForce),length(Aparams.chanControl),h);
+        plot(trial_data_avg_force(iangf).fv,abs(fft(trial_data_avg_force(iangf).EMG.raw(:,Aparams.chanControl(i))))/length(trial_data_avg_force(iangf).fv));
+        hold on;
+        plot(trial_data_avg_force(iangf).fv,abs(fft(trial_data_avg_force(iangf).EMG.filt(:,Aparams.chanControl(i))))/length(trial_data_avg_force(iangf).fv));
+        plot(trial_data_avg_force(iangf).fv,abs(fft(trial_data_avg_force(iangf).EMG.rect(:,Aparams.chanControl(i))))/length(trial_data_avg_force(iangf).fv));
+        xlim([1 fc]); ylim([0 0.8]);
+        legend('Raw','Filt','Rect');
+        if j == length(Aparams.targetAnglesForce)
+            xlabel('Time [s]');
+        end
+        if i == 1
+            ylabel([num2str(rad2deg(Aparams.targetAnglesForce(j))) ,' deg']);
+        end
+        if j == 1
+            title(['Musc: ',Aparams.chanControlName{i}]);
+        end
+    end
+end
+
+h = 0;
+figure('Name','EMGCO');
+set(gcf,'units','normalized','outerposition',[0 0 1 1]);
+for j = 1:length(Aparams.targetAnglesEMG)
+    for i = 1:length(Aparams.chanControl)
+        h = h+1;
+        iangE = j;
+        subplot(length(Aparams.targetAnglesEMG),length(Aparams.chanControl),h);
+        plot(trial_data_avg_EMG(iangE).fv,abs(fft(trial_data_avg_EMG(iangE).EMG.raw(:,Aparams.chanControl(i))))/length(trial_data_avg_EMG(iangE).fv));
+        hold on;
+        plot(trial_data_avg_EMG(iangE).fv,abs(fft(trial_data_avg_EMG(iangE).EMG.filt(:,Aparams.chanControl(i))))/length(trial_data_avg_EMG(iangE).fv));
+        plot(trial_data_avg_EMG(iangE).fv,abs(fft(trial_data_avg_EMG(iangE).EMG.rect(:,Aparams.chanControl(i))))/length(trial_data_avg_EMG(iangE).fv));
+        xlim([1 fc]); ylim([0 0.8]);
+        legend('Raw','Filt','Rect');
+        if j == length(Aparams.targetAnglesEMG)
+            xlabel('Time [s]');
+        end
+        if i == 1
+            ylabel([num2str(rad2deg(Aparams.targetAnglesEMG(j))) ,' deg']);
+        end
+        if j == 1
+            title(['Musc: ',Aparams.chanControlName{i}]);
+        end
+    end
+end
+
+%% Correlation
+for i = 1:length(plotmusc)
+    figure('Name','ForceCO');
+    set(gcf,'units','normalized','outerposition',[0 0 1 1]);
+    for j = 1:length(Aparams.targetAnglesForce)
+        if rem(length(Aparams.targetAnglesForce),2) == 0
+            subplot(2,length(Aparams.targetAnglesForce)/2,j);
+        else
+            subplot(1,length(Aparams.targetAnglesForce),j);
+        end
+        plot(trial_data_coh_force(j).(field).lags(:,plotmusc(i))*trial_data_avg_force(j).ts(2),trial_data_coh_force(j).(field).corr(:,plotmusc(i)));
+        hold on;
+        xlim([-0.1 0.1])
+        xlabel('Time lag [s]'); ylabel('Corr [-]');
+        title(['Musc: ',trial_data_coh_force(j).(field).muscles{plotmusc(i)}{1},...
+            ',',trial_data_coh_force(j).(field).muscles{plotmusc(i)}{2},...
+            ' ; Target: ',num2str(rad2deg(Aparams.targetAnglesForce(j))),' deg']);
+    end
+end
+
+for i = 1:length(plotmusc)
+    figure('Name','EMGCO');
+    set(gcf,'units','normalized','outerposition',[0 0 1 1]);
+    for j = 1:length(Aparams.targetAnglesEMG)
+        if rem(length(Aparams.targetAnglesEMG),2) == 0
+            subplot(2,length(Aparams.targetAnglesEMG)/2,j);
+        else
+            subplot(1,length(Aparams.targetAnglesEMG),j);
+        end
+        plot(trial_data_coh_EMG(j).(field).lags(:,plotmusc(i))*trial_data_avg_EMG(j).ts(2),trial_data_coh_EMG(j).(field).corr(:,plotmusc(i)));
+        hold on;
+        xlim([-0.1 0.1])
+        xlabel('Time lag [s]'); ylabel('Corr [-]');
+        title(['Musc: ',trial_data_coh_EMG(j).(field).muscles{plotmusc(i)}{1},...
+            ',',trial_data_coh_EMG(j).(field).muscles{plotmusc(i)}{2},...
+            ' ; Target: ',num2str(rad2deg(Aparams.targetAnglesEMG(j))),' deg']);
     end
 end
 

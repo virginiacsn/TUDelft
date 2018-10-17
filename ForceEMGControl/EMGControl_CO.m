@@ -284,6 +284,7 @@ if EMGEnabled
         save('emg_proc','emg_save')
     end
     if saveEMG
+        EMGOffset = EMGOffset';
         save([filepath,filenameEMG],'EMGDataOut_EMGCO','EMGOffset','EMGScale','EMGScaleJoint')
     end
     
