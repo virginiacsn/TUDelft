@@ -142,10 +142,12 @@ for i = 1:length(trial_data_avg)
     forcemean(i) = trial_data_avg(i).force.filtmag_mean;
 end
 
-EMGparams.EMGScaleForce = max(EMGmean,[],1)'; 
-EMGparams.EMGTolForce = round(min(EMGmean,[],1)'./EMGparams.EMGScaleForce,1);
 EMGparams.EMGmeanForce = EMGmean;
-%EMGparams.EMGScaleForce = mean(EMGmean,1)';
+
+% Obtain EMG scaling values for EMG-control
+EMGparams.EMGScaleForce = max(EMGmean,[],1)'; 
+% Obtain EMG target tolerance values for EMG-control
+EMGparams.EMGTolForce = round(min(EMGmean,[],1)'./EMGparams.EMGScaleForce,1);
 
 fprintf('\nEMG scaling values: \n')
 for k = 1:length(EMGparams.channelSubsetCal)-1

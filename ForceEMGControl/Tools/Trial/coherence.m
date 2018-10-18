@@ -23,9 +23,9 @@ if isempty(iapp)
     %     Y = fft(reshape(x,[sampseg,nseg]));
    
     % WHAT?
-    Sxx = mean(1/sampseg*real(conj(X).*X),2);
-    Syy = mean(1/sampseg*real(conj(Y).*Y),2);
-    Sxy = mean(1/sampseg*conj(X).*Y,2);
+    Sxx = mean(1/sampseg*conj(X).*X,2);
+    Syy = mean(1/sampseg*conj(Y).*Y,2);
+    Syx = mean(1/sampseg*conj(X).*Y,2);
     
     CLseg = totseg;
     
@@ -59,9 +59,9 @@ elseif ~isempty(iapp)
             end
         end
     
-    Sxx = mean(1/sampseg*real(conj(X).*X),2);
-    Syy = mean(1/sampseg*real(conj(Y).*Y),2);
-    Sxy = mean(1/sampseg*conj(X).*Y,2);
+    Sxx = mean(1/sampseg*conj(X).*X,2);
+    Syy = mean(1/sampseg*conj(Y).*Y,2);
+    Syx = mean(1/sampseg*conj(X).*Y,2);
     
     CLseg = totseg*napp;
     
@@ -73,12 +73,12 @@ elseif isempty(win)
     
     Sxx = 1/N*X.*conj(X);
     Syy = 1/N*Y.*conj(Y);
-    Sxy = 1/N*X.*conj(Y);
+    Syx = 1/N*X.*conj(Y);
     
     CLseg = 1;
 end
 
-coh = abs(Sxy).^2./(Sxx.*Syy);
+coh = abs(Syx).^2./(Sxx.*Syy);
 coh_avg = movingAvg(coh,3);
 fcoh = (0:length(coh_avg)-1)/(length(coh_avg)/fs);
 
