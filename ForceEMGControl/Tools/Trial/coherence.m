@@ -1,4 +1,4 @@
-function[coh,fcoh,CLseg] = coherence(x,y,fs,win,overlap,iapp)
+function[coh,fcoh,CLseg] = coherence(x,y,fs,win,overlap,CLoverlap,iapp)
 
 if isempty(iapp)
     
@@ -27,18 +27,22 @@ if isempty(iapp)
     Syy = mean(1/sampseg*conj(Y).*Y,2);
     Syx = mean(1/sampseg*conj(X).*Y,2);
     
-    CLseg = totseg;
+    if CLoverlap
+        CLseg = totseg;
+    else
+        CLseg = floor(N/sampseg);
+    end
     
 elseif ~isempty(iapp)
     
     if length(find(iapp))>1
-        N = min(diff(find(iapp)));
+        N = min(diff([find(iapp); length(iapp)])); 
     else
         N = length(x);
     end
     idxapp = find(iapp);
     napp = sum(iapp);
-    sampseg = length(win);%floor(N/nseg);
+    sampseg = length(win); %floor(N/nseg);
     overlap = floor(sampseg/2);
     
     if sampseg <= overlap
@@ -63,7 +67,11 @@ elseif ~isempty(iapp)
     Syy = mean(1/sampseg*conj(Y).*Y,2);
     Syx = mean(1/sampseg*conj(X).*Y,2);
     
-    CLseg = totseg*napp;
+    if CLoverlap
+        CLseg = totseg*napp;
+    else
+        CLseg = floor(N/sampseg)*napp;
+    end
     
 elseif isempty(win)
     N = length(x);
