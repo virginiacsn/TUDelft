@@ -8,6 +8,7 @@ window = [];
 tseg = 1;
 fs = 1024;
 alp = 0.05;
+CLoverlap = 1;
 
 alp_band = [8 12];
 beta_band = [15 30];
@@ -19,7 +20,6 @@ end
 
 for i = 1:length(trial_data)
     trial_data_coh(i).angle = trial_data(i).angle;
-    
     if isempty(window)
         win = hanning(128);
     else
@@ -48,9 +48,9 @@ for i = 1:length(trial_data)
                 trial_data_coh(i).(EMG_fields{j}).CL(h) = 1-alp^(1/(L-1)); 
                 
                 if isfield(trial_data,'iapp')
-                    [trial_data_coh(i).(EMG_fields{j}).my_coh(:,h),trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h),my_nsegtot] = coherence(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),fs,my_win,my_overlap,iapp);
+                    [trial_data_coh(i).(EMG_fields{j}).my_coh(:,h),trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h),my_nsegtot] = coherence(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),fs,my_win,my_overlap,CLoverlap,iapp);
                 else
-                    [trial_data_coh(i).(EMG_fields{j}).my_coh(:,h),trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h),my_nsegtot] = coherence(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),fs,my_win,my_overlap,[]);
+                    [trial_data_coh(i).(EMG_fields{j}).my_coh(:,h),trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h),my_nsegtot] = coherence(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),fs,my_win,my_overlap,CLoverlap,[]);
                 end
                 trial_data_coh(i).(EMG_fields{j}).my_CL(h) = 1-alp^(1/(my_nsegtot-1));
                 

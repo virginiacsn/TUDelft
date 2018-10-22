@@ -257,9 +257,9 @@ fileparams.task = 'EMGCO';
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
 fileparams.filenameEMG =    [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_EMG_',fileparams.code,'.mat'];
 
-EMGparams.fchEMG = 30;
-EMGparams.fclEMG = 60;
-EMGparams.fnEMG = [];
+% EMGparams.fchEMG = 30;
+% EMGparams.fclEMG = 60;
+% EMGparams.fnEMG = [];
 EMGparams.smoothWin = 800;
 EMGparams.EMGScale = EMGparams.EMGScaleForce; %EMGparams.EMGScaleMVC_start(:,1);
 EMGparams.EMGScaleType = 'Force';
