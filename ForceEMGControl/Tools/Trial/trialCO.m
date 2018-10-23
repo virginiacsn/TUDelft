@@ -86,18 +86,19 @@ for itrial = 1:length(trials)
     data_ts = data_trial(:,idh_ts(2:end));
     data_force = cat(2,data_trial(:,idh_fx(2:end)),data_trial(:,idh_fy(2:end)),data_trial(:,idh_fz(2:end)));
     data_trigger = data_trial(:,idh_trig(2:end));
-
+    
+    % iend is last cell of hold period
     if any(strcmp(data_outcome,'success'))
         trial_data(itrial).outcome = trial_outcomes{1};
-        iend = find(ismember(data_outcome,'success'),1);
+        iend = find(ismember(data_outcome,'success'),1)-1;
     elseif any(strcmp(data_outcome,'fail'))
         trial_data(itrial).outcome = trial_outcomes{2};
-        iend = find(ismember(data_outcome,'fail'),1);
+        iend = find(ismember(data_outcome,'fail'),1)-1;
     else
         trial_data(itrial).outcome = trial_outcomes{3};
         iend = [];
     end
-
+    
     istart = find(ismember(data_outcome,'start'),1);
     imove = find(ismember(data_outcome,'movement'),1);
     ihold = find(ismember(data_outcome,'hold'),1);
@@ -170,11 +171,11 @@ for itrial = 1:length(trials)
     
     
     if ~isempty(downsamp)
-        %trial_data(itrial).ts = decimate(trial_data(itrial).ts,downsample,'fir');
         trial_data(itrial).imove =  trial_data(itrial).imove/downsamp;
         trial_data(itrial).ihold =  trial_data(itrial).ihold/downsamp;
         trial_data(itrial).iend =  trial_data(itrial).iend/downsamp;
         
+        %trial_data(itrial).ts = decimate(trial_data(itrial).ts,downsamp,'fir');
         downsamp_fx = decimate(trial_data(itrial).force.raw(:,1),downsamp,'fir');
         downsamp_fy = decimate(trial_data(itrial).force.raw(:,2),downsamp,'fir');
         downsamp_fz = decimate(trial_data(itrial).force.raw(:,3),downsamp,'fir');
