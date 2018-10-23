@@ -8,8 +8,8 @@ addpath(genpath('Tools'));
 fileparams = struct(...
     'saveforce',    1,...
     'saveEMG',      1,...
-    'date',         '20181022',...
-    'subject',      '09');
+    'date',         '20181023',...
+    'subject',      '11');
 
 if ~exist(['D:\Student_experiments\Virginia\Data\',fileparams.date],'dir') && (fileparams.saveEMG || fileparams.saveforce)
     mkdir(['D:\Student_experiments\Virginia\Data\',fileparams.date])
@@ -147,7 +147,7 @@ EMGparams.EMGmeanForce = EMGmean;
 % Obtain EMG scaling values for EMG-control
 EMGparams.EMGScaleForce = max(EMGmean,[],1)'; 
 % Obtain EMG target tolerance values for EMG-control
-EMGparams.EMGTolForce = round(min(EMGmean,[],1)'./EMGparams.EMGScaleForce,1);
+EMGparams.EMGTolForce = round(0.05+min(EMGmean,[],1)'./EMGparams.EMGScaleForce,1);
 
 fprintf('\nEMG scaling values: \n')
 for k = 1:length(EMGparams.channelSubsetCal)-1
@@ -210,7 +210,7 @@ epoch = {'ihold',1,'iend',0};
 fields = {'EMG.rect','EMG.avg','force.filt','force.filtmag'};
 trial_data_avg_EMG = trialAngleAvg(trial_data, epoch, fields);
 
-EMGmean = zeros(length(trial_data_avg),length(EMGparams.channelSubset)-1);
+EMGmean = zeros(length(trial_data_avg_EMG),length(EMGparams.channelSubset)-1);
 forcemean = zeros(length(trial_data_avg_EMG),1);
 for i = 1:length(trial_data_avg_EMG)
     EMGmean(i,:) = mean(trial_data_avg_EMG(i).EMG.rect,1);
@@ -258,7 +258,7 @@ fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',filepar
 fileparams.filenameEMG =    [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_EMG_',fileparams.code,'.mat'];
 
 % EMGparams.fchEMG = 30;
-% EMGparams.fclEMG = 60;
+% EMGparams.fclEMG = 60; 
 % EMGparams.fnEMG = [];
 EMGparams.smoothWin = 800;
 EMGparams.EMGScale = EMGparams.EMGScaleForce; %EMGparams.EMGScaleMVC_start(:,1);

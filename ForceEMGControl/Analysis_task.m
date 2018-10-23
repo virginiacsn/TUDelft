@@ -3,8 +3,8 @@
 clear all
 addpath(genpath('Tools'));
 
-date =      '20181022';
-subject =   '09';
+date =      '20181023';
+subject =   '11';
 
 switch computer
     case 'PCWIN'
@@ -181,7 +181,7 @@ EMGmeanForce = EMGmean;
 % EMG scaling through max EMG for force-control
 EMGScaleForce = max(EMGmean,[],1)';
 % EMG target tolerance values
-EMGTolForce = min(EMGmean,[],1)'./EMGScaleForce;
+EMGTolForce = (min(EMGmean,[],1))'./EMGScaleForce;
 
 fprintf('EMG mean values: \n')
 for k = 1:length(EMGparams.channelSubsetCal)-1
