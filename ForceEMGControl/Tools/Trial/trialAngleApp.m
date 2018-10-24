@@ -27,7 +27,7 @@ for iangle = 1:length(angles)
                 idx2 = angle_data(itrial).(epoch{2});
             else
                 idx1 = angle_data(itrial).(epoch{1})+round(epoch{2}/angle_data(itrial).dt);
-                idx2 = angle_data(itrial).(epoch{3})+round(epoch{4}/angle_data(itrial).dt)-1;
+                idx2 = angle_data(itrial).(epoch{3})+round(epoch{4}/angle_data(itrial).dt);
             end
             
             if isempty(window)

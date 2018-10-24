@@ -4,7 +4,7 @@ clear all
 addpath(genpath('Tools'));
 
 date =      '20181023';
-subject =   '11';
+subject =   '10';
 
 switch computer
     case 'PCWIN'
