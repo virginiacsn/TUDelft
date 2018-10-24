@@ -334,11 +334,11 @@ library.destroy()
         [d,c] = butter(2,wnl,'low');
         
         filtEMGBuffer = filtfilt(b,a,EMGDataBuffer')';
-        %         if ~isempty(fnEMG)
-        %             wnn = (2/sampleRateEMG)*fnEMG;
-        %             [f,e] = iirnotch(wnn,wnn/35);
-        %             filtEMGBuffer = filter(f,e,abs(filtEMGBuffer),[],2);
-        %         end
+%         if ~isempty(fnEMG)
+%             wnn = (2/sampleRateEMG)*fnEMG;
+%             [f,e] = iirnotch(wnn,wnn/35);
+%             filtEMGBuffer = filter(f,e,abs(filtEMGBuffer),[],2);
+%         end
         filtEMGBuffer = filter(d,c,abs(filtEMGBuffer),[],2);
         
         %         if iAngle == 2
