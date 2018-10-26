@@ -36,7 +36,7 @@ if isempty(iapp)
 elseif ~isempty(iapp)
     
     if length(find(iapp))>1
-        N = min(diff([find(iapp); length(iapp)])); 
+        N = min(diff(find([iapp;1]))); 
     else
         N = length(x);
     end

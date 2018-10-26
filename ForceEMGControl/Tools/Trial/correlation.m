@@ -1,7 +1,7 @@
 function[cor,lags] = correlation(x,y,iapp)
 
 if length(find(iapp))>1
-    N = min(diff(find(iapp)));
+    N = min(diff(find([iapp;1])));
     
     idxapp = find(iapp);
     napp = sum(iapp);

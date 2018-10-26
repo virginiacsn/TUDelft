@@ -1,32 +1,24 @@
 %% Data Analysis for population
+% clear all;
 addpath(genpath('Tools'));
 
 switch computer
     case 'PCWIN64'
-        filepath =  ['D:\Student_experiments\Virginia\Data\'];
+        filepath =  ['D:\Student_experiments\Virginia\Data\TD\'];
     case 'MACI64'
-        filepath =  ['/Users/virginia/Documents/MATLAB/Thesis/Data/'];
+        filepath =  ['/Users/virginia/Documents/MATLAB/Thesis/Data/TD/'];
 end
 
-trial_ppl = struct();
-h = 0;
-datedir = dir(filepath);
-datedir = datedir([datedir.isdir]);
-for i = 3:length(datedir)
-    subjectdir = dir([filepath,datedir(i).name]);
-    subjectdir = subjectdir([subjectdir.isdir]);
-    for j = 3:length(subjectdir)
-        if exist([subjectdir(j).folder,'/',subjectdir(j).name,'/TD/'],'dir')
-            load([subjectdir(j).folder,'/',subjectdir(j).name,'/TD/',datedir(i).name,'_',subjectdir(j).name,'trial_pp.mat']);
-            h = h+1;
-            trial_ppl(h) = trial_pp;
-            %
-            %         load([subjectdir(i).folder,'/',subjectdir(i).name,'/trial_data/trial_data_coh_EMG.mat']);
-            %         trial_data_coh_EMG_pop = [trial_data_coh_EMG_pop, trial_data_coh_EMG];            
-        end
-    end
-end
+Aparams_pp = [];
+trial_pp_force = [];
+trial_pp_EMG = [];
 
-% tdc_force_pop_avg = trialAngleAvg(trial_data_coh_force_pop,[],{'rect.coh','rect.z'});
-% tdc_EMG_pop_avg = trialAngleAvg(trial_data_coh_EMG_pop,[],{'rect.coh','rect.z'});
+dirs = dir(filepath);
+files = dirs(~[dirs.isdir]);
+for i = 1:length(files)
+    load([filepath,files(i).name]);
+    Aparams_pp = [Aparams_pp, trial_pp.Aparams];
+    trial_pp_force = [trial_pp_force, trial_pp.forceCO];
+    trial_pp_EMG = [trial_pp_EMG, trial_pp.EMGCO];
+end
 
