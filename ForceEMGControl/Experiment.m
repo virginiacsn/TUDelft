@@ -8,8 +8,8 @@ addpath(genpath('Tools'));
 fileparams = struct(...
     'saveforce',    1,...
     'saveEMG',      1,...
-    'date',         '20181023',...
-    'subject',      '11');
+    'date',         '20181024',...
+    'subject',      '12');
 
 if ~exist(['D:\Student_experiments\Virginia\Data\',fileparams.date],'dir') && (fileparams.saveEMG || fileparams.saveforce)
     mkdir(['D:\Student_experiments\Virginia\Data\',fileparams.date])
@@ -76,7 +76,7 @@ EMGparams.EMGOffset = EMGOffsettest(EMGparams);
 %EMGparams.EMGScaleMVC_start = MVCtest(EMGparams);
 
 %% Force-control task
-fileparams.code = '004';
+fileparams.code = '005';
 fileparams.task = 'ForceCO';
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
@@ -110,7 +110,7 @@ for i = 1:length(codeF)
     PreAparams.fclF = forceparams.fclF;
     PreAparams.fchEMG = EMGparams.fchEMG;
     PreAparams.fclEMG = EMGparams.fclEMG;
-    PreAparams.fnEMG = EMGparams.fnEMG;
+    PreAparams.fnEMG = 50;
     PreAparams.avgWindow = 200;
     PreAparams.EMGOffset = EMGOffset;
 
@@ -240,7 +240,7 @@ plotForceEMGtimeComp;
 
 %% CONTINUE? [Y/N]
 %% Force-control task 
-fileparams.code = '004';
+fileparams.code = '005';
 fileparams.task = 'ForceCO';
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
@@ -251,14 +251,14 @@ if strcmp(fileparams.task,'ForceCO')
 end
 
 %% EMG-control task
-fileparams.code = '006';
+fileparams.code = '007';
 fileparams.task = 'EMGCO';
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
 fileparams.filenameEMG =    [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_EMG_',fileparams.code,'.mat'];
 
 % EMGparams.fchEMG = 30;
-% EMGparams.fclEMG = 60; 
+% EMGparams.fclEMG = 50; 
 % EMGparams.fnEMG = [];
 EMGparams.smoothWin = 800;
 EMGparams.EMGScale = EMGparams.EMGScaleForce; %EMGparams.EMGScaleMVC_start(:,1);
