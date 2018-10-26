@@ -233,7 +233,7 @@ if EMGEnabled
         % Initialize variables
         global tmove trelax tfail tsuccess tholdstart
         global targetCir iAngle trialNum
-        global htrg hsta hstaL hsuc
+        global htrg hsta hsuc
         
         trialNum = 0;
         countBuffer = 0;

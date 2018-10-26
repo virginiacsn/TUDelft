@@ -22,9 +22,11 @@ for iangle = 1:length(angles)
         else
             field_col = size(angle_data(1).(fields{ifield}),2);
         end
+        
         field_data_mean = [];
+        field_data_var = [];
         field_data = [];
-        %field_data_fft = [];
+        field_data_all = [];
         
         for itrial = 1:length(angle_data)
             if ~isempty(epoch)
@@ -43,8 +45,11 @@ for iangle = 1:length(angles)
                 sampv = 1:nsamp;
             end
             
-            field_data_mean(itrial,:) = mean(angle_data(itrial).(field_str{1}).(field_str{2})(sampv,:),1);
+            % Mean of the trial
+            %field_data_mean(itrial,:) = mean(angle_data(itrial).(field_str{1}).(field_str{2})(sampv,:),1);
+            field_data_var(itrial,:) = var(angle_data(itrial).(field_str{1}).(field_str{2})(sampv,:),1);
             field_data = [field_data reshape(angle_data(itrial).(field_str{1}).(field_str{2})(sampv,:),field_col*length(sampv),1)];
+            field_data_all = [field_data_all; angle_data(itrial).(field_str{1}).(field_str{2})(sampv,:)];
         end
         
         if isfield(angle_data(itrial),'dt')
@@ -56,7 +61,10 @@ for iangle = 1:length(angles)
             trial_data_avg(iangle).(field_str{1}).CL = angle_data(iangle).(field_str{1}).CL;
         end
         
-        trial_data_avg(iangle).(field_str{1}).([field_str{2},'_mean']) = mean(field_data_mean,1);
+        % Mean across trials
+        trial_data_avg(iangle).(field_str{1}).([field_str{2},'_mean']) = mean(field_data_all,1);
+        trial_data_avg(iangle).(field_str{1}).([field_str{2},'_std']) = std(field_data_all,1);
+        trial_data_avg(iangle).(field_str{1}).([field_str{2},'_pstd']) = sqrt(sum((nsamp-1)*field_data_var,1)./((nsamp-1)*size(field_data_var,1)));
         trial_data_avg(iangle).(field_str{1}).(field_str{2}) = reshape(mean(field_data,2),length(sampv),field_col);
         %trial_data_avg(iangle).(field_str{1}).(field_str{2}) = ifft(reshape(mean(field_data_fft,2),length(sampv),field_col),[],2);%reshape(mean(field_data,2),length(sampv),field_col);
         %trial_data_avg(iangle).(field_str{1}).([field_str{2},'_fft']) = fft(trial_data_avg(iangle).(field_str{1}).(field_str{2}));
