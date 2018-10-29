@@ -313,16 +313,17 @@ trial_pp.Aparams = Aparams;
 
 fstruct = [trial_avg_force.force];
 EMGstruct = [trial_avg_force.EMG];
-trial_pp.forceCO.angles = Aparams.targetAnglesForce;
-trial_pp.forceCO.force = [fstruct.filtmag_mean];
+trial_pp.forceCO.angles = Aparams.targetAnglesForce';
+trial_pp.forceCO.force.filtmag_mean = [fstruct.filtmag_mean]';
 trial_pp.forceCO.EMG.rect = cat(1,EMGstruct.rect_mean);
 trial_pp.forceCO.EMG.filt = cat(1,EMGstruct.filt_mean);
 trial_pp.forceCO.trial_coh = trial_coh_force;
 
 fstruct = [trial_avg_EMG.force];
 EMGstruct = [trial_avg_EMG.EMG];
-trial_pp.EMGCO.angles = Aparams.targetAnglesEMG;
-trial_pp.EMGCO.force = [fstruct.filtmag_mean];
+trial_pp.EMGCO.angles = Aparams.targetAnglesEMG';
+trial_pp.EMGCO.force.filtmag_mean = [fstruct.filtmag_mean]';
+trial_pp.forceCO.force.filtmag_std = [fstruct.filtmag_std]';
 trial_pp.EMGCO.EMG.rect = cat(1,EMGstruct.rect_mean);
 trial_pp.EMGCO.EMG.filt = cat(1,EMGstruct.filt_mean);
 trial_pp.EMGCO.trial_coh = trial_coh_EMG;

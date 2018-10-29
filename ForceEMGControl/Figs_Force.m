@@ -148,7 +148,6 @@ for i = 1:length(Aparams.angComp)
 end
 
 %% Force CV Polar plot
-
 figure('Name','Force CV');
 set(gcf,'units','normalized','outerposition',[0 0 1 1]);
 fCV = zeros(length(length(Aparams.angCompUni)),3);
