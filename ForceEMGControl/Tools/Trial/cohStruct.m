@@ -53,7 +53,10 @@ for i = 1:length(trial_data)
                     [trial_data_coh(i).(EMG_fields{j}).my_coh(:,h),trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h),my_nsegtot] = coherence(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),fs,my_win,my_overlap,CLoverlap,[]);
                 end
                 trial_data_coh(i).(EMG_fields{j}).my_CL(h) = 1-alp^(1/(my_nsegtot-1));
-                               
+                
+                % z-score coherence
+                trial_data_coh(i).(EMG_fields{j}).z(:,h) = sqrt(2*my_nsegtot)*atanh(sqrt(trial_data_coh(i).(EMG_fields{j}).my_coh(:,h)));
+
 %                 % Significant coherence in frequency bands - MATLAB
 %                 % coherence
 %                 alp_freq = find(trial_data_coh(i).(EMG_fields{j}).fcoh(:,h)>=alp_band(1) & trial_data_coh(i).(EMG_fields{j}).fcoh(:,h)<=alp_band(2));
@@ -101,7 +104,6 @@ for i = 1:length(trial_data)
                 %[~,fcoh250] = min(abs(trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2)-250));
                 %[~,fcoh500] = min(abs(trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2)-500));
                 %trial_data_coh(i).(EMG_fields{j}).z(:,k+l-2) = (atanh(sqrt(trial_data_coh(i).(EMG_fields{j}).coh(:,k+l-2))/sqrt(1/(2*L)))-mean(trial_data_coh(i).(EMG_fields{j}).coh(fcoh250:fcoh500,k+l-2)));
-%                 trial_data_coh(i).(EMG_fields{j}).z(:,h) = sqrt(2*L)*atanh(sqrt(trial_data_coh(i).(EMG_fields{j}).coh(:,h)));
                 
                 if isfield(trial_data,'iapp')
                     [trial_data_coh(i).(EMG_fields{j}).corr(:,h),trial_data_coh(i).(EMG_fields{j}).lags(:,h)] = correlation(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),iapp);

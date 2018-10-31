@@ -21,35 +21,26 @@ for iangle = 1:length(angles)
         for isubject = 1:length(trial_pp)
             iang = find([trial_pp(isubject).angles] == angles(iangle));
             chanControl = Aparams_pp(isubject).chanControl;
-
-            if length(field_str) == 2
-                if isrow(trial_pp(isubject).(field_str{1}).(field_str{2}))
-                    field_data_all = [field_data_all; trial_pp(isubject).(field_str{1}).(field_str{2})(iang)];
-                else
-                    if strcmp(field_str{1},'EMG')
-                        field_data_all = [field_data_all; trial_pp(isubject).(field_str{1}).(field_str{2})(iang,chanControl)];
-                    else
-                        field_data_all = [field_data_all; trial_pp(isubject).(field_str{1}).(field_str{2})(iang,:)];
-                    end
-                end
+            if isempty(iang) && (ifield == 1)
+                fprintf('\nMissing target: Subject %d, angle %d',isubject,rad2deg(angles(iangle)));
+            end
+            if isrow(trial_pp(isubject).(field_str{1}).(field_str{2}))
+                field_data_all = [field_data_all; trial_pp(isubject).(field_str{1}).(field_str{2})(iang)];
             else
-                if isrow(trial_pp(isubject).(field_str{1}))
-                    field_data_all = [field_data_all; trial_pp(isubject).(field_str{1})(iang)];
+                if strcmp(field_str{1},'EMG')
+                    field_data_all = [field_data_all; trial_pp(isubject).(field_str{1}).(field_str{2})(iang,chanControl)];
                 else
-                    field_data_all = [field_data_all; trial_pp(isubject).(field_str{1})(iang,:)];
+                    field_data_all = [field_data_all; trial_pp(isubject).(field_str{1}).(field_str{2})(iang,:)];
                 end
             end
+            
             %field_data_var(isubject,:) = var(angle_data(isubject).(field_str{1}).(field_str{2})(iang,:),1);
         end
         
-        if length(field_str) == 2
-            trial_pp_avg(iangle).(field_str{1}).([field_str{2},'_mean']) = mean(field_data_all,1);
-            trial_pp_avg(iangle).(field_str{1}).([field_str{2},'_std']) = std(field_data_all,1);
-        else
-            trial_pp_avg(iangle).([field_str{1},'_mean']) = mean(field_data_all,1);
-            trial_pp_avg(iangle).([field_str{1},'_std']) = std(field_data_all,1);
-        end
+        trial_pp_avg(iangle).(field_str{1}).([field_str{2},'_mean']) = mean(field_data_all,1);
+        trial_pp_avg(iangle).(field_str{1}).([field_str{2},'_std']) = std(field_data_all,1);
         %trial_pp_avg(iangle).(field_str{1}).([field_str{2},'_pstd']) = sqrt(sum((nsamp-1)*field_data_var,1)./((nsamp-1)*size(field_data_var,1)));
     end
 end
+fprintf('\n');
 end
