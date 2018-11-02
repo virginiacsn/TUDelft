@@ -80,10 +80,12 @@ for i = 1:length(trial_data)
 
                 coh_temp = zeros(size(trial_data_coh(i).(EMG_fields{j}).my_coh(:,h)));
                 coh_temp_area = zeros(size(trial_data_coh(i).(EMG_fields{j}).my_coh(:,h)));
+                z_temp_area = zeros(size(trial_data_coh(i).(EMG_fields{j}).z(:,h)));
                 
                 idx_sig = trial_data_coh(i).(EMG_fields{j}).my_coh(:,h) >= trial_data_coh(i).(EMG_fields{j}).my_CL(h);
                 coh_temp(idx_sig) = 1;
                 coh_temp_area(idx_sig) = trial_data_coh(i).(EMG_fields{j}).my_coh(idx_sig,h);
+                z_temp_area(idx_sig) = trial_data_coh(i).(EMG_fields{j}).z(idx_sig,h); 
 
                 alp_sig = coh_temp(alp_freq);
                 beta_sig = coh_temp(beta_freq);
@@ -100,6 +102,13 @@ for i = 1:length(trial_data)
                 trial_data_coh(i).(EMG_fields{j}).asig_coh(:,h) = [trapz(trial_data_coh(i).(EMG_fields{j}).my_fcoh(alp_freq,h), coh_temp_area(alp_freq)),...
                     trapz(trial_data_coh(i).(EMG_fields{j}).my_fcoh(beta_freq,h), coh_temp_area(beta_freq)),...
                     trapz(trial_data_coh(i).(EMG_fields{j}).my_fcoh(gam_freq,h), coh_temp_area(gam_freq))];
+                
+                trial_data_coh(i).(EMG_fields{j}).asig_z(:,h) = [trapz(trial_data_coh(i).(EMG_fields{j}).my_fcoh(alp_freq,h), z_temp_area(alp_freq)),...
+                    trapz(trial_data_coh(i).(EMG_fields{j}).my_fcoh(beta_freq,h), z_temp_area(beta_freq)),...
+                    trapz(trial_data_coh(i).(EMG_fields{j}).my_fcoh(gam_freq,h), z_temp_area(gam_freq))];
+                
+                trial_data_coh(i).(EMG_fields{j}).nasig_coh(:,h) = trial_data_coh(i).(EMG_fields{j}).asig_coh(:,h)./[length(alp_freq);length(beta_freq);length(gam_freq)];  
+                trial_data_coh(i).(EMG_fields{j}).nasig_z(:,h) = trial_data_coh(i).(EMG_fields{j}).asig_z(:,h)./[length(alp_freq);length(beta_freq);length(gam_freq)];
                 
                 %[~,fcoh250] = min(abs(trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2)-250));
                 %[~,fcoh500] = min(abs(trial_data_coh(i).(EMG_fields{j}).fcoh(:,k+l-2)-500));

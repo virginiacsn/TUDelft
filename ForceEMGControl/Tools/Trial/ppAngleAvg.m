@@ -1,6 +1,6 @@
 function[trial_pp_avg] = ppAngleAvg(trial_pp, fields, Aparams_pp)
 
-angles = sort(unique(extractfield(trial_pp,'angles')));
+angles = sort(unique(extractfield(trial_pp,'angle')));
 
 for iangle = 1:length(angles)
     
@@ -9,7 +9,11 @@ for iangle = 1:length(angles)
     for ifield = 1:length(fields)
         if any(strfind(fields{ifield},'.'))
             field_str = strsplit(fields{ifield},'.');
-            field_col = size(trial_pp(1).(field_str{1}).(field_str{2}),2);
+            if length(field_str) == 2
+                field_col = size(trial_pp(1).(field_str{1}).(field_str{2}),2);
+            else
+                error('Only 2 levels of substructs allowed.');
+            end
         else
             field_str = {fields{ifield}};
             field_col = size(trial_pp(1).(fields{ifield}));
@@ -19,7 +23,7 @@ for iangle = 1:length(angles)
         %field_data_var = [];
         
         for isubject = 1:length(trial_pp)
-            iang = find([trial_pp(isubject).angles] == angles(iangle));
+            iang = find([trial_pp(isubject).angle] == angles(iangle));
             chanControl = Aparams_pp(isubject).chanControl;
             if isempty(iang) && (ifield == 1)
                 fprintf('\nMissing target: Subject %d, angle %d',isubject,rad2deg(angles(iangle)));
