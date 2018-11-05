@@ -34,7 +34,7 @@ if nargin < 3 || isempty(handle)
 if mod(spokes,2) ~= 0
     error ('Number of spokes needs to be an even integer');  %'spokes' are actually diameters.
 end
-    
+
 
 % remove dotted radii and tickmarks and lables (actuall, all text)
 h = findall(handle,'type','line');          %get handles for all lines in polar plot
@@ -44,76 +44,89 @@ t = findall(handle,'type','text');          %get handles for all text in polar p
 delete (t)
 
 % add my own tick marks  (this section is adapted from the actual polar.m code
-        % plot spokes
-        th = (1 : spokes/2) * 2 * pi / spokes;
-        cst = cos(th);
-        snt = sin(th);
-        cs = [-cst; cst];
-        sn = [-snt; snt];
-        v = [get(handle, 'XLim') get(handle, 'YLim')];
-        rmax = v(2);
-        ls = get(handle, 'GridLineStyle');
-        tc = get(handle, 'XColor');
-        line(rmax * cs, rmax * sn, 'LineStyle', ls, 'Color', tc,  'LineWidth', 1, ...
-            'HandleVisibility', 'off', 'Parent', handle);
-        
-         % annotate spokes in degrees
-        rt = 1.1 * rmax;
-        degint = 360/spokes;
-        for i = 1 : length(th)
-            t_hand1(i) = text(rt * cst(i), rt * snt(i), int2str(i * degint),...
-                'HorizontalAlignment', 'center', ...
-                'HandleVisibility', 'off', 'Parent', handle);
-            if i == length(th)
-                loc = int2str(0);
-            else
-                loc = int2str(180 + i * degint);
-            end
-            t_hand2(i) = text(-rt * cst(i), -rt * snt(i), loc, 'HorizontalAlignment', 'center', ...
-                'HandleVisibility', 'off', 'Parent', handle);
-        end
-        
-                % set view to 2-D
-        view(handle, 2);
-        % set axis limits
-        axis(handle, rmax * [-1, 1, -1.15, 1.15]);
-        
-        % text handle outputs
-        text_handles = [t_hand1, t_hand2];
-        
-        % add 'y axis' labels to polar plot  (labels will always be between last two xticks)
-            %outter circumference y val
-            tx1 = get(text_handles(spokes), 'Position');      %text position of last xtick marker
-            tx2 = get(text_handles(spokes-1), 'Position');    %text position of 2nd-last xtick marker
-            circloc = [((tx1(1)-tx2(1))/2)+tx2(1) , ((tx1(2)-tx2(2))/2)+tx2(2)];        %location of midline between these two points.
-            xlimmax = max(get(gca, 'xlim'));
-            a0  = ((xlimmax^2)/(1+(( circloc(2)/circloc(1))^2)))^(1/2);            %adjust for circumference
-            b0 = (circloc(2)/circloc(1)) * a0;
-            text (a0, b0, num2str(xlimmax), 'FontSize', 8);
+% plot spokes
+th = (1 : spokes/2) * 2 * pi / spokes;
+cst = cos(th);
+snt = sin(th);
+cs = [-cst; cst];
+sn = [-snt; snt];
+v = [get(handle, 'XLim') get(handle, 'YLim')];
+rmax = v(2);
+%         ls = get(handle, 'GridLineStyle');
+%         tc = get(handle, 'XColor');
+line(rmax * cs, rmax * sn, 'Color', [0.9 0.9 0.9],  'LineWidth', 1.5, ...
+    'HandleVisibility', 'off', 'Parent', handle);
 
-            %add inner circumference and 1/2 point
-            hold on
-            polar(deg2rad([0:1:359]),repmat(ceil(xlimmax/2),[1,360]),'-.k');
-            slope = circloc(2)/circloc(1);
-            hyp = xlimmax/2;
-            a = ((hyp^2)/(1+(slope^2)))^(1/2);
-            b = slope*a;
-            text(a,b,num2str(hyp),'FontSize', 8);
-            hold off
+% annotate spokes in degrees
+rt = 1.1 * rmax;
+degint = 360/spokes;
+for i = 1 : length(th)
+    t_hand1(i) = text(rt * cst(i), rt * snt(i), int2str(i * degint),...
+        'HorizontalAlignment', 'center', ...
+        'HandleVisibility', 'off', 'Parent', handle);
+    if i == length(th)
+        loc = int2str(0);
+    else
+        loc = int2str(180 + i * degint);
+    end
+    t_hand2(i) = text(-rt * cst(i), -rt * snt(i), loc, 'HorizontalAlignment', 'center', ...
+        'HandleVisibility', 'off', 'Parent', handle);
+end
 
-        
+% set view to 2-D
+view(handle, 2);
+% set axis limits
+axis(handle, rmax * [-1, 1, -1.15, 1.15]);
+
+% text handle outputs
+text_handles = [t_hand1, t_hand2];
+
+% add 'y axis' labels to polar plot  (labels will always be between last two xticks)
+%outter circumference y val
+tx1 = get(text_handles(spokes), 'Position');      %text position of last xtick marker
+tx2 = get(text_handles(spokes-1), 'Position');    %text position of 2nd-last xtick marker
+circloc = [((tx1(1)-tx2(1))/2)+tx2(1) , ((tx1(2)-tx2(2))/2)+tx2(2)];        %location of midline between these two points.
+xlimmax = max(get(gca, 'xlim'));
+a0  = ((xlimmax^2)/(1+(( circloc(2)/circloc(1))^2)))^(1/2);            %adjust for circumference
+b0 = (circloc(2)/circloc(1)) * a0;
+text (a0, b0, num2str(xlimmax), 'FontSize', 8);
+
+%add inner circumference and 1/2 point
+hold on
+pp = polar(deg2rad([0:1:359]),repmat(round(xlimmax/3,1),[1,360]));
+%pp.LineStyle = '-.';
+pp.LineWidth = 1;
+pp.Color = [0.9,0.9,0.9];
+slope = circloc(2)/circloc(1);
+hyp = round(xlimmax/3,1);
+a = ((hyp^2)/(1+(slope^2)))^(1/2);
+b = slope*a;
+text(a,b,num2str(hyp),'FontSize', 8);
+hold off
+
+hold on
+pp = polar(deg2rad([0:1:359]),repmat(round(2*xlimmax/3,1),[1,360]));
+%pp.LineStyle = '-.';
+pp.LineWidth = 1;
+pp.Color = [0.9,0.9,0.9];
+slope = circloc(2)/circloc(1);
+hyp = round(2*xlimmax/3,1);
+a = ((hyp^2)/(1+(slope^2)))^(1/2);
+b = slope*a;
+text(a,b,num2str(hyp),'FontSize', 8);
+hold off
 end
 
 % Redistribution and use in source and binary forms, with or without
 % modification, are permitted provided that the following conditions are
 % met:
-% 
+%
 %     * Redistributions of source code must retain the above copyright
 %       notice, this list of conditions and the following disclaimer.
 %     * Redistributions in binary form must reproduce the above copyright
 %       notice, this list of conditions and the following disclaimer in
 %       the documentation and/or other materials provided with the distribution
-% 
+%
 % THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 % AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 % IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE

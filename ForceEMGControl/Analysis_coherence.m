@@ -110,7 +110,7 @@ for i = 1:length(Aparams.angCompPair)
         line(xlim,trial_coh_EMG(iangE).(field).my_CL(plotmuscpair)*[1 1],'Color','k','LineStyle','-.');
         
         xlim([2 fc]); ylim([0 coh_lim.(field)(Aparams.angCompUni==Aparams.angCompPair{i}(k),plotmuscpair)]);
-        if i == length(Aparams.angCompPair{i})
+        if k == length(Aparams.angCompPair{i})
             xlabel('Frequency [Hz]');
         end
         ylabel('Coh [-]');
@@ -204,7 +204,7 @@ for i = 1:length(Aparams.angCompPair)
     plotmuscpair = find(sum(reshape(contains([trial_coh_force(1).(field).muscles{:}],Aparams.muscCompPair{i}(1)),...
         [2,nmusccomb]))&sum(reshape(contains([trial_coh_force(1).(field).muscles{:}],Aparams.muscCompPair{i}(3)),[2,nmusccomb])));
     
-    figure('Name',['Significant coherence: Musc: ',trial_coh_force(1).(field).muscles{plotmuscpair}{1},...
+    figure('Name',['Area of significant coherence: Musc: ',trial_coh_force(1).(field).muscles{plotmuscpair}{1},...
         ',',trial_coh_force(1).(field).muscles{plotmuscpair}{2}]);
     set(gcf,'units','normalized','outerposition',[0 0 1 1]);
     
@@ -223,12 +223,90 @@ for i = 1:length(Aparams.angCompPair)
         polarscatter(Aparams.angCompPair{i},fsig(:,b),60,'filled')
         hold on
         polarscatter(Aparams.angCompPair{i},Esig(:,b),60,'filled','r')
-        thetaticks(rad2deg(Aparams.angCompPair{i})); thetaticklabels(Aparams.muscCompPair{i});
+        thetaticks(rad2deg(Aparams.angCompPair{i})); thetaticklabels(rad2deg(Aparams.angCompPair{i}));
         set(gca,'FontSize',12);
         if b == 3
             legend('ForceCO','EMGCO','Location','bestoutside');
         end
         title(freqBand{b});
+    end
+end
+
+%% Fig of area of coherence for muscle pair (plotmuscpair). Polar plot.
+figure('Name','Area of significant coherence');
+set(gcf,'units','normalized','outerposition',[0 0 1 1]);
+h = 0;
+for i = 1:length(Aparams.muscCompPair)
+    plotmuscpair = find(sum(reshape(contains([trial_coh_force(1).(field).muscles{:}],Aparams.muscCompPair{i}(1)),...
+        [2,nmusccomb]))&sum(reshape(contains([trial_coh_force(1).(field).muscles{:}],Aparams.muscCompPair{i}(3)),[2,nmusccomb])));
+    
+    fsig = [];
+    Esig = [];
+    
+    for k = 1:length(Aparams.angCompPair{i})
+        iangf = find([trial_coh_force.angle] == Aparams.angCompPair{i}(k));
+        iangE = find([trial_coh_EMG.angle] == Aparams.angCompPair{i}(k));
+        
+        fsig(k,:) = trial_coh_force(iangf).(field).asig_coh(1:3,plotmuscpair)';
+        Esig(k,:) = trial_coh_EMG(iangE).(field).asig_coh(1:3,plotmuscpair)';
+    end
+    
+    for j = 1:length(freqBand)
+        h = h+1;
+        subplot(length(Aparams.angCompPair),length(freqBand),h)
+        g = polar(0,max(max(abs([fsig;Esig]))),'w');
+        polarticks(8,[g]);       
+        hold on;
+        f = polar((Aparams.angCompPair{i}),fsig(k,:),'b-.o');
+        f.MarkerFaceColor = 'b';
+        hold on;
+        e = polar((Aparams.angCompPair{i}),Esig(k,:),'r-.o');
+        e.MarkerFaceColor = 'r';      
+        if i == 1
+            title(freqBand{j})
+        end
+        if j == 1
+            ylabel([Aparams.muscCompPair{i}{1},'-',Aparams.muscCompPair{i}{3}],'FontWeight','bold');
+        end
+        set(gca,'FontSize',14);
+    end
+end
+
+%% Fig of area of coherence for muscle pair (plotmuscpair). Plot.
+figure('Name','Area of significant coherence');
+set(gcf,'units','normalized','outerposition',[0 0 1 1]);
+h = 0;
+for i = 1:length(Aparams.muscCompPair)
+    plotmuscpair = find(sum(reshape(contains([trial_coh_force(1).(field).muscles{:}],Aparams.muscCompPair{i}(1)),...
+        [2,nmusccomb]))&sum(reshape(contains([trial_coh_force(1).(field).muscles{:}],Aparams.muscCompPair{i}(3)),[2,nmusccomb])));
+    
+    fsig = [];
+    Esig = [];
+    
+    for k = 1:length(Aparams.angCompPair{i})
+        iangf = find([trial_coh_force.angle] == Aparams.angCompPair{i}(k));
+        iangE = find([trial_coh_EMG.angle] == Aparams.angCompPair{i}(k));
+        
+        fsig(k,:) = trial_coh_force(iangf).(field).asig_coh(1:3,plotmuscpair)';
+        Esig(k,:) = trial_coh_EMG(iangE).(field).asig_coh(1:3,plotmuscpair)';
+    end
+    
+    for j = 1:length(freqBand)
+        h = h+1;
+        subplot(length(Aparams.angCompPair),length(freqBand),h)
+        f = plot(rad2deg(Aparams.angCompPair{i}),fsig(j,:),'b-.o','MarkerFaceColor','b');
+        hold on;
+        e = plot(rad2deg(Aparams.angCompPair{i}),Esig(j,:),'r-.o','MarkerFaceColor','r');
+        if i == 1
+            title(freqBand{j})
+        elseif i == length(Aparams.muscCompPair)
+            xlabel('Target [deg]');
+        end
+        if j == 1
+            ylabel([Aparams.muscCompPair{i}{1},'-',Aparams.muscCompPair{i}{3}],'FontWeight','bold');
+        end
+        set(gca,'XTick',rad2deg(Aparams.angCompPair{i}));
+        set(gca,'FontSize',14);
     end
 end
 

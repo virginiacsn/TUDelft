@@ -2,17 +2,17 @@ function[meanEMGerr] = meanppEMGerr(trial_pp_force,trial_pp_EMG,Aparams_pp,angCo
 
 meanEMGerr.angle = angComp';
 
-for j = 1:length(angComp)
+for iang = 1:length(angComp)
     EMGerr = [];
     scount = 0;
     
-    for i = 1:length(trial_pp_force)
-        channel = Aparams_pp(i).chanControl;
-        iangf = find([trial_pp_force(i).angle] == angComp(j));
-        iangE = find([trial_pp_EMG(i).angle] == angComp(j));
+    for isubject = 1:length(trial_pp_force)
+        channel = Aparams_pp(isubject).chanControl;
+        iangf = find([trial_pp_force(isubject).angle] == angComp(iang));
+        iangE = find([trial_pp_EMG(isubject).angle] == angComp(iang));
         
-        trial_force_scaleEMG = trial_pp_force(i).EMG.rect./repmat(Aparams_pp(i).EMGScale,[length(trial_pp_force(i).angles),1]);
-        trial_EMG_scaleEMG = trial_pp_EMG(i).EMG.rect./repmat(Aparams_pp(i).EMGScale,[length(trial_pp_EMG(i).angles),1]);
+        trial_force_scaleEMG = trial_pp_force(isubject).EMG.rect./repmat(Aparams_pp(isubject).EMGScale,[length(trial_pp_force(isubject).angle),1]);
+        trial_EMG_scaleEMG = trial_pp_EMG(isubject).EMG.rect./repmat(Aparams_pp(isubject).EMGScale,[length(trial_pp_EMG(isubject).angle),1]);
         
         if ~isempty(iangf)&&~isempty(iangE)
             scount = scount+1;
@@ -24,25 +24,11 @@ for j = 1:length(angComp)
         end
     end
     
-    meanEMGerr.mean(j,:) = mean(EMGerr,1);
-    meanEMGerr.std(j,:) = std(EMGerr,1);
-    meanEMGerr.sem(j,:) = std(EMGerr,1)/sqrt(scount);
+    meanEMGerr.mean(iang,:) = mean(EMGerr,1);
+    meanEMGerr.std(iang,:) = std(EMGerr,1);
+    meanEMGerr.sem(iang,:) = std(EMGerr,1)/sqrt(scount);
     %meanEMGErr.std = std(EMGErr,2);
 end
-
-figure('Name','Mean EMG Difference');
-h = plot(rad2deg(Aparams_pp(1).targetAnglesForce),meanEMGerr.mean,'o-.');
-hold on;
-for i = 1:length(h)
-    h(i).MarkerFaceColor = h(i).Color;
-    errorbar(rad2deg(Aparams_pp(1).targetAnglesForce),meanEMGerr.mean(:,i),meanEMGerr.sem(:,i),'.','Color',h(i).Color)
-end
-xticks(rad2deg(Aparams_pp(1).targetAnglesForce));
-ylim([0 1]);
-xlabel('Target [deg]'); ylabel('Error [-]')
-legend(Aparams_pp(1).chanControlName)
-title('Mean EMG error Force-EMG tasks')
-set(gca,'FontSize',12);
 
 % % Mean EMG difference - Polar
 % nmusc = 4; cols = {'r','b','g','m'};
