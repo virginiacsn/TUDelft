@@ -80,8 +80,8 @@ end
 
 %% Statistical analysis
 
-fields_stat = {'force.mag_mean','EMG.rect','trial_coh.rect.asig_coh','trial_coh.rect.nasig_coh',...
-    'trial_coh.rect.asig_z','trial_coh.rect.nasig_z'};
+fields_stat = {'force.mag_mean','EMG.rect','trial_coh.filt.asig_coh','trial_coh.filt.nasig_coh',...
+    'trial_coh.filt.asig_z','trial_coh.filt.nasig_z'};
 ppStats = statAnalysis(trial_pp_force,trial_pp_EMG,Aparams_pp,angComp,fields_stat);
 
 %% Force
@@ -433,6 +433,39 @@ bands = {'alp','beta','gam'};
 bands_label = {'Alpha','Beta','Gamma'};
 for i = 1:length(avgCoh.musc)
     iang = ismember(avgCoh.angle,avgCoh.angmusc{i});
+    yf = []; ye = [];
+    for j = 1:length(bands)
+        k = k+1;
+        subplot(length(avgCoh.musc),length(bands),k)
+        f = plot(rad2deg(avgCoh.angle(iang)),avgCoh.force.asig_coh.(bands{j}).mean(iang,i),'b-.o');
+        f.MarkerFaceColor = 'b';
+        hold on;
+        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.force.asig_coh.(bands{j}).mean(iang,i),avgCoh.force.asig_coh.(bands{j}).mean(iang,i),'b.');
+        e = plot(rad2deg(avgCoh.angle(iang)),avgCoh.EMG.asig_coh.(bands{j}).mean(iang,i),'r-.o');
+        e.MarkerFaceColor = 'r';
+        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.EMG.asig_coh.(bands{j}).mean(iang,i),avgCoh.EMG.asig_coh.(bands{j}).mean(iang,i),'r.');
+        if i == 1
+            title(bands_label{j})
+        end
+        if j == 1
+            ylabel([avgCoh.musc{i}{1},'-',avgCoh.musc{i}{2}],'FontWeight','bold');
+        end
+        if i == length(avgCoh.musc)
+            xlabel('Target [deg]');
+        end
+        set(gca,'XTick',rad2deg(avgCoh.angle(iang)));
+        set(gca,'FontSize',14);
+    end
+end
+
+%% Area coh - Plot only joint angles
+figure('Name','Significant Coherence Area');
+set(gcf,'units','normalized','outerposition',[0 0 1 1]);
+k = 0;
+bands = {'alp','beta','gam'};
+bands_label = {'Alpha','Beta','Gamma'};
+for i = 1:length(avgCoh.musc)
+    iang = ismember(avgCoh.angle,avgCoh.angmusc{i}(2));
     yf = []; ye = [];
     for j = 1:length(bands)
         k = k+1;
