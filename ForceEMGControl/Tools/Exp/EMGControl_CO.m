@@ -393,8 +393,10 @@ library.destroy()
                     targetCir = ellipse(rElipTarget(channelControl(2)),rCirTarget,targetPosx(iAngle),targetPosy(iAngle),-rotAngle);
                 elseif (iAngle == 3) && (rElipTarget(channelControl(1)) > rCirTarget)
                     targetCir = ellipse(rCirTarget,rElipTarget(channelControl(1)),targetPosx(iAngle),targetPosy(iAngle),-rotAngle);
-                else
+                elseif iAngle == 2
                     targetCir = circle(rCirTarget,jointTargetPosx,jointTargetPosy);
+                else
+                    targetCir = circle(rCirTarget,targetPosx(iAngle),targetPosy(iAngle));                   
                 end
                 
                 htrg = plot(targetCir(:,1),targetCir(:,2),'r','Linewidth',3);

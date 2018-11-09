@@ -369,7 +369,7 @@ end
                 state = 'movement';
                 tmove = tic;
             case 'movement'
-                if calCirCursor > 2*rCirCursor
+                if calCirCursor > 2.5*rCirCursor
                     state = 'fail';
                     tfail = tic;
                 else
@@ -382,7 +382,7 @@ end
                     end
                 end
             case 'hold'
-                if calCirCursor > 2*rCirCursor
+                if calCirCursor > 2.5*rCirCursor
                     state = 'fail';
                     tfail = tic;
                 else
@@ -416,7 +416,7 @@ end
                     delete(htrg)
                 end
             case 'relax'
-                if cursorInTarget(cursorCir,circle(2*calCirCursor,0,0)) && toc(trelax) > relaxtime && calCirCursor <= 2*rCirCursor
+                if cursorInTarget(cursorCir,circle(2*calCirCursor,0,0)) && toc(trelax) > relaxtime && calCirCursor <= 2.5*rCirCursor
                     state = 'start';
                     trialNum = trialNum+1;
                 end

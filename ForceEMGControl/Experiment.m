@@ -8,16 +8,16 @@ addpath(genpath('Tools'));
 fileparams = struct(...
     'saveforce',    1,...
     'saveEMG',      1,...
-    'date',         '20181024',...
-    'subject',      '12');
+    'date',         '20181109',...
+    'subject',      '13');
 
-if ~exist(['D:\Student_experiments\Virginia\Data\',fileparams.date],'dir') && (fileparams.saveEMG || fileparams.saveforce)
-    mkdir(['D:\Student_experiments\Virginia\Data\',fileparams.date])
+if ~exist(['D:\Student_experiments\Virginia\Data\Exp\',fileparams.date],'dir') && (fileparams.saveEMG || fileparams.saveforce)
+    mkdir(['D:\Student_experiments\Virginia\Data\Exp\',fileparams.date])
 end
-if ~exist(['D:\Student_experiments\Virginia\Data\',fileparams.date,'\s',fileparams.subject],'dir') && (fileparams.saveEMG || fileparams.saveforce)
-    mkdir(['D:\Student_experiments\Virginia\Data\',fileparams.date,'\s',fileparams.subject])
+if ~exist(['D:\Student_experiments\Virginia\Data\Exp\',fileparams.date,'\s',fileparams.subject],'dir') && (fileparams.saveEMG || fileparams.saveforce)
+    mkdir(['D:\Student_experiments\Virginia\Data\Exp\',fileparams.date,'\s',fileparams.subject])
 end
-fileparams.filepath =       ['D:\Student_experiments\Virginia\Data\',fileparams.date,'\s',fileparams.subject,'\'];
+fileparams.filepath =       ['D:\Student_experiments\Virginia\Data\Exp\',fileparams.date,'\s',fileparams.subject,'\'];
 
 if ~exist([fileparams.filepath,'Parameters/'],'dir')
     mkdir([fileparams.filepath,'Parameters/'])
@@ -58,11 +58,11 @@ forceparams = struct(...
 
 EMGparams = struct(...
     'plotEMG',          0,... % plot EMG 
-    'channelSubset',    [1 2 3 4 5 6 7 17],... %,...[1 2 3 4 17] 
+    'channelSubset',    [1 2 3 4 5 6 17],... %,...[1 2 3 4 17] 
     'channelSubsetCal', [1 2 4 5 17],... %[1 2 3 4 17],...
-    'channelName',      {{'BB','TLH','ECRB','DP','DA','FCR','TLat','Trigger'}},...%{{'BB','TLH','DA','DP','Trigger'}},... 
+    'channelName',      {{'BB','TLH','ECRB','DP','DA','FCR','Trigger'}},...%{{'BB','TLH','DA','DP','Trigger'}},... 
     'channelNameCal',   {{'BB','TLH','DP','DA','Trigger'}},...%{{'BB','TLH','DA','DP','Trigger'}},...
-    'channelAngle',     [5*pi/4,pi/4,0,7*pi/4,3*pi/4,0,0],...
+    'channelAngle',     [5*pi/4,pi/4,0,7*pi/4,3*pi/4,0],...
     'channelAngleCal',  [5*pi/4,pi/4,7*pi/4,3*pi/4],...%[5*pi/4,pi/4,3*pi/4,7*pi/4],...
     'sampleRateEMG',    1024,... % [samples/sec]
     'fchEMG',           30,... % [Hz]
@@ -76,7 +76,7 @@ EMGparams.EMGOffset = EMGOffsettest(EMGparams);
 %EMGparams.EMGScaleMVC_start = MVCtest(EMGparams);
 
 %% Force-control task
-fileparams.code = '005';
+fileparams.code = '004';
 fileparams.task = 'ForceCO';
 
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
@@ -257,13 +257,13 @@ fileparams.task = 'EMGCO';
 fileparams.filenameforce =  [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_Force_',fileparams.code,'.mat'];
 fileparams.filenameEMG =    [fileparams.date,'_s',fileparams.subject,'_',fileparams.task,'_EMG_',fileparams.code,'.mat'];
 
-% EMGparams.fchEMG = 30;
-% EMGparams.fclEMG = 50; 
+% EMGparams.fchEMG = 40;
+% EMGparams.fclEMG = 70; 
 % EMGparams.fnEMG = [];
 EMGparams.smoothWin = 800;
 EMGparams.EMGScale = EMGparams.EMGScaleForce; %EMGparams.EMGScaleMVC_start(:,1);
 EMGparams.EMGScaleType = 'Force';
-EMGparams.channelControl = [1 5];
+EMGparams.channelControl = [1 4];
 
 taskparams.numTargetsEMG = 3;
 taskparams.targetEMG = 1;

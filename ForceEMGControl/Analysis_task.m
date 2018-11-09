@@ -3,10 +3,10 @@
 clear all
 addpath(genpath('Tools'));
 
-date =      '20181023';
-subject =   '10'; 
+date =      '20181010';
+subject =   '06'; 
 
-savepp = 0;
+savepp = 1;
  
 switch computer
     case 'PCWIN'
@@ -323,6 +323,11 @@ if savepp
     trial_pp.forceCO.force.mag_pstd = [fstruct.filtmag_pstd]';
     trial_pp.forceCO.force.mag_sem = [fstruct.filtmag_sem]';
     trial_pp.forceCO.force.mag_psem = [fstruct.filtmag_psem]';
+    trial_pp.forceCO.force.filt_mean = [fstruct.filt_mean]';
+    trial_pp.forceCO.force.filt_std = [fstruct.filt_std]';
+    trial_pp.forceCO.force.filt_pstd = [fstruct.filt_pstd]';
+    trial_pp.forceCO.force.filt_sem = [fstruct.filt_sem]';
+    trial_pp.forceCO.force.filt_psem = [fstruct.filt_psem]';
     trial_pp.forceCO.EMG.rect = cat(1,EMGstruct.rect_mean);
     trial_pp.forceCO.EMG.filt = cat(1,EMGstruct.filt_mean);
     trial_pp.forceCO.trial_coh = trial_coh_force;
@@ -335,6 +340,11 @@ if savepp
     trial_pp.EMGCO.force.mag_pstd = [fstruct.filtmag_pstd]';
     trial_pp.EMGCO.force.mag_sem = [fstruct.filtmag_sem]';
     trial_pp.EMGCO.force.mag_psem = [fstruct.filtmag_psem]';
+    trial_pp.EMGCO.force.filt_mean = [fstruct.filt_mean]';
+    trial_pp.EMGCO.force.filt_std = [fstruct.filt_std]';
+    trial_pp.EMGCO.force.filt_pstd = [fstruct.filt_pstd]';
+    trial_pp.EMGCO.force.filt_sem = [fstruct.filt_sem]';
+    trial_pp.EMGCO.force.filt_psem = [fstruct.filt_psem]';
     trial_pp.EMGCO.EMG.rect = cat(1,EMGstruct.rect_mean);
     trial_pp.EMGCO.EMG.filt = cat(1,EMGstruct.filt_mean);
     trial_pp.EMGCO.trial_coh = trial_coh_EMG;
