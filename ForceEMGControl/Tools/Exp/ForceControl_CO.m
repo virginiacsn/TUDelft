@@ -287,8 +287,13 @@ end
             procData(i,:) = (calibMat*offsetData(i,:)')';
         end
         
-        forceData = procData(:,1:3);      
-        forceDataz = mean(forceData(:,3));
+        forceData = procData(:,1:3);
+        
+        wn = (2/s.Rate)*fclF;
+        [b,a] = butter(2,wn,'low');
+        forceDataFilt = filter(b,a,forceData(:,3));
+        
+        forceDataz = mean(forceDataFilt);
     end
 
     function processForceData(event,offset,calforceDataz,hp)
