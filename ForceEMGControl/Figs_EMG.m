@@ -5,7 +5,7 @@
 for j = 1:length(EMGparams.channelName)-1
     figure('Name',['ForceCO; EMG ',EMGparams.channelName{j}]);
     for i = 1:length(Aparams.targetAnglesForce)
-        if rem(length(Aparams.targetAnglesForce) ,2) == 0
+        if rem(length(Aparams.targetAnglesForce),2) == 0
             subplot(2,length(Aparams.targetAnglesForce) /2,i);
         else
             subplot(1,length(Aparams.targetAnglesForce) ,i);

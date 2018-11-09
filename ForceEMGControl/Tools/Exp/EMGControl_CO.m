@@ -87,7 +87,9 @@ if ~isempty(channelAngle)
     end
 end
 
-EMGScaleJoint = EMGmeanForce(ismember(targetAnglesForce,targetAnglesEMG(2)),channelControl);
+scaleTargetEMG = round(EMGmeanForce./repmat(EMGScale',[7 1]),1);
+jointTargetEMG = scaleTargetEMG(ismember(targetAnglesForce,targetAnglesEMG(2)),channelControl);
+%EMGScaleJoint = EMGmeanForce(ismember(targetAnglesForce,targetAnglesEMG(2)),channelControl);
 
 %% Saving file check
 if saveEMG || saveforce
@@ -213,6 +215,9 @@ if EMGEnabled
     targetPosx = targetEMG*cos(targetAnglesEMG)';
     targetPosy = targetEMG*sin(targetAnglesEMG)';
     
+    jointTargetPosx = jointTargetEMG(1)*cos(targetAnglesEMG(2))';
+    jointTargetPosy = jointTargetEMG(2)*sin(targetAnglesEMG(2))';
+    
     % Set figure
     hf = figure('Name','CO EMG Control Task');
     [hf,hp] = Figinit(hf,targetEMG*[1 1]);
@@ -285,7 +290,7 @@ if EMGEnabled
     end
     if saveEMG
         EMGOffset = EMGOffset';
-        save([filepath,filenameEMG],'EMGDataOut_EMGCO','EMGOffset','EMGScale','EMGScaleJoint')
+        save([filepath,filenameEMG],'EMGDataOut_EMGCO','EMGOffset','EMGScale')
     end
     
 else
@@ -334,11 +339,13 @@ library.destroy()
         [d,c] = butter(2,wnl,'low');
         
         filtEMGBuffer = filtfilt(b,a,EMGDataBuffer')';
+        
 %         if ~isempty(fnEMG)
 %             wnn = (2/sampleRateEMG)*fnEMG;
 %             [f,e] = iirnotch(wnn,wnn/35);
 %             filtEMGBuffer = filter(f,e,abs(filtEMGBuffer),[],2);
 %         end
+
         filtEMGBuffer = filter(d,c,abs(filtEMGBuffer),[],2);
         
         %         if iAngle == 2
@@ -387,7 +394,7 @@ library.destroy()
                 elseif (iAngle == 3) && (rElipTarget(channelControl(1)) > rCirTarget)
                     targetCir = ellipse(rCirTarget,rElipTarget(channelControl(1)),targetPosx(iAngle),targetPosy(iAngle),-rotAngle);
                 else
-                    targetCir = circle(rCirTarget,targetPosx(iAngle),targetPosy(iAngle));        
+                    targetCir = circle(rCirTarget,jointTargetPosx,jointTargetPosy);
                 end
                 
                 htrg = plot(targetCir(:,1),targetCir(:,2),'r','Linewidth',3);

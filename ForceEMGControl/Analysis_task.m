@@ -3,8 +3,10 @@
 clear all
 addpath(genpath('Tools'));
 
-date =      '20181005';
-subject =   '04'; 
+date =      '20181023';
+subject =   '10'; 
+
+savepp = 0;
  
 switch computer
     case 'PCWIN'
@@ -308,35 +310,37 @@ else
 end
 
 %% Save vars for population average
-fprintf('Finished coherence analysis.\nSaving data.\n');
-trial_pp.Aparams = Aparams;
-trial_pp.Aparams.EMGScale = EMGparams.EMGScale';
-
-fstruct = [trial_avg_force.force];
-EMGstruct = [trial_avg_force.EMG];
-trial_pp.forceCO.angle = Aparams.targetAnglesForce';
-trial_pp.forceCO.force.mag_mean = [fstruct.filtmag_mean]';
-trial_pp.forceCO.force.mag_std = [fstruct.filtmag_std]';
-trial_pp.forceCO.force.mag_pstd = [fstruct.filtmag_pstd]';
-trial_pp.forceCO.force.mag_sem = [fstruct.filtmag_sem]';
-trial_pp.forceCO.force.mag_psem = [fstruct.filtmag_psem]';
-trial_pp.forceCO.EMG.rect = cat(1,EMGstruct.rect_mean);
-trial_pp.forceCO.EMG.filt = cat(1,EMGstruct.filt_mean);
-trial_pp.forceCO.trial_coh = trial_coh_force;
-
-fstruct = [trial_avg_EMG.force];
-EMGstruct = [trial_avg_EMG.EMG];
-trial_pp.EMGCO.angle = Aparams.targetAnglesEMG';
-trial_pp.EMGCO.force.mag_mean = [fstruct.filtmag_mean]';
-trial_pp.EMGCO.force.mag_std = [fstruct.filtmag_std]';
-trial_pp.EMGCO.force.mag_pstd = [fstruct.filtmag_pstd]';
-trial_pp.EMGCO.force.mag_sem = [fstruct.filtmag_sem]';
-trial_pp.EMGCO.force.mag_psem = [fstruct.filtmag_psem]';
-trial_pp.EMGCO.EMG.rect = cat(1,EMGstruct.rect_mean);
-trial_pp.EMGCO.EMG.filt = cat(1,EMGstruct.filt_mean);
-trial_pp.EMGCO.trial_coh = trial_coh_EMG;
-
-save([filepathpp,date,'_s',subject,'_TDP','.mat'],'trial_pp');
+if savepp
+    fprintf('Finished coherence analysis.\nSaving data.\n');
+    trial_pp.Aparams = Aparams;
+    trial_pp.Aparams.EMGScale = EMGparams.EMGScale';
+    
+    fstruct = [trial_avg_force.force];
+    EMGstruct = [trial_avg_force.EMG];
+    trial_pp.forceCO.angle = Aparams.targetAnglesForce';
+    trial_pp.forceCO.force.mag_mean = [fstruct.filtmag_mean]';
+    trial_pp.forceCO.force.mag_std = [fstruct.filtmag_std]';
+    trial_pp.forceCO.force.mag_pstd = [fstruct.filtmag_pstd]';
+    trial_pp.forceCO.force.mag_sem = [fstruct.filtmag_sem]';
+    trial_pp.forceCO.force.mag_psem = [fstruct.filtmag_psem]';
+    trial_pp.forceCO.EMG.rect = cat(1,EMGstruct.rect_mean);
+    trial_pp.forceCO.EMG.filt = cat(1,EMGstruct.filt_mean);
+    trial_pp.forceCO.trial_coh = trial_coh_force;
+    
+    fstruct = [trial_avg_EMG.force];
+    EMGstruct = [trial_avg_EMG.EMG];
+    trial_pp.EMGCO.angle = Aparams.targetAnglesEMG';
+    trial_pp.EMGCO.force.mag_mean = [fstruct.filtmag_mean]';
+    trial_pp.EMGCO.force.mag_std = [fstruct.filtmag_std]';
+    trial_pp.EMGCO.force.mag_pstd = [fstruct.filtmag_pstd]';
+    trial_pp.EMGCO.force.mag_sem = [fstruct.filtmag_sem]';
+    trial_pp.EMGCO.force.mag_psem = [fstruct.filtmag_psem]';
+    trial_pp.EMGCO.EMG.rect = cat(1,EMGstruct.rect_mean);
+    trial_pp.EMGCO.EMG.filt = cat(1,EMGstruct.filt_mean);
+    trial_pp.EMGCO.trial_coh = trial_coh_EMG;
+    
+    save([filepathpp,date,'_s',subject,'_TDP','.mat'],'trial_pp');
+end
 
 % %% Calibration
 % calibtype = 'EMGCO';

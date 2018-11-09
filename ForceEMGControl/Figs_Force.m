@@ -89,6 +89,7 @@ for i = 1:length(Aparams.targetAnglesForce)
     legend([h1 h2],'Start','End');
 end
 title('ForceCO');
+set(gca,'FontSize',12);
 
 subplot(1,2,2)
 for i = 1:length(Aparams.targetAnglesEMG)
@@ -104,6 +105,7 @@ for i = 1:length(Aparams.targetAnglesEMG)
     legend([h1 h2],'Start','End');
 end
 title('EMGCO');
+set(gca,'FontSize',12);
 
 %% Force Mean Bar
 figure('Name','Force Mean');
@@ -162,6 +164,7 @@ end
 polarscatter(Aparams.angCompUni,fCV,60,'filled')
 hold on
 polarscatter(Aparams.angCompUni,ECV,60,'filled','r')
-thetaticks(rad2deg(Aparams.angCompUni)); %thetaticklabels(Aparams.muscComp);
+thetaticks([0,rad2deg(Aparams.angCompUni)]); %thetaticklabels(Aparams.muscComp);
+title('Force CV')
 set(gca,'FontSize',12);
 legend('ForceCO','EMGCO','Location','bestoutside');
