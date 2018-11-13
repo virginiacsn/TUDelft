@@ -25,7 +25,7 @@ for i = 1:length(files)
 end
 
 %% Analysis pre-figures
-fields_avg = {'force.mag_mean','EMG.rect'};
+fields_avg = {'force.filt_mean','force.mag_mean','EMG.rect'};
 trial_avg_force = ppAngleAvg(trial_pp_force, fields_avg, Aparams_pp);
 trial_avg_EMG = ppAngleAvg(trial_pp_EMG, fields_avg, Aparams_pp);
 
@@ -97,6 +97,26 @@ plot(fit_angle,fit_force_fmag_mean,'b--');
 plot(fit_angle,fit_EMG_fmag_mean,'r--')
 set(gca,'XTick',rad2deg(angComp));
 ylabel('Force [N]'); xlabel('Target [deg]');
+title('Mean Force Magnitude');
+legend([h1,h2],{'ForceCO','EMGCO'});
+set(gca,'FontSize',12);
+
+%% Force trajectory mean - Plot
+figure('Name','Force Trajectory Mean');
+%set(gcf,'units','normalized','outerposition',[0 0 1 1]);
+for i = 1:length(angComp)
+    h1 = plot(avgforce_force(i).filt_mean_mean(1),avgforce_force(i).filt_mean_mean(2),'bo','MarkerFaceColor','b');
+    hold on;
+    %errorbar(degAngComp,[avgforce_force.filt_mean_mean],[avgforce_force.mag_mean_std],'b.');
+    h2 = plot(avgEMG_force(i).filt_mean_mean(1),avgEMG_force(i).filt_mean_mean(2),'ro','MarkerFaceColor','r');
+    %errorbar(degAngComp,[avgEMG_force.mag_mean_mean],[avgEMG_force.mag_mean_std],'r.');
+    text(avgforce_force(i).filt_mean_mean(1),avgforce_force(i).filt_mean_mean(2),num2str(degAngComp(i)),'VerticalAlignment','top','HorizontalAlignment','left');
+    text(avgEMG_force(i).filt_mean_mean(1),avgEMG_force(i).filt_mean_mean(2),num2str(degAngComp(i)),'VerticalAlignment','top','HorizontalAlignment','left');
+end
+axis square;
+grid on;
+xlim([-30 30]); ylim([-30 30]); 
+ylabel('Fy [N]'); xlabel('Fx [N]');
 title('Mean Force Magnitude');
 legend([h1,h2],{'ForceCO','EMGCO'});
 set(gca,'FontSize',12);

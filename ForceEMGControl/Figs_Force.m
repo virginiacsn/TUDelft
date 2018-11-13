@@ -75,37 +75,73 @@ end
 
 %% Force trajectory. Subplot per task. Target angles in same subplot.
 figure('Name','Force trajectory');
-subplot(1,2,1)
+%subplot(2,1,1)
 for i = 1:length(Aparams.targetAnglesForce)
-    plot(trial_avg_force(i).force.filt(:,1),trial_avg_force(i).force.filt(:,2));
+    plot(trial_avg_force(i).force.filt(:,1),trial_avg_force(i).force.filt(:,2),'b');
     hold on;
     h1 = plot(trial_avg_force(i).force.filt(1,1),trial_avg_force(i).force.filt(1,2),'go');
-    h2 = plot(trial_avg_force(i).force.filt(end,1),trial_avg_force(i).force.filt(end,2),'ro');
+    h2 = plot(trial_avg_force(i).force.filt(end,1),trial_avg_force(i).force.filt(end,2),'mo');
     axis square;
     grid on;
     xlim(taskparams.targetForce*[-Flim Flim]);ylim(taskparams.targetForce*[-Flim Flim]);
     xlabel('Fx [N]'); ylabel('Fy [N]');
-    text(trial_avg_force(i).force.filt(end,1),trial_avg_force(i).force.filt(end,2),num2str(rad2deg(Aparams.targetAnglesForce(i))),'VerticalAlignment','top','HorizontalAlignment','left');
+    text(trial_avg_force(i).force.filt(end,1),trial_avg_force(i).force.filt(end,2),num2str(rad2deg(Aparams.targetAnglesForce(i))),'VerticalAlignment','top','HorizontalAlignment','left','FontSize',12);
     legend([h1 h2],'Start','End');
 end
-title('ForceCO');
+title('Force-Control');
 set(gca,'FontSize',12);
 
-subplot(1,2,2)
+figure('Name','Force trajectory');
+%subplot(2,1,2)
 for i = 1:length(Aparams.targetAnglesEMG)
-    plot(trial_avg_EMG(i).force.filt(:,1),trial_avg_EMG(i).force.filt(:,2));
+    plot(trial_avg_EMG(i).force.filt(:,1),trial_avg_EMG(i).force.filt(:,2),'r');
     hold on;
     h1 = plot(trial_avg_EMG(i).force.filt(1,1),trial_avg_EMG(i).force.filt(1,2),'go');
-    h2 = plot(trial_avg_EMG(i).force.filt(end,1),trial_avg_EMG(i).force.filt(end,2),'ro');
+    h2 = plot(trial_avg_EMG(i).force.filt(end,1),trial_avg_EMG(i).force.filt(end,2),'mo');
     axis square;
     grid on;
     xlim(taskparams.targetForce*[-Flim Flim]);ylim(taskparams.targetForce*[-Flim Flim]);
     xlabel('Fx [N]'); ylabel('Fy [N]');
-    text(trial_avg_EMG(i).force.filt(end,1),trial_avg_EMG(i).force.filt(end,2),num2str(rad2deg(Aparams.targetAnglesEMG(i))),'VerticalAlignment','top','HorizontalAlignment','left');
+    text(trial_avg_EMG(i).force.filt(end,1),trial_avg_EMG(i).force.filt(end,2),num2str(rad2deg(Aparams.targetAnglesEMG(i))),'VerticalAlignment','top','HorizontalAlignment','left','FontSize',12);
     legend([h1 h2],'Start','End');
 end
-title('EMGCO');
+title('EMG-Control');
 set(gca,'FontSize',12);
+
+%% Force trajectory. Target angles in same subplot for both tasks.
+figure('Name','Force trajectory');
+%subplot(2,1,1)
+for i = 1:length(Aparams.targetAnglesForce)
+    h1 = plot(trial_avg_force(i).force.filt(:,1),trial_avg_force(i).force.filt(:,2),'b');
+    hold on;
+    plot(trial_avg_force(i).force.filt(1,1),trial_avg_force(i).force.filt(1,2),'go');
+    plot(trial_avg_force(i).force.filt(end,1),trial_avg_force(i).force.filt(end,2),'mo');
+    axis square;
+    grid on;
+    xlim(taskparams.targetForce*[-Flim Flim]+1);ylim(taskparams.targetForce*[-Flim Flim]+1);
+    xlabel('Fx [N]'); ylabel('Fy [N]');
+    text(trial_avg_force(i).force.filt(end,1),trial_avg_force(i).force.filt(end,2),num2str(rad2deg(Aparams.targetAnglesForce(i))),'VerticalAlignment','top','HorizontalAlignment','left','FontSize',12);
+    %legend([h1 h2],'Start','End');
+end
+%title('Force-Control');
+set(gca,'FontSize',12);
+
+%figure('Name','Force trajectory');
+%subplot(2,1,2)
+for i = 1:length(Aparams.targetAnglesEMG)
+    h2 = plot(trial_avg_EMG(i).force.filt(:,1),trial_avg_EMG(i).force.filt(:,2),'r');
+    hold on;
+    plot(trial_avg_EMG(i).force.filt(1,1),trial_avg_EMG(i).force.filt(1,2),'go');
+    plot(trial_avg_EMG(i).force.filt(end,1),trial_avg_EMG(i).force.filt(end,2),'mo');
+    axis square;
+    grid on;
+    xlim(taskparams.targetForce*[-Flim Flim]+1);ylim(taskparams.targetForce*[-Flim Flim]+1);
+    xlabel('Fx [N]'); ylabel('Fy [N]');
+    text(trial_avg_EMG(i).force.filt(end,1),trial_avg_EMG(i).force.filt(end,2),num2str(rad2deg(Aparams.targetAnglesEMG(i))),'VerticalAlignment','top','HorizontalAlignment','left','FontSize',12);
+    %legend([h1 h2],'Start','End');
+end
+legend([h1 h2],'FC','MC');
+set(gca,'FontSize',13);
 
 %% Force Mean Bar
 figure('Name','Force Mean');
@@ -164,7 +200,26 @@ end
 polarscatter(Aparams.angCompUni,fCV,60,'filled')
 hold on
 polarscatter(Aparams.angCompUni,ECV,60,'filled','r')
-thetaticks([0,rad2deg(Aparams.angCompUni)]); %thetaticklabels(Aparams.muscComp);
+thetaticks([rad2deg(Aparams.angCompUni)]); thetaticklabels(rad2deg(Aparams.angCompUni));
 title('Force CV')
 set(gca,'FontSize',12);
 legend('ForceCO','EMGCO','Location','bestoutside');
+
+%% Force CV plot
+figure('Name','Force CV');
+set(gcf,'units','normalized','outerposition',[0 0 1 1]);
+for k = 1:length(Aparams.angCompUni)
+    iangf = find([trial_avg_force.angle] == Aparams.angCompUni(k));
+    iangE = find([trial_avg_EMG.angle] == Aparams.angCompUni(k));
+    
+    h1 = plot(trial_avg_force(iangf).angle,trial_avg_force(iangf).force.filtmag_CV_mean,'bo','MarkerFaceColor','b');
+    hold on;
+    errorbar(trial_avg_force(iangf).angle,trial_avg_force(iangf).force.filtmag_CV_mean,trial_avg_force(iangf).force.filtmag_CV_std,'b.');
+    h2 = plot(trial_avg_EMG(iangE).angle,trial_avg_EMG(iangE).force.filtmag_CV_mean,'ro','MarkerFaceColor','r');
+    errorbar(trial_avg_EMG(iangE).angle,trial_avg_EMG(iangE).force.filtmag_CV_mean,trial_avg_EMG(iangE).force.filtmag_CV_std,'r.');
+end
+title('Force CV')
+legend([h1,h2],'ForceCO','EMGCO');
+set(gca,'FontSize',13);
+
+

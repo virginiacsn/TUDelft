@@ -5,6 +5,7 @@ fclEMG = [];
 fnEMG = [];
 fs = 1024;
 avgWindow = 200;
+EMGScale = [];
 
 struct2vars(who,Aparams)
 
