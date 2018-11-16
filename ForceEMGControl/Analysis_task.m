@@ -125,12 +125,14 @@ for i = 1:length(trial_avg_force)
     EMGmean(i,:) = mean(trial_avg_force(i).EMG.rect,1);
     forcemean(i) = trial_avg_force(i).force.filtmag_mean;
 end
-EMGmeanForce = EMGmean;
+Aparams.EMGmeanForce = EMGmean;
 
 % EMG scaling through max EMG for force-control
 Aparams.EMGScaleForce = max(EMGmean,[],1)';
 % EMG target tolerance values
-EMGTolForce = (min(EMGmean,[],1))'./Aparams.EMGScaleForce;
+Aparams.EMGTolForce = (min(EMGmean,[],1))'./Aparams.EMGScaleForce;
+
+Aparams.EMGmeanForceScale = EMGmean./repmat(Aparams.EMGScaleForce',[size(Aparams.EMGmeanForce,1) 1]);
 
 fprintf('EMG mean values: \n')
 for k = 1:length(EMGparams.channelSubsetCal)-1
@@ -200,6 +202,10 @@ for i = 1:length(codeE)
     end
 end
 
+if strcmp(subject,'12')
+   trial_data_EMG([trial_data_EMG.angle] == 3*pi/2) = [];
+end
+
 % Final EMG-control target angles based on successful trials
 Aparams.targetAnglesEMG = sort(unique(extractfield(trial_data_EMG,'angle')));
 
@@ -223,7 +229,8 @@ for i = 1:length(trial_avg_EMG)
     EMGmean(i,:) = mean(trial_avg_EMG(i).EMG.rect,1);
     forcemean(i) = trial_avg_EMG(i).force.filtmag_mean;
 end
-EMGmeanEMG = EMGmean;
+Aparams.EMGmeanEMG = EMGmean;
+Aparams.EMGmeanEMGScale = EMGmean./repmat(Aparams.EMGScaleForce',[size(Aparams.EMGmeanEMG,1) 1]);
 
 for i = 1:length(trial_avg_EMG)
     trial_avg_EMG(i).EMG.rectScale =  trial_avg_EMG(i).EMG.rect./repmat(Aparams.EMGScaleForce',[size(trial_avg_EMG(i).EMG.rect,1) 1]);
@@ -319,6 +326,10 @@ if strcmp(Aparams.cohparams.data,'avg')
 else
     trial_coh_force = cohStruct(trial_app_force,EMGparams.channelName,fields_coh,Aparams.cohparams);
     trial_coh_EMG = cohStruct(trial_app_EMG,EMGparams.channelName,fields_coh,Aparams.cohparams);
+
+    Aparams.cohparams.CLoverlap = 0;
+    trial_coh_force_nov = cohStruct(trial_app_force,EMGparams.channelName,fields_coh,Aparams.cohparams);
+    trial_coh_EMG_nov = cohStruct(trial_app_EMG,EMGparams.channelName,fields_coh,Aparams.cohparams);
 end
 
 %% Save vars for population average
@@ -352,7 +363,8 @@ if savepp
     trial_pp.forceCO.EMG.rect = cat(1,EMGstruct.rect_mean);
     trial_pp.forceCO.EMG.filt = cat(1,EMGstruct.filt_mean);
     trial_pp.forceCO.trial_coh = trial_coh_force;
-    
+    trial_pp.forceCO.trial_coh_nov = trial_coh_force_nov;
+
     fstruct = [trial_avg_EMG.force];
     EMGstruct = [trial_avg_EMG.EMG];
     trial_pp.EMGCO.angle = Aparams.targetAnglesEMG';
@@ -378,7 +390,8 @@ if savepp
     trial_pp.EMGCO.EMG.rect = cat(1,EMGstruct.rect_mean);
     trial_pp.EMGCO.EMG.filt = cat(1,EMGstruct.filt_mean);
     trial_pp.EMGCO.trial_coh = trial_coh_EMG;
-    
+    trial_pp.EMGCO.trial_coh_nov = trial_coh_EMG_nov;
+
     save([filepathpp,date,'_s',subject,'_TDP','.mat'],'trial_pp');
 end
 

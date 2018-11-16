@@ -43,7 +43,6 @@ elseif ~isempty(iapp)
     idxapp = find(iapp);
     napp = sum(iapp);
     sampseg = length(win); %floor(N/nseg);
-    overlap = floor(sampseg/2);
     missamp = round(N/sampseg)*sampseg-N;
     
     xtemp = [x; zeros(missamp,1)];
