@@ -3,8 +3,8 @@
 clear all
 addpath(genpath('Tools'));
 
-date =      '20181010';
-subject =   '06'; 
+date =      '20181024';
+subject =   '12'; 
 
 savepp = 1;
  
@@ -18,9 +18,14 @@ switch computer
         filepath =  [datapath,'Exp\',date,'\s',subject,'\'];
         paramfolder = 'Parameters\';
         if ~exist([datapath,'TD'],'dir') && exist(datapath,'dir')
-            mkdir([datapath,'TD'])
+            mkdir([datapath,'TD']);
         end
-        filepathpp = [datapath,'TD\'];
+        if ~exist([datapath,'TD\UB'],'dir') && exist(datapath,'dir')
+            mkdir([datapath,'TD\UB']);
+        end
+        %filepathpp = [datapath,'TD\'];
+        %filepathpp = [datapath,'TD\UB\'];
+        
     case 'MACI64'
         datapath = '/Users/virginia/Documents/MATLAB/Thesis/Data/';
         filepath =  [datapath,'Exp/',date,'/s',subject,'/'];
@@ -113,6 +118,10 @@ trial_avg_force = fftEMG(trial_avg_force);
 % Select number of trials to append by finding minimum number of trials per
 % target
 mintrialsForce = min([trial_avg_force.ntrials]);
+
+% if mintrialsForce < 20
+%     trial_data_force(ismember([trial_data_force.angle],[trial_avg_force([trial_avg_force.ntrials] < 20).angle])) = [];
+% end
 
 % Trial append by angle. Limit to 20 trials (100 sec of data)
 trial_app_force = trialAngleApp(trial_data_force, Aparams.epoch, fields_app,[],20);
@@ -217,6 +226,10 @@ trial_avg_EMG = fftEMG(trial_avg_EMG);
 % Select number of trials to append by finding minimum number of trials per
 % target
 mintrialsEMG = min([trial_avg_EMG.ntrials]);
+
+% if mintrialsEMG < 25
+%     trial_data_EMG(ismember([trial_data_EMG.angle],[trial_avg_EMG([trial_avg_EMG.ntrials] < 25).angle])) = [];
+% end
 
 % Trial append by angle. Limit to 25 trials (100 sec of data)
 trial_app_EMG = trialAngleApp(trial_data_EMG, Aparams.epoch, fields_app,[],25);
