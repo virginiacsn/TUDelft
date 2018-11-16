@@ -28,8 +28,14 @@ for i = 1:length(trial_data)
         win = window(round(tseg/trial_data(i).ts(2)));        
         my_win = window(round(tseg/trial_data(i).ts(2)));
     end
-    overlap = round(length(win)/2);
-    my_overlap = round(length(my_win)/2);
+    
+    if CLoverlap
+        overlap = round(length(win)/2);
+        my_overlap = round(length(my_win)/2);
+    else
+        overlap = 0;
+        my_overlap = 0;
+    end
     
     EMG_struct = trial_data(i).EMG;
     if isfield(trial_data,'iapp')

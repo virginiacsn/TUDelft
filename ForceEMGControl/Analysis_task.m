@@ -143,7 +143,7 @@ fprintf('\nRecorded mean force value: %1.3f\n',round(mean(forcemean)))
 for i = 1:length(trial_avg_force)
     trial_avg_force(i).EMG.rectScale =  trial_avg_force(i).EMG.rect./repmat(Aparams.EMGScaleForce',[size(trial_avg_force(i).EMG.rect,1) 1]);
     trial_avg_force(i).EMG.avgScale = movingAvg(trial_avg_force(i).EMG.rectScale,Aparams.avgWindow);
-end
+end 
 
 %% EMG-control
 task = 'EMGCO';
@@ -199,7 +199,7 @@ for i = 1:length(codeE)
         end
     end
 end
-%%
+
 % Final EMG-control target angles based on successful trials
 Aparams.targetAnglesEMG = sort(unique(extractfield(trial_data_EMG,'angle')));
 

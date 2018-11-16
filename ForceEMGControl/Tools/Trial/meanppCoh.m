@@ -2,12 +2,21 @@ function[meanCoh] = meanppCoh(trial_pp_force,trial_pp_EMG,Aparams_pp,angComp)
 
 meanCoh.angle = angComp';
 
-fields = {'msig_coh','asig_coh','asig_z','nasig_coh','nasig_z'};
+fields = {'my_coh','z','msig_coh','asig_coh','asig_z','nasig_coh','nasig_z'};
 
 for iang = 1:length(angComp)
     for h = 1:length(fields)
-        force_coh = [];
-        EMG_coh = [];
+        if strcmp(fields{h},'my_coh')||strcmp(fields{h},'z')
+            force_coh = zeros(1024,1);
+            EMG_coh = zeros(1024,1);
+            force_count = zeros(1024,1);
+            EMG_count = zeros(1024,1);
+            meanCoh.force.my_fcoh = trial_pp_force(1).trial_coh(1).rect.my_fcoh(:,1);
+            meanCoh.EMG.my_fcoh = trial_pp_EMG(1).trial_coh(1).rect.my_fcoh(:,1);
+        else
+            force_coh = [];
+            EMG_coh = [];
+        end
         scountf = 0;
         scounte = 0;
         
@@ -32,32 +41,66 @@ for iang = 1:length(angComp)
             
             if ~isempty(iangf)
                 scountf = scountf+1;
-                force_coh = [force_coh reshape(trial_pp_force_coh(iangf).rect.(fields{h})(:,musccomb),nmusccomb*3,1)];
+                if strcmp(fields{h},'my_coh')
+                    force_coh = force_coh+trial_pp_force_coh(iangf).rect.(fields{h})(:,musccomb);
+                    force_count = force_count+(trial_pp_force_coh(iangf).rect.(fields{h})(:,musccomb)>=trial_pp_force_coh(iangf).rect.my_CL(musccomb));
+                elseif strcmp(fields{h},'z')
+                     force_coh = force_coh+trial_pp_force_coh(iangf).rect.(fields{h})(:,musccomb);
+                    force_count = force_count+(trial_pp_force_coh(iangf).rect.(fields{h})(:,musccomb)>=1.65);
+                else
+                    force_coh = [force_coh reshape(trial_pp_force_coh(iangf).rect.(fields{h})(:,musccomb),nmusccomb*3,1)];
+                end
             end
             if ~isempty(iangE)
                 scounte = scounte+1;
-                EMG_coh = [EMG_coh reshape(trial_pp_EMG_coh(iangE).rect.(fields{h})(:,musccomb),nmusccomb*3,1)];
+                if strcmp(fields{h},'my_coh')
+                    EMG_coh = EMG_coh+trial_pp_EMG_coh(iangf).rect.(fields{h})(:,musccomb);
+                    EMG_count = EMG_count+((trial_pp_EMG_coh(iangf).rect.(fields{h})(:,musccomb)>=trial_pp_EMG_coh(iangf).rect.my_CL(musccomb)));
+                elseif strcmp(fields{h},'z')
+                    EMG_coh = EMG_coh+trial_pp_EMG_coh(iangf).rect.(fields{h})(:,musccomb);
+                    EMG_count = EMG_count+(trial_pp_EMG_coh(iangf).rect.(fields{h})(:,musccomb)>=1.65);
+                else
+                    EMG_coh = [EMG_coh reshape(trial_pp_EMG_coh(iangE).rect.(fields{h})(:,musccomb),nmusccomb*3,1)];
+                end
             end
         end
         
-        fmean = reshape(mean(force_coh,2),3,nmusccomb);
-        fstd = reshape(std(force_coh,[],2),3,nmusccomb);
-        fsem = reshape(std(force_coh,[],2)/sqrt(scountf),3,nmusccomb);
-        emean = reshape(mean(EMG_coh,2),3,nmusccomb);
-        estd = reshape(std(EMG_coh,[],2),3,nmusccomb);
-        esem = reshape(std(EMG_coh,[],2)/sqrt(scounte),3,nmusccomb);
-        
-        bands = {'alp','beta','gam'};
-        for k = 1:3
-            meanCoh.force.(fields{h}).(bands{k}).mean(iang,:) = fmean(k,:);
-            meanCoh.force.(fields{h}).(bands{k}).std(iang,:) = fstd(k,:);
-            meanCoh.force.(fields{h}).(bands{k}).sem(iang,:) = fsem(k,:);
-            meanCoh.EMG.(fields{h}).(bands{k}).mean(iang,:) = emean(k,:);
-            meanCoh.EMG.(fields{h}).(bands{k}).std(iang,:) = estd(k,:);
-            meanCoh.EMG.(fields{h}).(bands{k}).sem(iang,:) = esem(k,:);
+        if strcmp(fields{h},'my_coh')||strcmp(fields{h},'z')
+            meanCoh.force.(fields{h})(iang).scount = force_count;
+            meanCoh.EMG.(fields{h})(iang).scount = EMG_count;
+
+            meanCoh.force.(fields{h})(iang).mean = force_coh./length(trial_pp_force);
+            meanCoh.force.(fields{h})(iang).std = force_coh./length(trial_pp_force);
+            meanCoh.force.(fields{h})(iang).sem = force_coh./length(trial_pp_force);
+            meanCoh.EMG.(fields{h})(iang).mean = EMG_coh./length(trial_pp_force);
+            meanCoh.EMG.(fields{h})(iang).std = EMG_coh./length(trial_pp_force);
+            meanCoh.EMG.(fields{h})(iang).sem = EMG_coh./length(trial_pp_force);
+        else
+            fmean = reshape(mean(force_coh,2),3,nmusccomb);
+            fstd = reshape(std(force_coh,[],2),3,nmusccomb);
+            fsem = reshape(std(force_coh,[],2)/sqrt(scountf),3,nmusccomb);
+            emean = reshape(mean(EMG_coh,2),3,nmusccomb);
+            estd = reshape(std(EMG_coh,[],2),3,nmusccomb);
+            esem = reshape(std(EMG_coh,[],2)/sqrt(scounte),3,nmusccomb);
+            
+            bands = {'alp','beta','gam'};
+            for k = 1:3
+                meanCoh.force.(fields{h}).(bands{k}).mean(iang,:) = fmean(k,:);
+                meanCoh.force.(fields{h}).(bands{k}).std(iang,:) = fstd(k,:);
+                meanCoh.force.(fields{h}).(bands{k}).sem(iang,:) = fsem(k,:);
+                meanCoh.EMG.(fields{h}).(bands{k}).mean(iang,:) = emean(k,:);
+                meanCoh.EMG.(fields{h}).(bands{k}).std(iang,:) = estd(k,:);
+                meanCoh.EMG.(fields{h}).(bands{k}).sem(iang,:) = esem(k,:);
+            end
         end
     end
     meanCoh.musc = trial_pp_force_coh(1).rect.muscles(musccomb);
+    
+    for n = 1:length(meanCoh.musc)
+        meanCoh.muscComp{n}{1} = meanCoh.musc{n}{1};
+        meanCoh.muscComp{n}{2} = [meanCoh.musc{n}{1},',',meanCoh.musc{n}{2}];
+        meanCoh.muscComp{n}{3} = meanCoh.musc{n}{2};
+    end
     
     for n = 1:length(meanCoh.musc)
         for m = 1:length(Aparams_pp(end).muscCompPair)
@@ -68,5 +111,6 @@ for iang = 1:length(angComp)
             end
         end
     end
+    
 end
 end

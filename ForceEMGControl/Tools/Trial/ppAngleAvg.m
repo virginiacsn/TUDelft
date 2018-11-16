@@ -34,13 +34,13 @@ for iangle = 1:length(angles)
             if isrow(trial_pp(isubject).(field_str{1}).(field_str{2}))                
                 field_data_all = [field_data_all; trial_pp(isubject).(field_str{1}).(field_str{2})(iang)];
             elseif strcmp((field_str{2}),'filt_mean')
-                filt_mat = reshape(trial_pp(isubject).(field_str{1}).(field_str{2}),length([trial_pp(isubject).angle]),3);
-                field_data_all = [field_data_all; filt_mat(iang,1:2)];
+                filt_mat = reshape(trial_pp(isubject).(field_str{1}).(field_str{2}),length([trial_pp(isubject).angle]),2);
+                field_data_all = [field_data_all; filt_mat(iang,:)];
                 
             else
                 if strcmp(field_str{1},'EMG')
                     field_data_all = [field_data_all; trial_pp(isubject).(field_str{1}).(field_str{2})(iang,chanControl)];
-                    field_data_all_scale = [field_data_all_scale; trial_pp(isubject).(field_str{1}).(field_str{2})(iang,chanControl)./Aparams_pp(isubject).EMGScale(chanControl)];
+                    field_data_all_scale = [field_data_all_scale; trial_pp(isubject).(field_str{1}).(field_str{2})(iang,chanControl)./Aparams_pp(isubject).EMGScaleForce(chanControl)'];
                 else
                     field_data_all = [field_data_all; trial_pp(isubject).(field_str{1}).(field_str{2})(iang,:)];
                 end
