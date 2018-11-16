@@ -10,7 +10,8 @@ wn = (2/fs)*fclF;
 
 for i = 1:length(trial_data)
     trial_data(i).force.rawmag = sqrt(trial_data(i).force.raw(:,1).^2+trial_data(i).force.raw(:,2).^2);
-    trial_data(i).force.filt = filtfilt(b,a,trial_data(i).force.raw);
+    
+    trial_data(i).force.filt = filtfilt(b,a,Rot(trial_data(i).force.raw(:,1:2),pi/4));
     trial_data(i).force.filtmag = sqrt(trial_data(i).force.filt(:,1).^2+trial_data(i).force.filt(:,2).^2);
 end
 end

@@ -3,8 +3,8 @@
 clear all
 addpath(genpath('Tools'));
 
-date =      '20181024';
-subject =   '12'; 
+date =      '20181010';
+subject =   '06'; 
 
 savepp = 1;
  
@@ -47,16 +47,18 @@ startTrial = 10;
 Aparams.fs = min(forceparams.scanRate,EMGparams.sampleRateEMG);
 Aparams.downsamp = forceparams.scanRate/EMGparams.sampleRateEMG;
 Aparams.channelNameEMG = EMGparams.channelName;
-Aparams.targetAngles = taskparams.targetAnglesForce;
+Aparams.targetAngles = taskparams.targetAnglesForce-pi/4;
 Aparams.fclF = 5;
 Aparams.fchEMG = 10;
 Aparams.fclEMG = 500;
 Aparams.fnEMG = 50;
 Aparams.avgWindow = 200;
+Aparams.EMGScale = EMGparams.EMGScale;
 
 % Epoch interval {epoch start, time start, epoch end, time end} and fields to trial average
 Aparams.epoch = {'ihold',1,'iend',0};
-fields_avg = {'EMG.raw','EMG.filt','EMG.rect','EMG.avg','force.filt','force.filtmag'};
+fields_avg = {'EMG.raw','EMG.filt','EMG.rect','EMG.avg','force.filt',...
+    'force.filtmag'};
 % Fields to trial append
 fields_app = {'EMG.raw','EMG.filt','EMG.rect','force.filt'};
 
@@ -126,17 +128,22 @@ end
 EMGmeanForce = EMGmean;
 
 % EMG scaling through max EMG for force-control
-EMGScaleForce = max(EMGmean,[],1)';
+Aparams.EMGScaleForce = max(EMGmean,[],1)';
 % EMG target tolerance values
-EMGTolForce = (min(EMGmean,[],1))'./EMGScaleForce;
+EMGTolForce = (min(EMGmean,[],1))'./Aparams.EMGScaleForce;
 
 fprintf('EMG mean values: \n')
 for k = 1:length(EMGparams.channelSubsetCal)-1
-    fprintf('%s: %1.3f\n',EMGparams.channelName{EMGparams.channelSubset == EMGparams.channelSubsetCal(k)},EMGScaleForce(EMGparams.channelSubset == EMGparams.channelSubsetCal(k)))
+    fprintf('%s: %1.3f\n',EMGparams.channelName{EMGparams.channelSubset == EMGparams.channelSubsetCal(k)},Aparams.EMGScaleForce(EMGparams.channelSubset == EMGparams.channelSubsetCal(k)))
 end
 
 % Mean filtered force magnitude value
 fprintf('\nRecorded mean force value: %1.3f\n',round(mean(forcemean)))
+
+for i = 1:length(trial_avg_force)
+    trial_avg_force(i).EMG.rectScale =  trial_avg_force(i).EMG.rect./repmat(Aparams.EMGScaleForce',[size(trial_avg_force(i).EMG.rect,1) 1]);
+    trial_avg_force(i).EMG.avgScale = movingAvg(trial_avg_force(i).EMG.rectScale,Aparams.avgWindow);
+end
 
 %% EMG-control
 task = 'EMGCO';
@@ -164,7 +171,7 @@ for i = 1:length(codeE)
     forceEMGData = {forceDataOut_EMGCO,EMGDataOut_EMGCO};
 
     Aparams.block = str2double(code);
-    Aparams.targetAngles = taskparams.targetAnglesEMG;
+    Aparams.targetAngles = taskparams.targetAnglesEMG-pi/4;
     Aparams.chanControlPair{i} = EMGparams.channelControl;
     if exist('EMGOffset','var')
         if size(EMGOffset,1) < size(EMGOffset,2)
@@ -192,7 +199,7 @@ for i = 1:length(codeE)
         end
     end
 end
-
+%%
 % Final EMG-control target angles based on successful trials
 Aparams.targetAnglesEMG = sort(unique(extractfield(trial_data_EMG,'angle')));
 
@@ -218,8 +225,13 @@ for i = 1:length(trial_avg_EMG)
 end
 EMGmeanEMG = EMGmean;
 
+for i = 1:length(trial_avg_EMG)
+    trial_avg_EMG(i).EMG.rectScale =  trial_avg_EMG(i).EMG.rect./repmat(Aparams.EMGScaleForce',[size(trial_avg_EMG(i).EMG.rect,1) 1]);
+    trial_avg_EMG(i).EMG.avgScale = movingAvg(trial_avg_EMG(i).EMG.rectScale,Aparams.avgWindow);
+end
+
 % Angles and corresponding muscle names to compare between tasks
-[muscAngle,ichan] = sort(EMGparams.channelAngle(EMGparams.channelAngle>0));
+[muscAngle,ichan] = sort(EMGparams.channelAngle(EMGparams.channelAngle>0)-pi/4);
 muscAngles = sort([muscAngle,mean([muscAngle(1:end-1);muscAngle(2:end)])]);
 
 chanControl = EMGparams.channelSubset(EMGparams.channelAngle>0);
@@ -252,8 +264,8 @@ Aparams.muscComp = channelNames(ismember(muscAngles,Aparams.targetAnglesEMG));
 siP = [0 0];
 j = 0;
 for i = 1:length(Aparams.chanControlPair)
-    iC1 = find(angComp==EMGparams.channelAngle(Aparams.chanControlPair{i}(1)));
-    iC2 = find(angComp==EMGparams.channelAngle(Aparams.chanControlPair{i}(2)));
+    iC1 = find(angComp==EMGparams.channelAngle(Aparams.chanControlPair{i}(1))-pi/4);
+    iC2 = find(angComp==EMGparams.channelAngle(Aparams.chanControlPair{i}(2))-pi/4);
     siC = sort([iC1,iC2]);
     if sum(siP == siC) == 2
         j = j+1;
@@ -277,7 +289,7 @@ for i = 1:length(Aparams.angComp)
 end
 
 % FFT lim
-fc = 100;
+fc = 80;
 
 % Limits for fft of rectified EMG
 fft_fields = {'raw','filt','rect'};
@@ -299,7 +311,7 @@ Aparams.cohparams.my_nseg = 10;
 Aparams.cohparams.window = @(N) hanning(N);
 Aparams.cohparams.CLoverlap = 1;
 fields_coh = {'filt','rect'};
-fc = 100;
+fc = 80;
 
 if strcmp(Aparams.cohparams.data,'avg')
     trial_coh_force = cohStruct(trial_avg_force,EMGparams.channelName,fields_coh,Aparams.cohparams);
@@ -323,11 +335,20 @@ if savepp
     trial_pp.forceCO.force.mag_pstd = [fstruct.filtmag_pstd]';
     trial_pp.forceCO.force.mag_sem = [fstruct.filtmag_sem]';
     trial_pp.forceCO.force.mag_psem = [fstruct.filtmag_psem]';
+    
     trial_pp.forceCO.force.filt_mean = [fstruct.filt_mean]';
     trial_pp.forceCO.force.filt_std = [fstruct.filt_std]';
     trial_pp.forceCO.force.filt_pstd = [fstruct.filt_pstd]';
     trial_pp.forceCO.force.filt_sem = [fstruct.filt_sem]';
     trial_pp.forceCO.force.filt_psem = [fstruct.filt_psem]';
+    
+    trial_pp.forceCO.force.mag_CV = [fstruct.filtmag_CV]';
+    trial_pp.forceCO.force.mag_CV_mean = [fstruct.filtmag_CV_mean]';
+    trial_pp.forceCO.force.mag_CV_std = [fstruct.filtmag_CV_std]';
+    trial_pp.forceCO.force.filt_CV = [fstruct.filt_CV]';
+    trial_pp.forceCO.force.filt_CV_mean = [fstruct.filt_CV_mean]';
+    trial_pp.forceCO.force.filt_CV_std = [fstruct.filt_CV_std]';
+    
     trial_pp.forceCO.EMG.rect = cat(1,EMGstruct.rect_mean);
     trial_pp.forceCO.EMG.filt = cat(1,EMGstruct.filt_mean);
     trial_pp.forceCO.trial_coh = trial_coh_force;
@@ -340,11 +361,20 @@ if savepp
     trial_pp.EMGCO.force.mag_pstd = [fstruct.filtmag_pstd]';
     trial_pp.EMGCO.force.mag_sem = [fstruct.filtmag_sem]';
     trial_pp.EMGCO.force.mag_psem = [fstruct.filtmag_psem]';
+    
+    trial_pp.EMGCO.force.mag_CV = [fstruct.filtmag_CV]';
+    trial_pp.EMGCO.force.mag_CV_mean = [fstruct.filtmag_CV_mean]';
+    trial_pp.EMGCO.force.mag_CV_std = [fstruct.filtmag_CV_std]';
+    trial_pp.EMGCO.force.filt_CV = [fstruct.filt_CV]';
+    trial_pp.EMGCO.force.filt_CV_mean = [fstruct.filt_CV_mean]';
+    trial_pp.EMGCO.force.filt_CV_std = [fstruct.filt_CV_std]';
+    
     trial_pp.EMGCO.force.filt_mean = [fstruct.filt_mean]';
     trial_pp.EMGCO.force.filt_std = [fstruct.filt_std]';
     trial_pp.EMGCO.force.filt_pstd = [fstruct.filt_pstd]';
     trial_pp.EMGCO.force.filt_sem = [fstruct.filt_sem]';
     trial_pp.EMGCO.force.filt_psem = [fstruct.filt_psem]';
+    
     trial_pp.EMGCO.EMG.rect = cat(1,EMGstruct.rect_mean);
     trial_pp.EMGCO.EMG.filt = cat(1,EMGstruct.filt_mean);
     trial_pp.EMGCO.trial_coh = trial_coh_EMG;

@@ -215,8 +215,10 @@ if EMGEnabled
     targetPosx = targetEMG*cos(targetAnglesEMG)';
     targetPosy = targetEMG*sin(targetAnglesEMG)';
     
-    jointTargetPosx = jointTargetEMG(1)*cos(targetAnglesEMG(2))';
-    jointTargetPosy = jointTargetEMG(2)*sin(targetAnglesEMG(2))';
+    jointTargetMag = sqrt(jointTargetEMG(1)^2+jointTargetEMG(2)^2);
+    jointTargetAngle = atan(jointTargetEMG(2)/jointTargetEMG(1))+rotAngle;
+    jointTargetPosx = jointTargetMag*cos(jointTargetAngle);
+    jointTargetPosy = jointTargetMag*sin(jointTargetAngle);
     
     % Set figure
     hf = figure('Name','CO EMG Control Task');

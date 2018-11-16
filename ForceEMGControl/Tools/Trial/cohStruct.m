@@ -53,6 +53,7 @@ for i = 1:length(trial_data)
                     [trial_data_coh(i).(EMG_fields{j}).my_coh(:,h),trial_data_coh(i).(EMG_fields{j}).my_fcoh(:,h),my_nsegtot] = coherence(EMG_struct.(EMG_fields{j})(:,k),EMG_struct.(EMG_fields{j})(:,l),fs,my_win,my_overlap,CLoverlap,[]);
                 end
                 trial_data_coh(i).(EMG_fields{j}).my_CL(h) = 1-alp^(1/(my_nsegtot-1));
+                trial_data_coh(i).(EMG_fields{j}).my_nseg(h) = my_nsegtot;
                 
                 % z-score coherence
                 trial_data_coh(i).(EMG_fields{j}).z(:,h) = sqrt(2*my_nsegtot)*atanh(sqrt(trial_data_coh(i).(EMG_fields{j}).my_coh(:,h)));

@@ -133,20 +133,21 @@ for j = 1:length(Aparams.targetAnglesForce)
     for i = 1:length(Aparams.chanControl)
         h = h+1;
         subplot(length(Aparams.targetAnglesForce),length(Aparams.chanControl),h);
-        plot(trial_avg_force(j).ts,trial_avg_force(j).EMG.rect(:,Aparams.chanControl(i)));
+        plot(trial_avg_force(j).ts,trial_avg_force(j).EMG.rectScale(:,Aparams.chanControl(i)));
         hold on;
-        plot(trial_avg_force(j).ts,trial_avg_force(j).EMG.avg(:,Aparams.chanControl(i)));
-        ylim([0 EMGlim]); %ylim([0 max(trial_data_avg_force(j).EMG.rect(:))+10]);%
+        plot(trial_avg_force(j).ts,trial_avg_force(j).EMG.avgScale(:,Aparams.chanControl(i)),'LineWidth',2);
+        ylim([0 2]);%ylim([0 EMG_lim(j,Aparams.chanControl(i))]); %ylim([0 max(trial_data_avg_force(j).EMG.rect(:))+10]);%
         xlim([0 trial_avg_force(j).ts(end)]);
         if j == length(Aparams.targetAnglesForce)
             xlabel('Time [s]');
         end
         if i == 1
-            ylabel([num2str(rad2deg(Aparams.targetAnglesForce(j))) ,' deg']);
+            ylabel([num2str(rad2deg(Aparams.targetAnglesForce(j)))],'FontWeight','bold');
         end
         if j == 1
-            title(['Musc: ',Aparams.chanControlName{i}]);
+            title([Aparams.chanControlName{i}]);
         end
+        set(gca,'FontSize',12);
     end
 end
 
@@ -157,20 +158,21 @@ for j = 1:length(Aparams.targetAnglesEMG)
         h = h+1;
         subplot(length(Aparams.targetAnglesEMG),length(Aparams.chanControl),h);
         
-        plot(trial_avg_EMG(j).ts,trial_avg_EMG(j).EMG.rect(:,Aparams.chanControl(i)));
+        plot(trial_avg_EMG(j).ts,trial_avg_EMG(j).EMG.rectScale(:,Aparams.chanControl(i)));
         hold on;
-        plot(trial_avg_EMG(j).ts,trial_avg_EMG(j).EMG.avg(:,Aparams.chanControl(i)));
-        ylim([0 EMGlim]);%ylim([0 max(trial_data_avg_EMG(j).EMG.rect(:))+50]);
+        plot(trial_avg_EMG(j).ts,trial_avg_EMG(j).EMG.avgScale(:,Aparams.chanControl(i)),'LineWidth',2);
+        ylim([0 2]);%ylim([0 EMG_lim(j,Aparams.chanControl(i))]);%ylim([0 max(trial_data_avg_EMG(j).EMG.rect(:))+50]);
         xlim([0 trial_avg_EMG(j).ts(end)]);
         if j == length(Aparams.targetAnglesEMG)
             xlabel('Time [s]');
         end
         if i == 1
-            ylabel([num2str(rad2deg(Aparams.targetAnglesEMG(j))) ,' deg']);
+            ylabel([num2str(rad2deg(Aparams.targetAnglesEMG(j)))],'FontWeight','bold');
         end
         if j == 1
-            title(['Musc: ',Aparams.chanControlName{i}]);
+            title([Aparams.chanControlName{i}]);
         end
+        set(gca,'FontSize',12);
     end
 end
 
@@ -280,11 +282,49 @@ for j = 1:length(Aparams.angComp)
         xlim([0 length(Aparams.chanControl)+1]);
         ylabel('Mean EMG [-]');
         title(['Targets: Force-',num2str(rad2deg(Aparams.angComp{j}(1))),'; EMG-',num2str(rad2deg(Aparams.angComp{j}(2))),' (',Aparams.muscComp{j},')']);
-        legend('ForceCO','EMGCO')
+        
+        if j == 1
+            legend('Force-Control','EMG-Control')
+        end
     end
     xticks([0:length(Aparams.chanControl)]);
     xticklabels([{''},Aparams.chanControlName]);  
 end
+
+%% Fig of scaled EMG mean of control muscles. Subplot per target from angComp. 
+% Compare means of control muscles for each target.
+for k = 1:length(Aparams.muscComp)
+    xticklab{k} = {num2str(rad2deg(Aparams.angCompUni(k)));Aparams.muscComp(k)};   
+end
+figure('Name','EMG mean')
+    for i = 1:length(Aparams.chanControl)
+        subplot(length(Aparams.chanControl),1,i)
+        
+        for j = 1:length(Aparams.angComp)
+            iangf = find([trial_avg_force.angle] == Aparams.angComp{j}(1));
+            
+            h1 = plot(Aparams.angComp{j}(1),mean(trial_avg_force(iangf).EMG.rectScale(:,Aparams.chanControl(i))),'bo','MarkerFaceColor','b');
+            hold on
+            errorbar(Aparams.angComp{j}(1),mean(trial_avg_force(iangf).EMG.rectScale(:,Aparams.chanControl(i))),...
+                std(trial_avg_force(iangf).EMG.rectScale(:,Aparams.chanControl(i))),'b.')
+            iangE = find([trial_avg_EMG.angle] == Aparams.angComp{j}(2));
+            h2 = plot(Aparams.angComp{j}(2),mean(trial_avg_EMG(iangE).EMG.rectScale(:,Aparams.chanControl(i))),'ro','MarkerFaceColor','r');
+            errorbar(Aparams.angComp{j}(2),mean(trial_avg_EMG(iangE).EMG.rectScale(:,Aparams.chanControl(i))),...
+                std(trial_avg_EMG(iangE).EMG.rectScale(:,Aparams.chanControl(i))),'r.')
+        end
+        ylim([0 1.5]);xlim([Aparams.angCompUni(1)-0.2 Aparams.angCompUni(end)+0.2])
+        ylabel('EMG [-]'); 
+        xticklabels(rad2deg(Aparams.angCompUni));
+        set(gca,'XTick',[Aparams.angCompUni])
+        title(Aparams.chanControlName(i));
+        if i == 1
+            legend([h1,h2],'FC','MC')
+        elseif i == length(Aparams.chanControl)
+            xlabel('Target [deg]');
+        end
+        set(gca,'FontSize',12);
+    end
+%     xticklabels([{''},Aparams.chanControlName]);  
 
 %% Fig of EMG variance of all muscles. Subplot per target from angComp.
 figure('Name','EMG var')

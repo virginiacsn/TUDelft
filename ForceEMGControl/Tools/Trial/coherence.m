@@ -44,11 +44,15 @@ elseif ~isempty(iapp)
     napp = sum(iapp);
     sampseg = length(win); %floor(N/nseg);
     overlap = floor(sampseg/2);
+    missamp = round(N/sampseg)*sampseg-N;
     
+    xtemp = [x; zeros(missamp,1)];
+    ytemp = [y; zeros(missamp,1)];
+
     if sampseg <= overlap
         error('Overlap should be less than samples per segement. Reduce number of segments.')
     else
-        totseg = floor(N/(sampseg-overlap));
+        totseg = round(N/(sampseg-overlap));
     end
         
     X = zeros(sampseg,totseg*napp);
@@ -57,8 +61,8 @@ elseif ~isempty(iapp)
     
         for j = 1:napp
             for i = 0:totseg-2
-                X(:,count) = fft(x(idxapp(j)+(sampseg-overlap)*i:idxapp(j)+(sampseg-overlap)*i+sampseg-1).*win);
-                Y(:,count) = fft(y(idxapp(j)+(sampseg-overlap)*i:idxapp(j)+(sampseg-overlap)*i+sampseg-1).*win);
+                X(:,count) = fft(xtemp(idxapp(j)+(sampseg-overlap)*i:idxapp(j)+(sampseg-overlap)*i+sampseg-1).*win);
+                Y(:,count) = fft(ytemp(idxapp(j)+(sampseg-overlap)*i:idxapp(j)+(sampseg-overlap)*i+sampseg-1).*win);
                 count = count+1;
             end
         end
@@ -70,7 +74,7 @@ elseif ~isempty(iapp)
     if CLoverlap
         CLseg = totseg*napp;
     else
-        CLseg = floor(N/sampseg)*napp;
+        CLseg = round(N/sampseg)*napp;
     end
     
 elseif isempty(win)

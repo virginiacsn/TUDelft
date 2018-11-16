@@ -31,8 +31,12 @@ for iangle = 1:length(angles)
             else
                 scount = scount+1;
             end
-            if isrow(trial_pp(isubject).(field_str{1}).(field_str{2}))
+            if isrow(trial_pp(isubject).(field_str{1}).(field_str{2}))                
                 field_data_all = [field_data_all; trial_pp(isubject).(field_str{1}).(field_str{2})(iang)];
+            elseif strcmp((field_str{2}),'filt_mean')
+                filt_mat = reshape(trial_pp(isubject).(field_str{1}).(field_str{2}),length([trial_pp(isubject).angle]),3);
+                field_data_all = [field_data_all; filt_mat(iang,1:2)];
+                
             else
                 if strcmp(field_str{1},'EMG')
                     field_data_all = [field_data_all; trial_pp(isubject).(field_str{1}).(field_str{2})(iang,chanControl)];
