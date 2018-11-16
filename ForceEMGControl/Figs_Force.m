@@ -185,25 +185,53 @@ for i = 1:length(Aparams.angComp)
     set(gca,'XTick',1:2,'XTickLabel',{'ForceCO','EMGCO'});
 end
 
-%% Force CV Polar plot
-figure('Name','Force CV');
+%% Force mean and CV Polar plot
+figure('Name','Force Mean and CV');
 set(gcf,'units','normalized','outerposition',[0 0 1 1]);
-fCV = zeros(length(length(Aparams.angCompUni)),3);
-ECV = zeros(length(length(Aparams.angCompUni)),3);
+subplot(1,2,2)
+fm = zeros(length(length(Aparams.angCompUni)),3);
+Em = zeros(length(length(Aparams.angCompUni)),3);
 for k = 1:length(Aparams.angCompUni)
     iangf = find([trial_avg_force.angle] == Aparams.angCompUni(k));
     iangE = find([trial_avg_EMG.angle] == Aparams.angCompUni(k));
     
-    fCV(k) = 100*trial_avg_force(iangf).force.filtmag_pstd/trial_avg_force(iangf).force.filtmag_mean;
-    ECV(k) = 100*trial_avg_EMG(iangE).force.filtmag_pstd/trial_avg_EMG(iangE).force.filtmag_mean;
+    fm(k) = trial_avg_force(iangf).force.filtmag_CV;
+    Em(k) = trial_avg_EMG(iangE).force.filtmag_CV;
+%     fCV(k) = 100*trial_avg_force(iangf).force.filtmag_pstd/trial_avg_force(iangf).force.filtmag_mean;
+%     ECV(k) = 100*trial_avg_EMG(iangE).force.filtmag_pstd/trial_avg_EMG(iangE).force.filtmag_mean;
 end
-polarscatter(Aparams.angCompUni,fCV,60,'filled')
+polarscatter(Aparams.angCompUni,fm,60,'filled','b')
 hold on
-polarscatter(Aparams.angCompUni,ECV,60,'filled','r')
+polarscatter(Aparams.angCompUni,Em,60,'filled','r')
 thetaticks([rad2deg(Aparams.angCompUni)]); thetaticklabels(rad2deg(Aparams.angCompUni));
-title('Force CV')
-set(gca,'FontSize',12);
-legend('ForceCO','EMGCO','Location','bestoutside');
+title({'Force Magnitude'; 'CV'})
+set(gca,'FontSize',18);
+
+subplot(1,2,1)
+fm = zeros(length(length(Aparams.angCompUni)),3);
+Em = zeros(length(length(Aparams.angCompUni)),3);
+fstd = zeros(length(length(Aparams.angCompUni)),3);
+Estd = zeros(length(length(Aparams.angCompUni)),3);
+for k = 1:length(Aparams.angCompUni)
+    iangf = find([trial_avg_force.angle] == Aparams.angCompUni(k));
+    iangE = find([trial_avg_EMG.angle] == Aparams.angCompUni(k));
+    
+    fm(k) = trial_avg_force(iangf).force.filtmag_mean;
+    Em(k) = trial_avg_EMG(iangE).force.filtmag_mean;
+    fstd(k) = trial_avg_force(iangf).force.filtmag_std;
+    Estd(k) = trial_avg_EMG(iangE).force.filtmag_std;
+    %     fCV(k) = 100*trial_avg_force(iangf).force.filtmag_pstd/trial_avg_force(iangf).force.filtmag_mean;
+    %     ECV(k) = 100*trial_avg_EMG(iangE).force.filtmag_pstd/trial_avg_EMG(iangE).force.filtmag_mean;
+end
+h1 = polarscatter(Aparams.angCompUni,fm,60,'filled','b');
+hold on
+errorpolar(Aparams.angCompUni,fm,fstd,'b')
+h2 = polarscatter(Aparams.angCompUni,Em,60,'filled','r');
+errorpolar(Aparams.angCompUni,Em,Estd,'r')
+thetaticks([rad2deg(Aparams.angCompUni)]); thetaticklabels(rad2deg(Aparams.angCompUni));
+title({'Force Magnitude'; 'Mean'})
+set(gca,'FontSize',18);
+legend([h1,h2],'FC','MC','Location','bestoutside');
 
 %% Force CV plot
 figure('Name','Force CV');
@@ -212,12 +240,13 @@ for k = 1:length(Aparams.angCompUni)
     iangf = find([trial_avg_force.angle] == Aparams.angCompUni(k));
     iangE = find([trial_avg_EMG.angle] == Aparams.angCompUni(k));
     
-    h1 = plot(trial_avg_force(iangf).angle,trial_avg_force(iangf).force.filtmag_CV_mean,'bo','MarkerFaceColor','b');
+    h1 = plot(rad2deg(trial_avg_force(iangf).angle),trial_avg_force(iangf).force.filtmag_CV,'bo','MarkerFaceColor','b');
     hold on;
-    errorbar(trial_avg_force(iangf).angle,trial_avg_force(iangf).force.filtmag_CV_mean,trial_avg_force(iangf).force.filtmag_CV_std,'b.');
-    h2 = plot(trial_avg_EMG(iangE).angle,trial_avg_EMG(iangE).force.filtmag_CV_mean,'ro','MarkerFaceColor','r');
-    errorbar(trial_avg_EMG(iangE).angle,trial_avg_EMG(iangE).force.filtmag_CV_mean,trial_avg_EMG(iangE).force.filtmag_CV_std,'r.');
+    %errorbar(trial_avg_force(iangf).angle,trial_avg_force(iangf).force.filtmag_CV_mean,trial_avg_force(iangf).force.filtmag_CV_std,'b.');
+    h2 = plot(rad2deg(trial_avg_EMG(iangE).angle),trial_avg_EMG(iangE).force.filtmag_CV,'ro','MarkerFaceColor','r');
+    %errorbar(trial_avg_EMG(iangE).angle,trial_avg_EMG(iangE).force.filtmag_CV,trial_avg_EMG(iangE).force.filtmag_CV_std,'r.');
 end
+xticks(rad2deg(Aparams.angCompUni))
 title('Force CV')
 legend([h1,h2],'ForceCO','EMGCO');
 set(gca,'FontSize',13);

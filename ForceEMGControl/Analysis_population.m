@@ -16,11 +16,13 @@ trial_pp_EMG = [];
 dirs = dir(filepath);
 files = dirs(~[dirs.isdir]);
 for i = 1:length(files)
-    load([filepath,files(i).name]);
-    if isempty(strfind(files(i).name,'s04'))
-        Aparams_pp = [Aparams_pp, trial_pp.Aparams];
-        trial_pp_force = [trial_pp_force, trial_pp.forceCO];
-        trial_pp_EMG = [trial_pp_EMG, trial_pp.EMGCO];
+    if ~isempty(strfind(files(i).name,'_s'))
+        load([filepath,files(i).name]);
+        if isempty(strfind(files(i).name,'s04'))
+            Aparams_pp = [Aparams_pp, trial_pp.Aparams];
+            trial_pp_force = [trial_pp_force, trial_pp.forceCO];
+            trial_pp_EMG = [trial_pp_EMG, trial_pp.EMGCO];
+        end
     end
 end
 
@@ -192,6 +194,30 @@ title('Mean Force CV');
 legend([h1,h2],{'ForceCO','EMGCO'});
 set(gca,'FontSize',12);
 
+%% Force mean and CV - Polar
+figure('Name','Force CV');
+set(gcf,'units','normalized','outerposition',[0 0 1 1]);
+subplot(1,2,1)
+h1 = polarscatter(angComp,[avgforce_force.mag_mean_mean],60,'filled','b');
+hold on;
+h2 = polarscatter(angComp,[avgEMG_force.mag_mean_mean],60,'filled','r');
+errorpolar(angComp,[avgforce_force.mag_mean_mean],[avgforce_force.mag_mean_sem],'b')
+errorpolar(angComp,[avgEMG_force.mag_mean_mean],[avgEMG_force.mag_mean_sem],'r')
+thetaticks(degAngComp); thetaticklabels(degAngComp);
+title({'Force Magnitude'; 'Mean'})
+set(gca,'FontSize',18);
+
+subplot(1,2,2)
+h1 = polarscatter(avgCV.angle,avgCV.force.mean,60,'filled','b');
+hold on;
+h2 = polarscatter(avgCV.angle,avgCV.EMG.mean,60,'filled','r');
+errorpolar(avgCV.angle,avgCV.force.mean,avgCV.force.sem,'b')
+errorpolar(avgCV.angle,avgCV.EMG.mean,avgCV.EMG.sem,'r')
+thetaticks(degAngComp); thetaticklabels(degAngComp);
+title({'Force Magnitude'; 'CV'})
+set(gca,'FontSize',18);
+legend([h1,h2],'FC','MC','Location','bestoutside');
+
 %% EMG
 %% EMG mean
 figure('Name','EMG Mean');
@@ -223,18 +249,23 @@ for i = 1:size(force_EMG_smean,2)
     h1 = plot(degAngComp,force_EMG_smean(:,i),'bo','MarkerFaceColor','b');
     hold on;
     h2 = plot(degAngComp,EMG_EMG_smean(:,i),'ro','MarkerFaceColor','r');
-    errorbar(degAngComp,force_EMG_smean(:,i),force_EMG_ssem(:,i),'b.')
-    errorbar(degAngComp,EMG_EMG_smean(:,i),EMG_EMG_ssem(:,i),'r.')
-    plot(fit_angle,fit_force_EMG_smean(:,i),'b--');
-    plot(fit_angle,fit_EMG_EMG_smean(:,i),'r--')
+    errorbar(degAngComp,force_EMG_smean(:,i),force_EMG_ssem(:,i),'b.','Capsize',12)
+    errorbar(degAngComp,EMG_EMG_smean(:,i),EMG_EMG_ssem(:,i),'r.','Capsize',12)
+%     plot(fit_angle,fit_force_EMG_smean(:,i),'b--');
+%     plot(fit_angle,fit_EMG_EMG_smean(:,i),'r--')
+    %line(xlim,[0.9 0.9],'LineStyle','-.');line(xlim,[0.5 0.5],'LineStyle','-.');
+    ylim([0 1.2]); xlim([degAngComp(1)-10 degAngComp(end)+10])
+    line(xlim,[1 1],'LineStyle','-.','Color','k');line(xlim,[0.7 0.7],'LineStyle','-.','Color','k');
     set(gca,'XTick',degAngComp);
     if i == size(force_EMG_smean,2)
         xlabel('Target [deg]');
     end
     ylabel('EMG [-]');
     title(Aparams_pp(1).chanControlName{i});
-    legend([h1,h2],{'ForceCO','EMGCO'});
-    set(gca,'FontSize',12);
+    if i == 1
+    legend([h1,h2],{'FC','MC'});
+    end
+    set(gca,'FontSize',13);
 end
 
 %% EMG difference mean
@@ -412,7 +443,6 @@ for i = 1:length(avgCoh.musc)
 end
 
 %% Area coh - Polar, one per musccomb
-
 bands = {'alp','beta','gam'};
 bands_label = {'Alpha','Beta','Gamma'};
 for i = 1:length(avgCoh.musc) 
@@ -460,43 +490,10 @@ for i = 1:length(avgCoh.musc)
         f = plot(rad2deg(avgCoh.angle(iang)),avgCoh.force.asig_coh.(bands{j}).mean(iang,i),'b-.o');
         f.MarkerFaceColor = 'b';
         hold on;
-        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.force.asig_coh.(bands{j}).mean(iang,i),avgCoh.force.asig_coh.(bands{j}).mean(iang,i),'b.');
+        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.force.asig_coh.(bands{j}).mean(iang,i),avgCoh.force.asig_coh.(bands{j}).sem(iang,i),'b.');
         e = plot(rad2deg(avgCoh.angle(iang)),avgCoh.EMG.asig_coh.(bands{j}).mean(iang,i),'r-.o');
         e.MarkerFaceColor = 'r';
-        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.EMG.asig_coh.(bands{j}).mean(iang,i),avgCoh.EMG.asig_coh.(bands{j}).mean(iang,i),'r.');
-        if i == 1
-            title(bands_label{j})
-        end
-        if j == 1
-            ylabel([avgCoh.musc{i}{1},'-',avgCoh.musc{i}{2}],'FontWeight','bold');
-        end
-        if i == length(avgCoh.musc)
-            xlabel('Target [deg]');
-        end
-        set(gca,'XTick',rad2deg(avgCoh.angle(iang)));
-        set(gca,'FontSize',14);
-    end
-end
-
-%% Area coh - Plot only joint angles
-figure('Name','Significant Coherence Area');
-set(gcf,'units','normalized','outerposition',[0 0 1 1]);
-k = 0;
-bands = {'alp','beta','gam'};
-bands_label = {'Alpha','Beta','Gamma'};
-for i = 1:length(avgCoh.musc)
-    iang = ismember(avgCoh.angle,avgCoh.angmusc{i}(2));
-    yf = []; ye = [];
-    for j = 1:length(bands)
-        k = k+1;
-        subplot(length(avgCoh.musc),length(bands),k)
-        f = plot(rad2deg(avgCoh.angle(iang)),avgCoh.force.asig_coh.(bands{j}).mean(iang,i),'b-.o');
-        f.MarkerFaceColor = 'b';
-        hold on;
-        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.force.asig_coh.(bands{j}).mean(iang,i),avgCoh.force.asig_coh.(bands{j}).mean(iang,i),'b.');
-        e = plot(rad2deg(avgCoh.angle(iang)),avgCoh.EMG.asig_coh.(bands{j}).mean(iang,i),'r-.o');
-        e.MarkerFaceColor = 'r';
-        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.EMG.asig_coh.(bands{j}).mean(iang,i),avgCoh.EMG.asig_coh.(bands{j}).mean(iang,i),'r.');
+        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.EMG.asig_coh.(bands{j}).mean(iang,i),avgCoh.EMG.asig_coh.(bands{j}).sem(iang,i),'r.');
         if i == 1
             title(bands_label{j})
         end
@@ -526,10 +523,10 @@ for i = 1:length(avgCoh.musc)
         f = plot(rad2deg(avgCoh.angle(iang)),avgCoh.force.asig_z.(bands{j}).mean(iang,i),'b-.o');
         f.MarkerFaceColor = 'b';
         hold on;
-        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.force.asig_z.(bands{j}).mean(iang,i),avgCoh.force.asig_z.(bands{j}).mean(iang,i),'b.');
+        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.force.asig_z.(bands{j}).mean(iang,i),avgCoh.force.asig_z.(bands{j}).sem(iang,i),'b.');
         e = plot(rad2deg(avgCoh.angle(iang)),avgCoh.EMG.asig_z.(bands{j}).mean(iang,i),'r-.o');
         e.MarkerFaceColor = 'r';
-        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.EMG.asig_z.(bands{j}).mean(iang,i),avgCoh.EMG.asig_z.(bands{j}).mean(iang,i),'r.');
+        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.EMG.asig_z.(bands{j}).mean(iang,i),avgCoh.EMG.asig_z.(bands{j}).sem(iang,i),'r.');
         if i == 1
             title(bands_label{j})
         end
@@ -559,10 +556,10 @@ for i = 1:length(avgCoh.musc)
         f = plot(rad2deg(avgCoh.angle(iang)),avgCoh.force.nasig_coh.(bands{j}).mean(iang,i),'b-.o');
         f.MarkerFaceColor = 'b';
         hold on;
-        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.force.nasig_coh.(bands{j}).mean(iang,i),avgCoh.force.nasig_coh.(bands{j}).mean(iang,i),'b.');
+        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.force.nasig_coh.(bands{j}).mean(iang,i),avgCoh.force.nasig_coh.(bands{j}).sem(iang,i),'b.');
         e = plot(rad2deg(avgCoh.angle(iang)),avgCoh.EMG.nasig_coh.(bands{j}).mean(iang,i),'r-.o');
         e.MarkerFaceColor = 'r';
-        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.EMG.nasig_coh.(bands{j}).mean(iang,i),avgCoh.EMG.nasig_coh.(bands{j}).mean(iang,i),'r.');
+        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.EMG.nasig_coh.(bands{j}).mean(iang,i),avgCoh.EMG.nasig_coh.(bands{j}).sem(iang,i),'r.');
         if i == 1
             title(bands_label{j})
         end
@@ -579,35 +576,137 @@ for i = 1:length(avgCoh.musc)
 end
 
 %% Norm area z - Plot
+sangpair = {avgCoh.angmusc{3},avgCoh.angmusc{2},avgCoh.angmusc{1}};
+smuscpair = {avgCoh.musc{3},avgCoh.musc{2},avgCoh.musc{1}};
+srt = [3,2,1];
+
+figure('Name','Significant Norm Z-score Area');
+set(gcf,'units','normalized','outerposition',[0 0 1 1]);
+k = 0;
+bands = {'alp','beta','gam'};
+bands_label = {'Alpha','Beta','Gamma'};
+for j = 1:length(bands)
+    for i = 1:length(avgCoh.musc)
+        iang = ismember(avgCoh.angle,sangpair{i});        
+        k = k+1;
+        subplot(length(avgCoh.musc),length(bands),k)
+        f = plot(rad2deg(avgCoh.angle(iang)),avgCoh.force.nasig_z.(bands{j}).mean(iang,srt(i)),'b-.o','MarkerFaceColor','b');
+        hold on;
+        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.force.nasig_z.(bands{j}).mean(iang,srt(i)),avgCoh.force.nasig_z.(bands{j}).sem(iang,srt(i)),'b.','CapSize',12);
+        e = plot(rad2deg(avgCoh.angle(iang)),avgCoh.EMG.nasig_z.(bands{j}).mean(iang,srt(i)),'r-.o','MarkerFaceColor','r');
+        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.EMG.nasig_z.(bands{j}).mean(iang,srt(i)),avgCoh.EMG.nasig_z.(bands{j}).sem(iang,srt(i)),'r.','CapSize',12);
+        xlim(rad2deg([sangpair{i}(1)-0.2 sangpair{i}(3)+0.2]));
+        if i == 1
+            ylabel({['\bf',bands_label{j}];'\rmArea Z [-]'},'interpreter','tex');
+        end
+        if j == 1
+            title([smuscpair{i}{1},'-',smuscpair{i}{2}],'FontWeight','bold');
+        end
+        if j == length(avgCoh.musc)
+            xlabel('Target [deg]');
+        end
+        if j == 1 && i == 3
+            legend([f,e],'FC','MC');
+        end
+        set(gca,'XTick',rad2deg(avgCoh.angle(iang)));
+        set(gca,'FontSize',13);
+    end
+end
+
+%% Norm area z - Plot only joint ang
+sangpair = {avgCoh.angmusc{3},avgCoh.angmusc{2},avgCoh.angmusc{1}};
+smuscpair = {avgCoh.musc{3},avgCoh.musc{2},avgCoh.musc{1}};
+srt = [3,2,1];
+
 figure('Name','Significant Norm Z-score Area');
 set(gcf,'units','normalized','outerposition',[0 0 1 1]);
 k = 0;
 bands = {'alp','beta','gam'};
 bands_label = {'Alpha','Beta','Gamma'};
 for i = 1:length(avgCoh.musc)
-    iang = ismember(avgCoh.angle,avgCoh.angmusc{i});
-    yf = []; ye = [];
+    iang = ismember(avgCoh.angle,sangpair{i}(2));
+    k = k+1;
+    subplot(1,length(avgCoh.musc),k)
     for j = 1:length(bands)
-        k = k+1;
-        subplot(length(avgCoh.musc),length(bands),k)
-        f = plot(rad2deg(avgCoh.angle(iang)),avgCoh.force.nasig_z.(bands{j}).mean(iang,i),'b-.o');
-        f.MarkerFaceColor = 'b';
+        f = plot(j,avgCoh.force.nasig_z.(bands{j}).mean(iang,srt(i)),'bo','MarkerFaceColor','b');
         hold on;
-        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.force.nasig_z.(bands{j}).mean(iang,i),avgCoh.force.nasig_z.(bands{j}).mean(iang,i),'b.');
-        e = plot(rad2deg(avgCoh.angle(iang)),avgCoh.EMG.nasig_z.(bands{j}).mean(iang,i),'r-.o');
-        e.MarkerFaceColor = 'r';
-        errorbar(rad2deg(avgCoh.angle(iang)),avgCoh.EMG.nasig_z.(bands{j}).mean(iang,i),avgCoh.EMG.nasig_z.(bands{j}).mean(iang,i),'r.');
-        if i == 1
-            title(bands_label{j})
-        end
-        if j == 1
-            ylabel([avgCoh.musc{i}{1},'-',avgCoh.musc{i}{2}],'FontWeight','bold');
-        end
-        if i == length(avgCoh.musc)
-            xlabel('Target [deg]');
-        end
-        set(gca,'XTick',rad2deg(avgCoh.angle(iang)));
-        set(gca,'FontSize',14);
+        errorbar(j,avgCoh.force.nasig_z.(bands{j}).mean(iang,srt(i)),avgCoh.force.nasig_z.(bands{j}).sem(iang,srt(i)),'b.','CapSize',12);
+        e = plot(j,avgCoh.EMG.nasig_z.(bands{j}).mean(iang,srt(i)),'ro','MarkerFaceColor','r');
+        errorbar(j,avgCoh.EMG.nasig_z.(bands{j}).mean(iang,srt(i)),avgCoh.EMG.nasig_z.(bands{j}).sem(iang,srt(i)),'r.','CapSize',12);
+    end
+    xlim([0.5 3.5]);
+    xlabel('Frequency Band');
+    title([smuscpair{i}{1},'-',smuscpair{i}{2} ' (',num2str(rad2deg(sangpair{i}(2))),')'],'FontWeight','bold');
+    if i == 1   
+        ylabel('Area Z [-]');        
+    end
+    if i == 3
+        legend([f,e],'FC','MC');
+    end
+    set(gca,'XTick',1:3,'XTickLabels',bands_label);
+    set(gca,'FontSize',13);
+end
+
+%% Grand average z
+sangpair = {avgCoh.angmusc{3},avgCoh.angmusc{2},avgCoh.angmusc{1}};
+smuscpair = {avgCoh.musc{3},avgCoh.musc{2},avgCoh.musc{1}};
+srt = [3,2,1];
+fc = 80; h = 0;
+figure('Name','Grand Average Z-score');
+for k = 1:length(smuscpair)
+    for i = 1:length(sangpair)
         
+        iang = find([avgCoh.angle] == sangpair{i}(k));
+        h = h+1;
+        subplot(length(sangpair),length(sangpair),h);
+        
+        h1 = plot(avgCoh.force.my_fcoh,avgCoh.force.z(iang).mean(:,srt(i)),'b','Linewidth',2);
+        hold on;
+        h2 = plot(avgCoh.force.my_fcoh,avgCoh.EMG.z(iang).mean(:,srt(i)),'r','Linewidth',2);
+        line(xlim,[1.65 1.65],'Color','k','LineStyle','-.');
+        xlim([2 fc]); %ylim([0 coh_lim.(field)(Aparams.angCompUni==sangpair{i}(k),srt(i))]);
+        title(['Target: ',num2str(rad2deg(sangpair{i}(k))),' deg (',avgCoh.muscComp{srt(i)}{k},')']);
+        if k == 3
+            xlabel('Frequency [Hz]');
+        end
+        if i == 1
+            ylabel('Z [-]');
+        end
+        if i == 3 && k == 1
+            legend([h1,h2],'FC','EC')
+        end
+        set(gca,'FontSize',13);
+    end
+end
+
+%% Z participant counts
+sangpair = {avgCoh.angmusc{3},avgCoh.angmusc{2},avgCoh.angmusc{1}};
+smuscpair = {avgCoh.musc{3},avgCoh.musc{2},avgCoh.musc{1}};
+srt = [3,2,1];
+fc = 80; h = 0;
+figure('Name','Grand Average Z-score');
+for k = 1:length(smuscpair)
+    for i = 1:length(sangpair)
+        
+        iang = find([avgCoh.angle] == sangpair{i}(k));
+        h = h+1;
+        subplot(length(sangpair),length(sangpair),h);
+        
+        h1 = plot(avgCoh.force.my_fcoh,avgCoh.force.my_coh(iang).scount(:,srt(i)),'b','Linewidth',2);
+        hold on;
+        h2 = plot(avgCoh.force.my_fcoh,avgCoh.EMG.my_coh(iang).scount(:,srt(i)),'r','Linewidth',2);
+        line(xlim,[1.65 1.65],'Color','k','LineStyle','-.');
+        xlim([2 fc]); ylim([0 7.5]);
+        title(['Target: ',num2str(rad2deg(sangpair{i}(k))),' deg (',avgCoh.muscComp{srt(i)}{k},')']);
+        if k == 3
+            xlabel('Frequency [Hz]');
+        end
+        if i == 1
+            ylabel('Subjects');
+        end
+        if i == 3 && k == 1
+            legend([h1,h2],'FC','EC')
+        end
+        set(gca,'FontSize',13);
     end
 end

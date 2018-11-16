@@ -293,13 +293,12 @@ end
 
 %% Fig of scaled EMG mean of control muscles. Subplot per target from angComp. 
 % Compare means of control muscles for each target.
-for k = 1:length(Aparams.muscComp)
-    xticklab{k} = {num2str(rad2deg(Aparams.angCompUni(k)));Aparams.muscComp(k)};   
-end
+% for k = 1:length(Aparams.muscComp)
+%     xticklab{k} = {num2str(rad2deg(Aparams.angCompUni(k)));Aparams.muscComp(k)};   
+% end
 figure('Name','EMG mean')
     for i = 1:length(Aparams.chanControl)
         subplot(length(Aparams.chanControl),1,i)
-        
         for j = 1:length(Aparams.angComp)
             iangf = find([trial_avg_force.angle] == Aparams.angComp{j}(1));
             
@@ -427,7 +426,7 @@ for j = 1:length(Aparams.targetAnglesForce)
             xlabel('Frequency [Hz]');
         end
         if i == 1
-            ylabel([num2str(rad2deg(Aparams.targetAnglesForce(j))) ,' deg']);
+            ylabel([num2str(rad2deg(Aparams.targetAnglesForce(j))) ,' deg'],'FontWeight','bold');
         end
         if j == 1
             title(['Musc: ',Aparams.chanControlName{i}]);
@@ -452,10 +451,75 @@ for j = 1:length(Aparams.targetAnglesEMG)
             xlabel('Frequency [Hz]');
         end
         if i == 1
-            ylabel([num2str(rad2deg(Aparams.targetAnglesEMG(j))) ,' deg']);
+            ylabel([num2str(rad2deg(Aparams.targetAnglesEMG(j))) ,' deg'],'FontWeight','bold');
         end
         if j == 1
             title(['Musc: ',Aparams.chanControlName{i}]);
         end
     end
 end
+
+%% FFT comparison tasks
+h = 0;
+figure('Name','FFT');
+set(gcf,'units','normalized','outerposition',[0 0 1 1]);
+for j = 1:length(Aparams.angComp)
+    for i = 1:length(Aparams.chanControl)
+        h = h+1;
+        subplot(length(Aparams.targetAnglesEMG),length(Aparams.chanControl),h);
+        
+        iangf = find([trial_avg_force.angle] == Aparams.angComp{j}(1));
+        iangE = find([trial_avg_EMG.angle] == Aparams.angComp{j}(2));
+
+        h1 = plot(trial_avg_force(iangf).fv,abs(trial_avg_force(iangf).EMG.fftrect(:,Aparams.chanControl(i))),'b');
+        hold on;
+        h2 = plot(trial_avg_EMG(iangE).fv,abs(trial_avg_EMG(iangE).EMG.fftrect(:,Aparams.chanControl(i))),'r');
+        xlim([2 fc]); %ylim([0 max(max(fft_lim.rect(:,Aparams.chanControl(i))))]);
+        if j == length(Aparams.angComp)
+            xlabel('Frequency [Hz]');
+        end
+        if i == 1
+            ylabel([num2str(rad2deg(Aparams.angComp{j}(1))) ,' deg'],'FontWeight','bold');
+        end
+        if j == 1
+            title(['Musc: ',Aparams.chanControlName{i}]);
+            if i == length(Aparams.chanControl)
+                legend([h1,h2],{'FC','MC'})
+            end
+        end
+        set(gca,'Fontsize',13);
+    end
+end
+
+%% Scaled EMG Polar plot
+figure('Name','Scaled mean EMG');
+set(gcf,'units','normalized','outerposition',[0 0 1 1]);
+for i = 1:length(Aparams.chanControl)
+    subplot(2,2,i)
+    fm = zeros(length(length(Aparams.angCompUni)),3);
+    Em = zeros(length(length(Aparams.angCompUni)),3);
+    fstd = zeros(length(length(Aparams.angCompUni)),3);
+    Estd = zeros(length(length(Aparams.angCompUni)),3);
+    for k = 1:length(Aparams.angCompUni)
+        iangf = find([trial_avg_force.angle] == Aparams.angCompUni(k));
+        iangE = find([trial_avg_EMG.angle] == Aparams.angCompUni(k));
+        
+        fm(k) = mean(trial_avg_force(iangf).EMG.rectScale(:,Aparams.chanControl(i)));
+        Em(k) = mean(trial_avg_EMG(iangf).EMG.rectScale(:,Aparams.chanControl(i)));
+        fstd(k) = std(trial_avg_force(iangf).EMG.rectScale(:,Aparams.chanControl(i)));
+        Estd(k) = std(trial_avg_EMG(iangf).EMG.rectScale(:,Aparams.chanControl(i)));
+        %     fCV(k) = 100*trial_avg_force(iangf).force.filtmag_pstd/trial_avg_force(iangf).force.filtmag_mean;
+        %     ECV(k) = 100*trial_avg_EMG(iangE).force.filtmag_pstd/trial_avg_EMG(iangE).force.filtmag_mean;
+    end
+    h1 = polarscatter(Aparams.angCompUni,fm,60,'filled','b');
+    hold on
+    errorpolar(Aparams.angCompUni,fm,fstd,'b')
+    h2 = polarscatter(Aparams.angCompUni,Em,60,'filled','r');
+    errorpolar(Aparams.angCompUni,Em,Estd,'r')
+    thetaticks([rad2deg(Aparams.angCompUni)]); thetaticklabels(rad2deg(Aparams.angCompUni));
+    rlim([0 1.2])
+    title(Aparams.chanControlName(i))
+    set(gca,'FontSize',18);
+end
+
+legend([h1,h2],'FC','MC','Location','bestoutside');

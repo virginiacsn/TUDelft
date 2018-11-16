@@ -14,18 +14,20 @@ for iang = 1:length(angComp)
         
         if ~isempty(iangf)
             scountf = scountf+1;
-            CVforce = [CVforce,100*trial_pp_force(isubject).force.mag_pstd(iangf)./trial_pp_force(isubject).force.mag_mean(iangf)];
+            %CVforce = [CVforce,100*trial_pp_force(isubject).force.mag_pstd(iangf)./trial_pp_force(isubject).force.mag_mean(iangf)];
+            CVforce = [CVforce, trial_pp_force(isubject).force.mag_CV(iangf)];
         end
         if ~isempty(iangE)
             scounte = scounte+1;
-            CVEMG = [CVEMG,100*trial_pp_EMG(isubject).force.mag_pstd(iangE)./trial_pp_EMG(isubject).force.mag_mean(iangE)];
+            %CVEMG = [CVEMG,100*trial_pp_EMG(isubject).force.mag_pstd(iangE)./trial_pp_EMG(isubject).force.mag_mean(iangE)];
+            CVEMG = [CVEMG, trial_pp_EMG(isubject).force.mag_CV(iangE)];
         end
     end
     CV.force.mean(iang) = mean(CVforce);
     CV.force.std(iang) = std(CVforce);
-    CV.force.sem(iang) = std(CVforce)/length(scountf);
+    CV.force.sem(iang) = std(CVforce)/sqrt(length(scountf));
     CV.EMG.mean(iang) = mean(CVEMG);
     CV.EMG.std(iang) = std(CVEMG);
-    CV.EMG.sem(iang) = std(CVEMG)/length(scounte);
+    CV.EMG.sem(iang) = std(CVEMG)/sqrt(length(scounte));
 end
 end
