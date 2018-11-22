@@ -291,39 +291,39 @@ for j = 1:length(Aparams.angComp)
     xticklabels([{''},Aparams.chanControlName]);  
 end
 
-%% Fig of scaled EMG mean of control muscles. Subplot per target from angComp. 
+%% Fig of scaled EMG mean of control muscles. Subplot per target from angComp.
 % Compare means of control muscles for each target.
 % for k = 1:length(Aparams.muscComp)
-%     xticklab{k} = {num2str(rad2deg(Aparams.angCompUni(k)));Aparams.muscComp(k)};   
+%     xticklab{k} = {num2str(rad2deg(Aparams.angCompUni(k)));Aparams.muscComp(k)};
 % end
 figure('Name','EMG mean')
-    for i = 1:length(Aparams.chanControl)
-        subplot(length(Aparams.chanControl),1,i)
-        for j = 1:length(Aparams.angComp)
-            iangf = find([trial_avg_force.angle] == Aparams.angComp{j}(1));
-            
-            h1 = plot(Aparams.angComp{j}(1),mean(trial_avg_force(iangf).EMG.rectScale(:,Aparams.chanControl(i))),'bo','MarkerFaceColor','b');
-            hold on
-            errorbar(Aparams.angComp{j}(1),mean(trial_avg_force(iangf).EMG.rectScale(:,Aparams.chanControl(i))),...
-                std(trial_avg_force(iangf).EMG.rectScale(:,Aparams.chanControl(i))),'b.')
-            iangE = find([trial_avg_EMG.angle] == Aparams.angComp{j}(2));
-            h2 = plot(Aparams.angComp{j}(2),mean(trial_avg_EMG(iangE).EMG.rectScale(:,Aparams.chanControl(i))),'ro','MarkerFaceColor','r');
-            errorbar(Aparams.angComp{j}(2),mean(trial_avg_EMG(iangE).EMG.rectScale(:,Aparams.chanControl(i))),...
-                std(trial_avg_EMG(iangE).EMG.rectScale(:,Aparams.chanControl(i))),'r.')
-        end
-        ylim([0 1.5]);xlim([Aparams.angCompUni(1)-0.2 Aparams.angCompUni(end)+0.2])
-        ylabel('EMG [-]'); 
-        xticklabels(rad2deg(Aparams.angCompUni));
-        set(gca,'XTick',[Aparams.angCompUni])
-        title(Aparams.chanControlName(i));
-        if i == 1
-            legend([h1,h2],'FC','MC')
-        elseif i == length(Aparams.chanControl)
-            xlabel('Target [deg]');
-        end
-        set(gca,'FontSize',12);
+for i = 1:length(Aparams.chanControl)
+    subplot(length(Aparams.chanControl),1,i)
+    for j = 1:length(Aparams.angComp)
+        iangf = find([trial_avg_force.angle] == Aparams.angComp{j}(1));
+        
+        h1 = plot(Aparams.angComp{j}(1),mean(trial_avg_force(iangf).EMG.rectScale(:,Aparams.chanControl(i))),'bo','MarkerFaceColor','b');
+        hold on
+        errorbar(Aparams.angComp{j}(1),mean(trial_avg_force(iangf).EMG.rectScale(:,Aparams.chanControl(i))),...
+            std(trial_avg_force(iangf).EMG.rectScale(:,Aparams.chanControl(i))),'b.')
+        iangE = find([trial_avg_EMG.angle] == Aparams.angComp{j}(2));
+        h2 = plot(Aparams.angComp{j}(2),mean(trial_avg_EMG(iangE).EMG.rectScale(:,Aparams.chanControl(i))),'ro','MarkerFaceColor','r');
+        errorbar(Aparams.angComp{j}(2),mean(trial_avg_EMG(iangE).EMG.rectScale(:,Aparams.chanControl(i))),...
+            std(trial_avg_EMG(iangE).EMG.rectScale(:,Aparams.chanControl(i))),'r.')
     end
-%     xticklabels([{''},Aparams.chanControlName]);  
+    ylim([0 1.5]);xlim([Aparams.angCompUni(1)-0.2 Aparams.angCompUni(end)+0.2])
+    line(xlim,[1 1],'LineStyle',':','Color','k','Linewidth',1.7);line(xlim,[0.7 0.7],'LineStyle',':','Color','k','Linewidth',1.7);
+    ylabel('EMG [-]');
+    xticklabels(rad2deg(Aparams.angCompUni));
+    set(gca,'XTick',[Aparams.angCompUni])
+    title(Aparams.chanControlName(i));
+    if i == 1
+        legend([h1,h2],'FC','MC')
+    elseif i == length(Aparams.chanControl)
+        xlabel('Target [deg]');
+    end
+    set(gca,'FontSize',13);
+end
 
 %% Fig of EMG variance of all muscles. Subplot per target from angComp.
 figure('Name','EMG var')
@@ -479,10 +479,10 @@ for j = 1:length(Aparams.angComp)
             xlabel('Frequency [Hz]');
         end
         if i == 1
-            ylabel([num2str(rad2deg(Aparams.angComp{j}(1))) ,' deg'],'FontWeight','bold');
+            ylabel([num2str(rad2deg(Aparams.angComp{j}(1)))],'FontWeight','bold');
         end
         if j == 1
-            title(['Musc: ',Aparams.chanControlName{i}]);
+            title([Aparams.chanControlName{i}]);
             if i == length(Aparams.chanControl)
                 legend([h1,h2],{'FC','MC'})
             end

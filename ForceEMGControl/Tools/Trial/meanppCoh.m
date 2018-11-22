@@ -5,6 +5,9 @@ meanCoh.angle = angComp';
 fields = {'my_coh','z','msig_coh','asig_coh','asig_z','nasig_coh','nasig_z'};
 
 for iang = 1:length(angComp)
+    
+    fprintf('Angle: %d\n\n',rad2deg(angComp(iang)));
+    
     for h = 1:length(fields)
         if strcmp(fields{h},'my_coh')||strcmp(fields{h},'z')
             force_coh = zeros(1024,1);
@@ -27,12 +30,22 @@ for iang = 1:length(angComp)
             iangf = find([trial_pp_force_coh.angle] == angComp(iang));
             iangE = find([trial_pp_EMG_coh.angle] == angComp(iang));
             
-            
-            BB = sum(reshape(contains([trial_pp_force_coh(iangf).rect.muscles{:}],'BB'),[2,length(trial_pp_force_coh(iangf).rect.muscles)]));
-            TLH = sum(reshape(contains([trial_pp_force_coh(iangf).rect.muscles{:}],'TLH'),[2,length(trial_pp_force_coh(iangf).rect.muscles)]));
-            DA = sum(reshape(contains([trial_pp_force_coh(iangf).rect.muscles{:}],'DA'),[2,length(trial_pp_force_coh(iangf).rect.muscles)]));
-            DP = sum(reshape(contains([trial_pp_force_coh(iangf).rect.muscles{:}],'DP'),[2,length(trial_pp_force_coh(iangf).rect.muscles)]));
-            
+            if ~isempty(iangf)
+                BB = sum(reshape(contains([trial_pp_force_coh(iangf).rect.muscles{:}],'BB'),[2,length(trial_pp_force_coh(iangf).rect.muscles)]));
+                TLH = sum(reshape(contains([trial_pp_force_coh(iangf).rect.muscles{:}],'TLH'),[2,length(trial_pp_force_coh(iangf).rect.muscles)]));
+                DA = sum(reshape(contains([trial_pp_force_coh(iangf).rect.muscles{:}],'DA'),[2,length(trial_pp_force_coh(iangf).rect.muscles)]));
+                DP = sum(reshape(contains([trial_pp_force_coh(iangf).rect.muscles{:}],'DP'),[2,length(trial_pp_force_coh(iangf).rect.muscles)]));
+            elseif ~isempty(iangE)
+                BB = sum(reshape(contains([trial_pp_EMG_coh(iangE).rect.muscles{:}],'BB'),[2,length(trial_pp_EMG_coh(iangE).rect.muscles)]));
+                TLH = sum(reshape(contains([trial_pp_EMG_coh(iangE).rect.muscles{:}],'TLH'),[2,length(trial_pp_EMG_coh(iangE).rect.muscles)]));
+                DA = sum(reshape(contains([trial_pp_EMG_coh(iangE).rect.muscles{:}],'DA'),[2,length(trial_pp_EMG_coh(iangE).rect.muscles)]));
+                DP = sum(reshape(contains([trial_pp_EMG_coh(iangE).rect.muscles{:}],'DP'),[2,length(trial_pp_EMG_coh(iangE).rect.muscles)]));
+            else
+                BB = [];
+                TLH = [];
+                DA = [];
+                DP = [];
+            end
             % Find indexes of muscle pair combinations to plot. Combinations of control
             % muscles.
             % musccomb = find((plotBB&plotDA)|(plotDP&plotBB)|(plotDA&plotTLH)|(plotDA&plotDP)|(plotBB&plotTLH)|(plotTLH&plotDP));
@@ -46,20 +59,38 @@ for iang = 1:length(angComp)
                     force_count = force_count+(trial_pp_force_coh(iangf).rect.(fields{h})(:,musccomb)>=trial_pp_force_coh(iangf).rect.my_CL(musccomb));
                 elseif strcmp(fields{h},'z')
                      force_coh = force_coh+trial_pp_force_coh(iangf).rect.(fields{h})(:,musccomb);
-                    force_count = force_count+(trial_pp_force_coh(iangf).rect.(fields{h})(:,musccomb)>=1.65);
+                     force_count = force_count+(trial_pp_force_coh(iangf).rect.(fields{h})(:,musccomb)>=1.65);
                 else
+                    if strcmp(fields{h},'nasig_z')
+                        fprintf('s%d. FC: %s-%s ',isubject,trial_pp_force_coh(iangf).rect.muscles{musccomb(1)}{1},trial_pp_force_coh(iangf).rect.muscles{musccomb(1)}{2})
+                        fprintf('%s-%s ',trial_pp_force_coh(iangf).rect.muscles{musccomb(2)}{1},trial_pp_force_coh(iangf).rect.muscles{musccomb(2)}{2})
+                        fprintf('%s-%s\n',trial_pp_force_coh(iangf).rect.muscles{musccomb(3)}{1},trial_pp_force_coh(iangf).rect.muscles{musccomb(3)}{2})
+                        
+                        fprintf('Alpha: %1.1f %1.1f %1.1f\n',trial_pp_force_coh(iangf).rect.(fields{h})(1,musccomb))
+                        fprintf('Beta: %1.1f %1.1f %1.1f\n',trial_pp_force_coh(iangf).rect.(fields{h})(2,musccomb))
+                        fprintf('Gamma: %1.1f %1.1f %1.1f\n\n',trial_pp_force_coh(iangf).rect.(fields{h})(3,musccomb))
+                    end
                     force_coh = [force_coh reshape(trial_pp_force_coh(iangf).rect.(fields{h})(:,musccomb),nmusccomb*3,1)];
                 end
             end
             if ~isempty(iangE)
                 scounte = scounte+1;
                 if strcmp(fields{h},'my_coh')
-                    EMG_coh = EMG_coh+trial_pp_EMG_coh(iangf).rect.(fields{h})(:,musccomb);
-                    EMG_count = EMG_count+((trial_pp_EMG_coh(iangf).rect.(fields{h})(:,musccomb)>=trial_pp_EMG_coh(iangf).rect.my_CL(musccomb)));
+                    EMG_coh = EMG_coh+trial_pp_EMG_coh(iangE).rect.(fields{h})(:,musccomb);
+                    EMG_count = EMG_count+((trial_pp_EMG_coh(iangE).rect.(fields{h})(:,musccomb)>=trial_pp_EMG_coh(iangE).rect.my_CL(musccomb)));
                 elseif strcmp(fields{h},'z')
-                    EMG_coh = EMG_coh+trial_pp_EMG_coh(iangf).rect.(fields{h})(:,musccomb);
-                    EMG_count = EMG_count+(trial_pp_EMG_coh(iangf).rect.(fields{h})(:,musccomb)>=1.65);
+                    EMG_coh = EMG_coh+trial_pp_EMG_coh(iangE).rect.(fields{h})(:,musccomb);
+                    EMG_count = EMG_count+(trial_pp_EMG_coh(iangE).rect.(fields{h})(:,musccomb)>=1.65);
                 else
+                    if strcmp(fields{h},'nasig_z')
+                        fprintf('s%d. MC: %s-%s ',isubject,trial_pp_EMG_coh(iangE).rect.muscles{musccomb(1)}{1},trial_pp_EMG_coh(iangE).rect.muscles{musccomb(1)}{2})
+                        fprintf('%s-%s ',trial_pp_EMG_coh(iangE).rect.muscles{musccomb(2)}{1},trial_pp_EMG_coh(iangE).rect.muscles{musccomb(2)}{2})
+                        fprintf('%s-%s\n',trial_pp_EMG_coh(iangE).rect.muscles{musccomb(3)}{1},trial_pp_EMG_coh(iangE).rect.muscles{musccomb(3)}{2})
+                        
+                        fprintf('Alpha: %1.1f %1.1f %1.1f\n',trial_pp_EMG_coh(iangE).rect.(fields{h})(1,musccomb))
+                        fprintf('Beta: %1.1f %1.1f %1.1f\n',trial_pp_EMG_coh(iangE).rect.(fields{h})(2,musccomb))
+                        fprintf('Gamma: %1.1f %1.1f %1.1f\n\n',trial_pp_EMG_coh(iangE).rect.(fields{h})(3,musccomb))
+                    end
                     EMG_coh = [EMG_coh reshape(trial_pp_EMG_coh(iangE).rect.(fields{h})(:,musccomb),nmusccomb*3,1)];
                 end
             end
@@ -69,12 +100,8 @@ for iang = 1:length(angComp)
             meanCoh.force.(fields{h})(iang).scount = force_count;
             meanCoh.EMG.(fields{h})(iang).scount = EMG_count;
 
-            meanCoh.force.(fields{h})(iang).mean = force_coh./length(trial_pp_force);
-            meanCoh.force.(fields{h})(iang).std = force_coh./length(trial_pp_force);
-            meanCoh.force.(fields{h})(iang).sem = force_coh./length(trial_pp_force);
-            meanCoh.EMG.(fields{h})(iang).mean = EMG_coh./length(trial_pp_force);
-            meanCoh.EMG.(fields{h})(iang).std = EMG_coh./length(trial_pp_force);
-            meanCoh.EMG.(fields{h})(iang).sem = EMG_coh./length(trial_pp_force);
+            meanCoh.force.(fields{h})(iang).mean = force_coh./scountf;
+            meanCoh.EMG.(fields{h})(iang).mean = EMG_coh./scounte;
         else
             fmean = reshape(mean(force_coh,2),3,nmusccomb);
             fstd = reshape(std(force_coh,[],2),3,nmusccomb);
@@ -103,11 +130,11 @@ for iang = 1:length(angComp)
     end
     
     for n = 1:length(meanCoh.musc)
-        for m = 1:length(Aparams_pp(end).muscCompPair)
-            idm1 = contains(Aparams_pp(end).muscCompPair{m},meanCoh.musc{n}(1));
-            idm2 = contains(Aparams_pp(end).muscCompPair{m},meanCoh.musc{n}(2));
+        for m = 1:length(Aparams_pp(end-1).muscCompPair)
+            idm1 = contains(Aparams_pp(end-1).muscCompPair{m},meanCoh.musc{n}(1));
+            idm2 = contains(Aparams_pp(end-1).muscCompPair{m},meanCoh.musc{n}(2));
             if sum(idm1+idm2) == 4
-                meanCoh.angmusc{n} = Aparams_pp(end).angCompPair{m};
+                meanCoh.angmusc{n} = Aparams_pp(end-1).angCompPair{m};
             end
         end
     end

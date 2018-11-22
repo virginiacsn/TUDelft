@@ -25,9 +25,9 @@ for iang = 1:length(angComp)
     end
     CV.force.mean(iang) = mean(CVforce);
     CV.force.std(iang) = std(CVforce);
-    CV.force.sem(iang) = std(CVforce)/sqrt(length(scountf));
+    CV.force.sem(iang) = std(CVforce)/sqrt(scountf);
     CV.EMG.mean(iang) = mean(CVEMG);
     CV.EMG.std(iang) = std(CVEMG);
-    CV.EMG.sem(iang) = std(CVEMG)/sqrt(length(scounte));
+    CV.EMG.sem(iang) = std(CVEMG)/sqrt(scounte);
 end
 end

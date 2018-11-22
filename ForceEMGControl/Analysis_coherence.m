@@ -123,12 +123,13 @@ for i = 1:length(Aparams.angCompPair)
 end
 
 %% Before in one fig
-figure;
+figure('Name','Coherence');
 h = 0;
 sangpair = {Aparams.angCompPair{2},Aparams.angCompPair{3},Aparams.angCompPair{1}};
 smuscpair = {Aparams.muscCompPair{2},Aparams.muscCompPair{3},Aparams.muscCompPair{1}};
-for k = 1:length(Aparams.angCompPair{i})
-    for i = 1:length(Aparams.angCompPair)
+
+for k = 1:length(Aparams.angCompPair)
+    for i = 1:length(Aparams.angCompPair{i})
         
         plotmuscpair = find(sum(reshape(contains([trial_coh_force(1).(field).muscles{:}],smuscpair{i}(1)),...
             [2,nmusccomb]))&sum(reshape(contains([trial_coh_force(1).(field).muscles{:}],smuscpair{i}(3)),[2,nmusccomb])));
@@ -382,7 +383,6 @@ for j = 1:length(freqBand)
         hold on;
         e = plot(rad2deg(sangpair{i}),Esig(:,j),'r-.o','MarkerFaceColor','r');
         if j == 1
-            %title(freqBand{j})
             title([smuscpair{i}{1},'-',smuscpair{i}{3}],'FontWeight','bold');          
         elseif j == length(Aparams.muscCompPair)
             xlabel('Target [deg]');

@@ -1,11 +1,10 @@
-function[trial_data] = procEMG(trial_data,Aparams)
+function[trial_data] = procEMG(trial_data,Aparams,exp)
 % Initialize variables
 fchEMG = 10;
 fclEMG = [];
 fnEMG = [];
 fs = 1024;
 avgWindow = 200;
-EMGScale = [];
 
 struct2vars(who,Aparams)
 
@@ -33,7 +32,11 @@ for i = 1:length(trial_data)
     EMGrect = abs(EMGfiltH);
     
     if ~isempty(fclEMG)
-        EMGfiltL = filter(d,c,EMGrect);
+        if exp
+            EMGfiltL = filter(d,c,EMGrect);
+        else
+            EMGfiltL = filtfilt(d,c,EMGrect);
+        end
     else
         EMGfiltL = EMGrect;
     end

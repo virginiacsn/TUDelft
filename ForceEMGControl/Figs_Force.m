@@ -188,24 +188,6 @@ end
 %% Force mean and CV Polar plot
 figure('Name','Force Mean and CV');
 set(gcf,'units','normalized','outerposition',[0 0 1 1]);
-subplot(1,2,2)
-fm = zeros(length(length(Aparams.angCompUni)),3);
-Em = zeros(length(length(Aparams.angCompUni)),3);
-for k = 1:length(Aparams.angCompUni)
-    iangf = find([trial_avg_force.angle] == Aparams.angCompUni(k));
-    iangE = find([trial_avg_EMG.angle] == Aparams.angCompUni(k));
-    
-    fm(k) = trial_avg_force(iangf).force.filtmag_CV;
-    Em(k) = trial_avg_EMG(iangE).force.filtmag_CV;
-%     fCV(k) = 100*trial_avg_force(iangf).force.filtmag_pstd/trial_avg_force(iangf).force.filtmag_mean;
-%     ECV(k) = 100*trial_avg_EMG(iangE).force.filtmag_pstd/trial_avg_EMG(iangE).force.filtmag_mean;
-end
-polarscatter(Aparams.angCompUni,fm,60,'filled','b')
-hold on
-polarscatter(Aparams.angCompUni,Em,60,'filled','r')
-thetaticks([rad2deg(Aparams.angCompUni)]); thetaticklabels(rad2deg(Aparams.angCompUni));
-title({'Force Magnitude'; 'CV'})
-set(gca,'FontSize',18);
 
 subplot(1,2,1)
 fm = zeros(length(length(Aparams.angCompUni)),3);
@@ -220,8 +202,6 @@ for k = 1:length(Aparams.angCompUni)
     Em(k) = trial_avg_EMG(iangE).force.filtmag_mean;
     fstd(k) = trial_avg_force(iangf).force.filtmag_std;
     Estd(k) = trial_avg_EMG(iangE).force.filtmag_std;
-    %     fCV(k) = 100*trial_avg_force(iangf).force.filtmag_pstd/trial_avg_force(iangf).force.filtmag_mean;
-    %     ECV(k) = 100*trial_avg_EMG(iangE).force.filtmag_pstd/trial_avg_EMG(iangE).force.filtmag_mean;
 end
 h1 = polarscatter(Aparams.angCompUni,fm,60,'filled','b');
 hold on
@@ -231,6 +211,24 @@ errorpolar(Aparams.angCompUni,Em,Estd,'r')
 thetaticks([rad2deg(Aparams.angCompUni)]); thetaticklabels(rad2deg(Aparams.angCompUni));
 title({'Force Magnitude'; 'Mean'})
 set(gca,'FontSize',18);
+
+subplot(1,2,2)
+fm = zeros(length(length(Aparams.angCompUni)),3);
+Em = zeros(length(length(Aparams.angCompUni)),3);
+for k = 1:length(Aparams.angCompUni)
+    iangf = find([trial_avg_force.angle] == Aparams.angCompUni(k));
+    iangE = find([trial_avg_EMG.angle] == Aparams.angCompUni(k));
+    
+    fm(k) = trial_avg_force(iangf).force.filtmag_CV;
+    Em(k) = trial_avg_EMG(iangE).force.filtmag_CV;
+end
+h1 = polarscatter(Aparams.angCompUni,fm,60,'filled','b');
+hold on
+h2 = polarscatter(Aparams.angCompUni,Em,60,'filled','r');
+thetaticks([rad2deg(Aparams.angCompUni)]); thetaticklabels(rad2deg(Aparams.angCompUni));
+title({'Force Magnitude'; 'CV'})
+set(gca,'FontSize',18);
+
 legend([h1,h2],'FC','MC','Location','bestoutside');
 
 %% Force CV plot

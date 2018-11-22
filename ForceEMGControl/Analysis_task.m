@@ -3,10 +3,10 @@
 clear all
 addpath(genpath('Tools'));
 
-date =      '20181024';
-subject =   '12'; 
+date =      '20181019';
+subject =   '08'; 
 
-savepp = 1;
+savepp = 0;
  
 switch computer
     case 'PCWIN'
@@ -23,9 +23,8 @@ switch computer
         if ~exist([datapath,'TD\UB'],'dir') && exist(datapath,'dir')
             mkdir([datapath,'TD\UB']);
         end
-        %filepathpp = [datapath,'TD\'];
+        filepathpp = [datapath,'TD\'];
         %filepathpp = [datapath,'TD\UB\'];
-        
     case 'MACI64'
         datapath = '/Users/virginia/Documents/MATLAB/Thesis/Data/';
         filepath =  [datapath,'Exp/',date,'/s',subject,'/'];
@@ -93,7 +92,7 @@ for i = 1:length(codeF)
         
         trial_data = removeFailTrials(trial_data(startTrial:end));
         
-        trial_data = procEMG(trial_data,Aparams);
+        trial_data = procEMG(trial_data,Aparams,0);
         trial_data_force = [trial_data_force, procForce(trial_data,Aparams)];
         
         % Check EMG offset values for each file
@@ -196,7 +195,7 @@ for i = 1:length(codeE)
     
     trial_data = removeFailTrials(trial_data(startTrial:end));
 
-    trial_data = procEMG(trial_data,Aparams);
+    trial_data = procEMG(trial_data,Aparams,0);
     trial_data_EMG = [trial_data_EMG, procForce(trial_data,Aparams)];
     
     if exist('EMGOffset','var')
@@ -330,7 +329,7 @@ Aparams.cohparams.nseg = 10;
 Aparams.cohparams.my_nseg = 10;
 Aparams.cohparams.window = @(N) hanning(N);
 Aparams.cohparams.CLoverlap = 1;
-fields_coh = {'filt','rect'};
+fields_coh = {'rect'};
 fc = 80;
 
 if strcmp(Aparams.cohparams.data,'avg')
