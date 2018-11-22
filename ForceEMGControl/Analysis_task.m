@@ -3,11 +3,12 @@
 clear all
 addpath(genpath('Tools'));
 
-date =      '20181019';
-subject =   '08'; 
+date =      '20181024';
+subject =   '12'; 
 
-savepp = 0;
- 
+savepp = 1;
+UB = 0;
+
 switch computer
     case 'PCWIN'
         datapath = 'D:\Student_experiments\Virginia\Data\';
@@ -23,8 +24,11 @@ switch computer
         if ~exist([datapath,'TD\UB'],'dir') && exist(datapath,'dir')
             mkdir([datapath,'TD\UB']);
         end
-        filepathpp = [datapath,'TD\'];
-        %filepathpp = [datapath,'TD\UB\'];
+        if UB
+            filepathpp = [datapath,'TD\UB\'];
+        else
+            filepathpp = [datapath,'TD\'];
+        end
     case 'MACI64'
         datapath = '/Users/virginia/Documents/MATLAB/Thesis/Data/';
         filepath =  [datapath,'Exp/',date,'/s',subject,'/'];
@@ -118,9 +122,11 @@ trial_avg_force = fftEMG(trial_avg_force);
 % target
 mintrialsForce = min([trial_avg_force.ntrials]);
 
-% if mintrialsForce < 20
-%     trial_data_force(ismember([trial_data_force.angle],[trial_avg_force([trial_avg_force.ntrials] < 20).angle])) = [];
-% end
+if UB
+    if mintrialsForce < 20
+        trial_data_force(ismember([trial_data_force.angle],[trial_avg_force([trial_avg_force.ntrials] < 20).angle])) = [];
+    end
+end
 
 % Trial append by angle. Limit to 20 trials (100 sec of data)
 trial_app_force = trialAngleApp(trial_data_force, Aparams.epoch, fields_app,[],20);
@@ -226,9 +232,11 @@ trial_avg_EMG = fftEMG(trial_avg_EMG);
 % target
 mintrialsEMG = min([trial_avg_EMG.ntrials]);
 
-% if mintrialsEMG < 25
-%     trial_data_EMG(ismember([trial_data_EMG.angle],[trial_avg_EMG([trial_avg_EMG.ntrials] < 25).angle])) = [];
-% end
+if UB
+    if mintrialsEMG < 25
+        trial_data_EMG(ismember([trial_data_EMG.angle],[trial_avg_EMG([trial_avg_EMG.ntrials] < 25).angle])) = [];
+    end
+end
 
 % Trial append by angle. Limit to 25 trials (100 sec of data)
 trial_app_EMG = trialAngleApp(trial_data_EMG, Aparams.epoch, fields_app,[],25);

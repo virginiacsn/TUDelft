@@ -1,4 +1,4 @@
-function[coh,fcoh,CLseg] = coherence(x,y,fs,win,overlap,CLoverlap,iapp)
+function[coh,fcoh,CLseg,Sxx,Syy,Syx] = coherence(x,y,fs,win,overlap,CLoverlap,iapp)
 
 if isempty(iapp)
     
