@@ -3,10 +3,10 @@
 clear all
 addpath(genpath('Tools'));
 
-date =      '20181024';
-subject =   '12'; 
+date =      '20181019';
+subject =   '08'; 
 
-savepp = 1;
+savepp = 0;
 UB = 0;
 
 switch computer
@@ -64,7 +64,7 @@ Aparams.avgWindow = 200;
 Aparams.EMGScale = EMGparams.EMGScale;
 
 % Epoch interval {epoch start, time start, epoch end, time end} and fields to trial average
-Aparams.epoch = {'ihold',1,'iend',0};
+Aparams.epoch = {'istart',0,'iend',0};
 fields_avg = {'EMG.raw','EMG.filt','EMG.rect','EMG.avg','force.filt',...
     'force.filtmag'};
 % Fields to trial append

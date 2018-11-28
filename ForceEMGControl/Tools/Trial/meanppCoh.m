@@ -2,11 +2,11 @@ function[meanCoh] = meanppCoh(trial_pp_force,trial_pp_EMG,Aparams_pp,angComp)
 
 meanCoh.angle = angComp';
 
-fields = {'my_coh','z','msig_coh','asig_coh','asig_z','nasig_coh','nasig_z'};
+fields = {'my_coh','z','asig_coh','asig_z','nasig_coh','nasig_z'};
 
 for iang = 1:length(angComp)
     
-    fprintf('Angle: %d\n\n',rad2deg(angComp(iang)));
+%     fprintf('Angle: %d\n\n',rad2deg(angComp(iang)));
     
     for h = 1:length(fields)
         if strcmp(fields{h},'my_coh')||strcmp(fields{h},'z')
@@ -61,15 +61,15 @@ for iang = 1:length(angComp)
                      force_coh = force_coh+trial_pp_force_coh(iangf).rect.(fields{h})(:,musccomb);
                      force_count = force_count+(trial_pp_force_coh(iangf).rect.(fields{h})(:,musccomb)>=1.65);
                 else
-                    if strcmp(fields{h},'nasig_z')
-                        fprintf('s%d. FC: %s-%s ',isubject,trial_pp_force_coh(iangf).rect.muscles{musccomb(1)}{1},trial_pp_force_coh(iangf).rect.muscles{musccomb(1)}{2})
-                        fprintf('%s-%s ',trial_pp_force_coh(iangf).rect.muscles{musccomb(2)}{1},trial_pp_force_coh(iangf).rect.muscles{musccomb(2)}{2})
-                        fprintf('%s-%s\n',trial_pp_force_coh(iangf).rect.muscles{musccomb(3)}{1},trial_pp_force_coh(iangf).rect.muscles{musccomb(3)}{2})
-                        
-                        fprintf('Alpha: %1.1f %1.1f %1.1f\n',trial_pp_force_coh(iangf).rect.(fields{h})(1,musccomb))
-                        fprintf('Beta: %1.1f %1.1f %1.1f\n',trial_pp_force_coh(iangf).rect.(fields{h})(2,musccomb))
-                        fprintf('Gamma: %1.1f %1.1f %1.1f\n\n',trial_pp_force_coh(iangf).rect.(fields{h})(3,musccomb))
-                    end
+%                     if strcmp(fields{h},'nasig_z')
+%                         fprintf('s%d. FC: %s-%s ',isubject,trial_pp_force_coh(iangf).rect.muscles{musccomb(1)}{1},trial_pp_force_coh(iangf).rect.muscles{musccomb(1)}{2})
+%                         fprintf('%s-%s ',trial_pp_force_coh(iangf).rect.muscles{musccomb(2)}{1},trial_pp_force_coh(iangf).rect.muscles{musccomb(2)}{2})
+%                         fprintf('%s-%s\n',trial_pp_force_coh(iangf).rect.muscles{musccomb(3)}{1},trial_pp_force_coh(iangf).rect.muscles{musccomb(3)}{2})
+%                         
+%                         fprintf('Alpha: %1.1f %1.1f %1.1f\n',trial_pp_force_coh(iangf).rect.(fields{h})(1,musccomb))
+%                         fprintf('Beta: %1.1f %1.1f %1.1f\n',trial_pp_force_coh(iangf).rect.(fields{h})(2,musccomb))
+%                         fprintf('Gamma: %1.1f %1.1f %1.1f\n\n',trial_pp_force_coh(iangf).rect.(fields{h})(3,musccomb))
+%                     end
                     force_coh = [force_coh reshape(trial_pp_force_coh(iangf).rect.(fields{h})(:,musccomb),nmusccomb*3,1)];
                 end
             end
@@ -82,15 +82,15 @@ for iang = 1:length(angComp)
                     EMG_coh = EMG_coh+trial_pp_EMG_coh(iangE).rect.(fields{h})(:,musccomb);
                     EMG_count = EMG_count+(trial_pp_EMG_coh(iangE).rect.(fields{h})(:,musccomb)>=1.65);
                 else
-                    if strcmp(fields{h},'nasig_z')
-                        fprintf('s%d. MC: %s-%s ',isubject,trial_pp_EMG_coh(iangE).rect.muscles{musccomb(1)}{1},trial_pp_EMG_coh(iangE).rect.muscles{musccomb(1)}{2})
-                        fprintf('%s-%s ',trial_pp_EMG_coh(iangE).rect.muscles{musccomb(2)}{1},trial_pp_EMG_coh(iangE).rect.muscles{musccomb(2)}{2})
-                        fprintf('%s-%s\n',trial_pp_EMG_coh(iangE).rect.muscles{musccomb(3)}{1},trial_pp_EMG_coh(iangE).rect.muscles{musccomb(3)}{2})
-                        
-                        fprintf('Alpha: %1.1f %1.1f %1.1f\n',trial_pp_EMG_coh(iangE).rect.(fields{h})(1,musccomb))
-                        fprintf('Beta: %1.1f %1.1f %1.1f\n',trial_pp_EMG_coh(iangE).rect.(fields{h})(2,musccomb))
-                        fprintf('Gamma: %1.1f %1.1f %1.1f\n\n',trial_pp_EMG_coh(iangE).rect.(fields{h})(3,musccomb))
-                    end
+%                     if strcmp(fields{h},'nasig_z')
+%                         fprintf('s%d. MC: %s-%s ',isubject,trial_pp_EMG_coh(iangE).rect.muscles{musccomb(1)}{1},trial_pp_EMG_coh(iangE).rect.muscles{musccomb(1)}{2})
+%                         fprintf('%s-%s ',trial_pp_EMG_coh(iangE).rect.muscles{musccomb(2)}{1},trial_pp_EMG_coh(iangE).rect.muscles{musccomb(2)}{2})
+%                         fprintf('%s-%s\n',trial_pp_EMG_coh(iangE).rect.muscles{musccomb(3)}{1},trial_pp_EMG_coh(iangE).rect.muscles{musccomb(3)}{2})
+%                         
+%                         fprintf('Alpha: %1.1f %1.1f %1.1f\n',trial_pp_EMG_coh(iangE).rect.(fields{h})(1,musccomb))
+%                         fprintf('Beta: %1.1f %1.1f %1.1f\n',trial_pp_EMG_coh(iangE).rect.(fields{h})(2,musccomb))
+%                         fprintf('Gamma: %1.1f %1.1f %1.1f\n\n',trial_pp_EMG_coh(iangE).rect.(fields{h})(3,musccomb))
+%                     end
                     EMG_coh = [EMG_coh reshape(trial_pp_EMG_coh(iangE).rect.(fields{h})(:,musccomb),nmusccomb*3,1)];
                 end
             end

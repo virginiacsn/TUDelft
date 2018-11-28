@@ -84,8 +84,8 @@ fc = 80;
 
 %% Statistical analysis
 
-fields_stat = {'force.mag_mean','EMG.rect','trial_coh.filt.asig_coh','trial_coh.filt.nasig_coh',...
-    'trial_coh.filt.asig_z','trial_coh.filt.nasig_z'};
+fields_stat = {'force.mag_mean','EMG.rect','trial_coh.rect.asig_coh','trial_coh.rect.nasig_coh',...
+    'trial_coh.rect.asig_z','trial_coh.rect.nasig_z'};
 ppStats = statAnalysis(trial_pp_force,trial_pp_EMG,Aparams_pp,angComp,fields_stat);
 
 %% Force

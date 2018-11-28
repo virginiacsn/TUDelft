@@ -1,0 +1,140 @@
+GET DATA
+  /TYPE=TXT
+  /FILE='//Users//virginia//Documents//MATLAB//Thesis//ForceEMGControl//SPSS/stat_coh.txt'
+  /DELCASE=LINE
+  /DELIMITERS="\t"
+  /ARRANGEMENT=DELIMITED
+  /FIRSTCASE=2
+  /IMPORTCASE=ALL
+  /VARIABLES=
+  Subject F12.6
+  FC_TLH-DA_0_alp F12.6
+  MC_TLH-DA_0_alp F12.6
+  FC_TLH-DA_0_bet F12.6
+  MC_TLH-DA_0_bet F12.6
+  FC_TLH-DA_0_gam F12.6
+  MC_TLH-DA_0_gam F12.6
+  FC_TLH-DA_45_alp F12.6
+  MC_TLH-DA_45_alp F12.6
+  FC_TLH-DA_45_bet F12.6
+  MC_TLH-DA_45_bet F12.6
+  FC_TLH-DA_45_gam F12.6
+  MC_TLH-DA_45_gam F12.6
+  FC_TLH-DA_90_alp F12.6
+  MC_TLH-DA_90_alp F12.6
+  FC_TLH-DA_90_bet F12.6
+  MC_TLH-DA_90_bet F12.6
+  FC_TLH-DA_90_gam F12.6
+  MC_TLH-DA_90_gam F12.6
+  FC_TLH-DA_135_alp F12.6
+  MC_TLH-DA_135_alp F12.6
+  FC_TLH-DA_135_bet F12.6
+  MC_TLH-DA_135_bet F12.6
+  FC_TLH-DA_135_gam F12.6
+  MC_TLH-DA_135_gam F12.6
+  FC_TLH-DA_180_alp F12.6
+  MC_TLH-DA_180_alp F12.6
+  FC_TLH-DA_180_bet F12.6
+  MC_TLH-DA_180_bet F12.6
+  FC_TLH-DA_180_gam F12.6
+  MC_TLH-DA_180_gam F12.6
+  FC_TLH-DA_225_alp F12.6
+  MC_TLH-DA_225_alp F12.6
+  FC_TLH-DA_225_bet F12.6
+  MC_TLH-DA_225_bet F12.6
+  FC_TLH-DA_225_gam F12.6
+  MC_TLH-DA_225_gam F12.6
+  FC_TLH-DA_270_alp F12.6
+  MC_TLH-DA_270_alp F12.6
+  FC_TLH-DA_270_bet F12.6
+  MC_TLH-DA_270_bet F12.6
+  FC_TLH-DA_270_gam F12.6
+  MC_TLH-DA_270_gam F12.6
+  FC_DA-BB_0_alp F12.6
+  MC_DA-BB_0_alp F12.6
+  FC_DA-BB_0_bet F12.6
+  MC_DA-BB_0_bet F12.6
+  FC_DA-BB_0_gam F12.6
+  MC_DA-BB_0_gam F12.6
+  FC_DA-BB_45_alp F12.6
+  MC_DA-BB_45_alp F12.6
+  FC_DA-BB_45_bet F12.6
+  MC_DA-BB_45_bet F12.6
+  FC_DA-BB_45_gam F12.6
+  MC_DA-BB_45_gam F12.6
+  FC_DA-BB_90_alp F12.6
+  MC_DA-BB_90_alp F12.6
+  FC_DA-BB_90_bet F12.6
+  MC_DA-BB_90_bet F12.6
+  FC_DA-BB_90_gam F12.6
+  MC_DA-BB_90_gam F12.6
+  FC_DA-BB_135_alp F12.6
+  MC_DA-BB_135_alp F12.6
+  FC_DA-BB_135_bet F12.6
+  MC_DA-BB_135_bet F12.6
+  FC_DA-BB_135_gam F12.6
+  MC_DA-BB_135_gam F12.6
+  FC_DA-BB_180_alp F12.6
+  MC_DA-BB_180_alp F12.6
+  FC_DA-BB_180_bet F12.6
+  MC_DA-BB_180_bet F12.6
+  FC_DA-BB_180_gam F12.6
+  MC_DA-BB_180_gam F12.6
+  FC_DA-BB_225_alp F12.6
+  MC_DA-BB_225_alp F12.6
+  FC_DA-BB_225_bet F12.6
+  MC_DA-BB_225_bet F12.6
+  FC_DA-BB_225_gam F12.6
+  MC_DA-BB_225_gam F12.6
+  FC_DA-BB_270_alp F12.6
+  MC_DA-BB_270_alp F12.6
+  FC_DA-BB_270_bet F12.6
+  MC_DA-BB_270_bet F12.6
+  FC_DA-BB_270_gam F12.6
+  MC_DA-BB_270_gam F12.6
+  FC_BB-DP_0_alp F12.6
+  MC_BB-DP_0_alp F12.6
+  FC_BB-DP_0_bet F12.6
+  MC_BB-DP_0_bet F12.6
+  FC_BB-DP_0_gam F12.6
+  MC_BB-DP_0_gam F12.6
+  FC_BB-DP_45_alp F12.6
+  MC_BB-DP_45_alp F12.6
+  FC_BB-DP_45_bet F12.6
+  MC_BB-DP_45_bet F12.6
+  FC_BB-DP_45_gam F12.6
+  MC_BB-DP_45_gam F12.6
+  FC_BB-DP_90_alp F12.6
+  MC_BB-DP_90_alp F12.6
+  FC_BB-DP_90_bet F12.6
+  MC_BB-DP_90_bet F12.6
+  FC_BB-DP_90_gam F12.6
+  MC_BB-DP_90_gam F12.6
+  FC_BB-DP_135_alp F12.6
+  MC_BB-DP_135_alp F12.6
+  FC_BB-DP_135_bet F12.6
+  MC_BB-DP_135_bet F12.6
+  FC_BB-DP_135_gam F12.6
+  MC_BB-DP_135_gam F12.6
+  FC_BB-DP_180_alp F12.6
+  MC_BB-DP_180_alp F12.6
+  FC_BB-DP_180_bet F12.6
+  MC_BB-DP_180_bet F12.6
+  FC_BB-DP_180_gam F12.6
+  MC_BB-DP_180_gam F12.6
+  FC_BB-DP_225_alp F12.6
+  MC_BB-DP_225_alp F12.6
+  FC_BB-DP_225_bet F12.6
+  MC_BB-DP_225_bet F12.6
+  FC_BB-DP_225_gam F12.6
+  MC_BB-DP_225_gam F12.6
+  FC_BB-DP_270_alp F12.6
+  MC_BB-DP_270_alp F12.6
+  FC_BB-DP_270_bet F12.6
+  MC_BB-DP_270_bet F12.6
+  FC_BB-DP_270_gam F12.6
+  MC_BB-DP_270_gam F12.6
+.
+
+SAVE OUTFILE='//Users//virginia//Documents//MATLAB//Thesis//ForceEMGControl//SPSS/stat_coh.sav'
+/COMPRESSED

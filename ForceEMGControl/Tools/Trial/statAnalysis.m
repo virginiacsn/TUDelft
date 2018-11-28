@@ -28,6 +28,23 @@ for iang = 1:length(angComp)
                 DA = sum(reshape(contains([trial_force(iangf).rect.muscles{:}],'DA'),[2,length(trial_force(iangf).rect.muscles)]));
                 DP = sum(reshape(contains([trial_force(iangf).rect.muscles{:}],'DP'),[2,length(trial_force(iangf).rect.muscles)]));
                 
+                if ~isempty(iangf)
+                    BB = sum(reshape(contains([trial_force(iangf).rect.muscles{:}],'BB'),[2,length(trial_force(iangf).rect.muscles)]));
+                    TLH = sum(reshape(contains([trial_force(iangf).rect.muscles{:}],'TLH'),[2,length(trial_force(iangf).rect.muscles)]));
+                    DA = sum(reshape(contains([trial_force(iangf).rect.muscles{:}],'DA'),[2,length(trial_force(iangf).rect.muscles)]));
+                    DP = sum(reshape(contains([trial_force(iangf).rect.muscles{:}],'DP'),[2,length(trial_force(iangf).rect.muscles)]));
+                elseif ~isempty(iangE)
+                    BB = sum(reshape(contains([trial_EMG(iangE).rect.muscles{:}],'BB'),[2,length(trial_EMG(iangE).rect.muscles)]));
+                    TLH = sum(reshape(contains([trial_EMG(iangE).rect.muscles{:}],'TLH'),[2,length(trial_EMG(iangE).rect.muscles)]));
+                    DA = sum(reshape(contains([trial_EMG(iangE).rect.muscles{:}],'DA'),[2,length(trial_EMG(iangE).rect.muscles)]));
+                    DP = sum(reshape(contains([trial_EMG(iangE).rect.muscles{:}],'DP'),[2,length(trial_EMG(iangE).rect.muscles)]));
+                else
+                    BB = [];
+                    TLH = [];
+                    DA = [];
+                    DP = [];
+                end
+                
                 musccomb = find((BB&DA)|(DP&BB)|(DA&TLH));
                 nmusccomb = length(musccomb);
             else
@@ -86,17 +103,25 @@ for iang = 1:length(angComp)
                 end
             end
             for imusc = 1:nmusccomb
-                [ppStats.(field_str{3}).alp.p(iang,imusc),ppStats.(field_str{3}).alp.h(iang,imusc)] = ranksum(force_alp(:,imusc),EMG_alp(:,imusc),'alpha',0.1);
-                [ppStats.(field_str{3}).beta.p(iang,imusc),ppStats.(field_str{3}).beta.h(iang,imusc)] = ranksum(force_beta(:,imusc),EMG_beta(:,imusc),'alpha',0.1);
-                [ppStats.(field_str{3}).gam.p(iang,imusc),ppStats.(field_str{3}).gam.h(iang,imusc)] = ranksum(force_gam(:,imusc),EMG_gam(:,imusc),'alpha',0.1);
+                [ppStats.(field_str{3}).alp.p(iang,imusc),ppStats.(field_str{3}).alp.tbl(iang,imusc)] = anova1([force_alp(:,imusc),EMG_alp(:,imusc)]);
+                [ppStats.(field_str{3}).beta.p(iang,imusc),ppStats.(field_str{3}).beta.tbl(iang,imusc)] = anova1([force_beta(:,imusc),EMG_beta(:,imusc)]);
+                [ppStats.(field_str{3}).gam.p(iang,imusc),ppStats.(field_str{3}).gam.tbl(iang,imusc)] = anova1([force_gam(:,imusc),EMG_gam(:,imusc)]);
+                
+%                 [ppStats.(field_str{3}).alp.p(iang,imusc),ppStats.(field_str{3}).alp.h(iang,imusc)] = ranksum(force_alp(:,imusc),EMG_alp(:,imusc),'alpha',0.1);
+%                 [ppStats.(field_str{3}).beta.p(iang,imusc),ppStats.(field_str{3}).beta.h(iang,imusc)] = ranksum(force_beta(:,imusc),EMG_beta(:,imusc),'alpha',0.1);
+%                 [ppStats.(field_str{3}).gam.p(iang,imusc),ppStats.(field_str{3}).gam.h(iang,imusc)] = ranksum(force_gam(:,imusc),EMG_gam(:,imusc),'alpha',0.1);
             end
         elseif strcmp(field_str{1},'EMG')
             for imusc = 1:length(channel)
                 ppStats.(field_str{2}).musc = Aparams_pp(end).chanControlName;
-                [ppStats.(field_str{2}).p(iang,imusc),ppStats.(field_str{2}).h(iang,imusc)] = ranksum(force_all(:,imusc),EMG_all(:,imusc),'alpha',0.1);
+                [ppStats.(field_str{2}).p(iang,imusc),ppStats.(field_str{2}).tbl(iang,imusc)] = anova1([force_all(:,imusc),EMG_all(:,imusc)]);
+                
+%                 [ppStats.(field_str{2}).p(iang,imusc),ppStats.(field_str{2}).h(iang,imusc)] = ranksum(force_all(:,imusc),EMG_all(:,imusc),'alpha',0.1);
             end
         else
-            [ppStats.(field_str{2}).p(iang),ppStats.(field_str{2}).h(iang)] = ranksum(force_all,EMG_all,'alpha',0.1);
+            %[ppStats.(field_str{2}).p(iang),ppStats.(field_str{2}).tbl(iang)] = anova1([force_all,EMG_all]);
+            
+%             [ppStats.(field_str{2}).p(iang),ppStats.(field_str{2}).h(iang)] = ranksum(force_all,EMG_all,'alpha',0.1);
         end
     end
 end

@@ -3,24 +3,24 @@
 figure('Name','Force CV');
 set(gcf,'units','normalized','outerposition',[0 0 1 1]);
 subplot(1,2,1)
-h1 = polarscatter(angComp,[avgforce_force.mag_mean_mean],60,'filled','b');
+h1 = polarscatter(angComp+pi/4,[avgforce_force.mag_mean_mean],80,'filled','b');
 hold on;
-h2 = polarscatter(angComp,[avgEMG_force.mag_mean_mean],60,'filled','r');
-errorpolar(angComp,[avgforce_force.mag_mean_mean],[avgforce_force.mag_mean_sem],'b')
-errorpolar(angComp,[avgEMG_force.mag_mean_mean],[avgEMG_force.mag_mean_sem],'r')
-thetaticks(degAngComp); thetaticklabels(degAngComp);
-title({'Force Magnitude'; 'Mean'})
-set(gca,'FontSize',18);
+h2 = polarscatter(angComp+pi/4,[avgEMG_force.mag_mean_mean],80,'filled','r');
+errorpolar(angComp+pi/4,[avgforce_force.mag_mean_mean],[avgforce_force.mag_mean_sem],'b')
+errorpolar(angComp+pi/4,[avgEMG_force.mag_mean_mean],[avgEMG_force.mag_mean_sem],'r')
+thetaticks(degAngComp+45); thetaticklabels(degAngComp);
+title({'Force Magnitude'; 'Mean [N]'})
+set(gca,'FontSize',20);
 
 subplot(1,2,2)
-h1 = polarscatter(avgCV.angle,avgCV.force.mean,60,'filled','b');
+h1 = polarscatter(avgCV.angle+pi/4,avgCV.force.mean,80,'filled','b');
 hold on;
-h2 = polarscatter(avgCV.angle,avgCV.EMG.mean,60,'filled','r');
-errorpolar(avgCV.angle,avgCV.force.mean,avgCV.force.sem,'b')
-errorpolar(avgCV.angle,avgCV.EMG.mean,avgCV.EMG.sem,'r')
-thetaticks(degAngComp); thetaticklabels(degAngComp);
-title({'Force Magnitude'; 'CV'})
-set(gca,'FontSize',18);
+h2 = polarscatter(avgCV.angle+pi/4,avgCV.EMG.mean,80,'filled','r');
+errorpolar(avgCV.angle+pi/4,avgCV.force.mean,avgCV.force.sem,'b');
+errorpolar(avgCV.angle+pi/4,avgCV.EMG.mean,avgCV.EMG.sem,'r');
+thetaticks(degAngComp+45); thetaticklabels(degAngComp);
+title({'Force Magnitude'; 'CV [%]'})
+set(gca,'FontSize',20);
 legend([h1,h2],'FC','MC','Location','bestoutside');
 
 %% Scaled EMG mean - Plot. Subplot per control muscle.
@@ -168,19 +168,26 @@ for k = 1:length(smuscpair)
         h = h+1;
         subplot(length(sangpair),length(sangpair),h);
         
-        h1 = plot(avgCoh.force.my_fcoh,avgCoh.force.z(iang).mean(:,srt(i)),'b','Linewidth',2);
+        plot(avgCoh.force.my_fcoh,avgCoh.force.z(iang).mean(:,srt(i)),'b','Linewidth',2);
         hold on;
+        plot(avgCoh.force.my_fcoh,avgCoh.EMG.z(iang).mean(:,srt(i)),'r','Linewidth',2);
+        xlim([2 fc]);
+        yl = ylim;
+        area([8 12],[yl(2)-0.02 yl(2)-0.02],'FaceColor',[0.8,0.8,0.8],'FaceAlpha',0.8,'EdgeColor','none');
+        area([15 30],[yl(2)-0.02 yl(2)-0.02],'FaceColor',[0.6,0.6,0.6],'FaceAlpha',0.8,'EdgeColor','none');
+        h1 = plot(avgCoh.force.my_fcoh,avgCoh.force.z(iang).mean(:,srt(i)),'b','Linewidth',2);
         h2 = plot(avgCoh.force.my_fcoh,avgCoh.EMG.z(iang).mean(:,srt(i)),'r','Linewidth',2);
-        line(xlim,[0.62 0.62],'Color','k','LineStyle','-.');       
-        xlim([2 fc]); 
-        plot([8 8],ylim,'Color',[0.7,0.7,0.7],'Linewidth',1);plot([12 12],ylim,'Color',[0.7,0.7,0.7],'Linewidth',1);
-        plot([15 15],ylim,'Color',[0.3,0.3,0.3],'Linewidth',1);plot([30 30],ylim,'Color',[0.3,0.3,0.3],'Linewidth',1);
+        line(xlim,[0.65 0.65],'Color','k','LineStyle','-.');
+
+        
+%         plot([15 15],ylim,'Color',[0.3,0.3,0.3],'Linewidth',1);
+%         plot([30 30],ylim,'Color',[0.3,0.3,0.3],'Linewidth',1);
         ylim([0, max(ylim)]);
         if k == 1
             title({['\fontsize{15}',smuscpair{i}{1},'-',smuscpair{i}{3}];...
-                ['Target: ',num2str(rad2deg(sangpair{i}(k))),' (',smuscpair{i}{k},')']},'interpreter','tex');
+                ['Target: ',num2str(rad2deg(sangpair{i}(k))),' deg (',smuscpair{i}{k},')']},'interpreter','tex');
         else
-            title(['Target: ',num2str(rad2deg(sangpair{i}(k))),' (',smuscpair{i}{k},')']);
+            title(['Target: ',num2str(rad2deg(sangpair{i}(k))),' deg (',smuscpair{i}{k},')']);
         end
         if k == 3
             xlabel('Frequency [Hz]');

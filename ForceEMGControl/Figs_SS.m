@@ -130,6 +130,36 @@ for j = 1:length(Aparams.targetAnglesEMG)
     end
 end
 
+%% EMG in time. Subplot per muscle (control) (col) and target (row). 
+% Compare control muscles and targets for each task.
+h = 0;
+figure('Name','ForceCO');
+for j = 1:length(Aparams.targetAnglesForce)
+    for i = 1:length(Aparams.chanControl)
+        h = h+1;
+        subplot(length(Aparams.targetAnglesForce),length(Aparams.chanControl),h);
+        plot(trial_avg_force(j).ts,trial_avg_force(j).EMG.avgScale(:,Aparams.chanControl(i)),'b','LineWidth',2);
+        hold on;
+        plot(trial_avg_EMG(j).ts,trial_avg_EMG(j).EMG.avgScale(:,Aparams.chanControl(i)),'r','LineWidth',2);
+        ylim([0 1.4]);%ylim([0 EMG_lim(j,Aparams.chanControl(i))]); %ylim([0 max(trial_data_avg_force(j).EMG.rect(:))+10]);%
+        xlim([0 trial_avg_force(j).ts(end)]);
+        if j == length(Aparams.targetAnglesForce)
+            xlabel('Time [s]');
+        end
+        if i == 1
+            ylabel({['\bf',num2str(rad2deg(Aparams.targetAnglesForce(j))),' deg'];'\rmEMG [-]'},'interpreter','tex');
+        end
+        if j == 1
+            title([Aparams.chanControlName{i}]);
+        end
+        if i == length(Aparams.chanControlName) && j == 2
+            legend('FC','MC')
+        end
+        set(gca,'FontSize',13);
+    end
+end
+
+
 %% Scaled EMG mean - Plot. Subplot per control muscle.
 figure('Name','Scaled EMG mean')
 for i = 1:length(Aparams.chanControl)
