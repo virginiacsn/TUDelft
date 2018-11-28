@@ -78,9 +78,10 @@ Thumbs.db
 *.pl2
 *.plo
 
-# Text files
+# SPSS files
 *.txt
 *.htm
+*.sps
 
 # Matlab things
 *.asv
