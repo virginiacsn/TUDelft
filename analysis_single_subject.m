@@ -1,4 +1,4 @@
-%% Data Analysis for individual subject
+%% Data Analysis for single subject
 addpath(genpath('Tools'));
 
 date =      '20180918';
@@ -317,26 +317,3 @@ xlabel('Fx [N]'); ylabel('Fy [N]');
 title(['Trial: ',num2str(itrial),'; Target: ',num2str(rad2deg(trial_data(itrial).angle)),' deg']);
 legend([h1,h2],'Start','End');
 
-%% Mapping
-% N = size(trial_data(4).EMGrect,1);
-% tv = (0:N-1)*dt;
-% 
-% FD = trial_data(4).forcefilt;
-% ED = trial_data(4).EMGavg;
-% 
-% bx = regress(FD(:,1),[ones(size(ED,1),1) ED]); 
-% by = regress(FD(:,2),[ones(size(ED,1),1) ED]); 
-% 
-% fitx = bx(1)+bx(2)*ED(:,1)+bx(3)*ED(:,2);
-% fity = by(1)+by(2)*ED(:,1)+by(3)*ED(:,2);
-% 
-% figure 
-% subplot(121)
-% plot(tv,FD(:,1))
-% hold on
-% plot(tv,fitx)
-% 
-% subplot(122)
-% plot(tv,FD(:,2))
-% hold on
-% plot(tv,fity)

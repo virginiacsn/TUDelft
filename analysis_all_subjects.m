@@ -1,4 +1,4 @@
-%% Data Analysis for population
+%% Data Analysis for all subjects/population
 clear all;
 addpath(genpath('Tools'));
 

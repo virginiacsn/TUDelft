@@ -1,4 +1,4 @@
-%% Final figs for single-subject
+%% Final figs for single subject
 %% Force trajectory. Target angles in same subplot for both tasks.
 figure('Name','Force trajectory');
 %subplot(2,1,1)

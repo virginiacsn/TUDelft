@@ -1,4 +1,4 @@
-%% Experiment protocol
+%% Script to run experiment
 close all;
 clear all;
 

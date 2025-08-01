@@ -1,4 +1,4 @@
-%% Final figs for population
+%% Final figs for all subjects/population
 %% Force magnitude and CV mean - Polar
 figure('Name','Force CV');
 set(gcf,'units','normalized','outerposition',[0 0 1 1]);
